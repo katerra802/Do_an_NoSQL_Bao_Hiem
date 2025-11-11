@@ -1,0 +1,36 @@
+# Visual Studio user-specific files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Tt]emp/
+
+# Packages
+*.nupkg
+packages/
+*.snupkg
+
+# Backup & cache
+*.cache
+*.pdb
+
+# Publish
+publish/
+*.Publish.xml
+
+# Others
+*.dbmdl
+*.bak
+*.ldf
+*.mdf
+*.sqlite
+
+# VS Code or Rider configs (optional)
+.vscode/
+.idea/

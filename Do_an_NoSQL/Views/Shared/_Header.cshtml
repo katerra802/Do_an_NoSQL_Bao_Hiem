@@ -1,0 +1,204 @@
+﻿@* Views/Shared/_Header.cshtml *@
+<style>
+    :root {
+        --primary-red: #E31E24;
+        --text-dark: #003366;
+        --bg-light: #ffffff;
+        --transition-speed: 0.3s;
+    }
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    /* Top White Header */
+    .header-top {
+        background-color: var(--bg-light);
+        padding: 20px 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #e0e0e0;
+        transition: all 0.4s ease;
+        position: relative;
+        z-index: 50;
+    }
+
+        .header-top.hidden {
+            opacity: 0;
+            transform: translateY(-120%);
+            pointer-events: none;
+        }
+
+
+    .logo {
+        font-size: 24px;
+        font-weight: bold;
+        color: var(--primary-red);
+        text-decoration: none;
+    }
+
+    .header-top-right {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+    }
+
+    .header-icons {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+    }
+
+    .header-icons a {
+        color: var(--text-dark);
+        text-decoration: none;
+        font-size: 18px;
+        cursor: pointer;
+    }
+
+    .header-icons a:hover {
+        color: var(--primary-red);
+    }
+
+    .header-top-right > a {
+        color: var(--primary-red);
+        text-decoration: none;
+        padding: 8px 16px;
+        border: 1px solid var(--primary-red);
+        border-radius: 20px;
+        font-size: 14px;
+        transition: all var(--transition-speed) ease;
+    }
+
+    .header-top-right > a:hover {
+        background-color: var(--primary-red);
+        color: white;
+    }
+
+    /* Red Navigation Bar (Sticky on scroll) */
+    .header-nav {
+        background-color: var(--primary-red);
+        transition: all var(--transition-speed) ease;
+        position: relative;
+        z-index: 40;
+    }
+
+        .header-nav.sticky {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            background-color: #c4161c; /* hơi đậm hơn để thấy rõ */
+        }
+
+    .nav-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 40px;
+        gap: 8px;
+    }
+
+    .nav-container a {
+        color: white;
+        text-decoration: none;
+        padding: 16px 20px;
+        font-size: 15px;
+        font-weight: 500;
+        transition: background-color var(--transition-speed) ease;
+        border-bottom: 3px solid transparent;
+    }
+
+    .nav-container a:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-bottom-color: white;
+    }
+
+    body.nav-sticky {
+        padding-top: 56px;
+    }
+
+    @@media (max-width: 768px) {
+        .header-top {
+            padding: 12px 20px;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .header-top-right {
+            gap: 16px;
+            width: 100%;
+        }
+
+        .header-icons {
+            gap: 12px;
+        }
+
+        .nav-container {
+            overflow-x: auto;
+        }
+
+        .nav-container a {
+            padding: 14px 12px;
+            font-size: 13px;
+        }
+    }
+</style>
+
+<header class="header-wrapper">
+    <!-- White Top Section -->
+    <div class="header-top">
+        <a href="/" class="logo">PRUDENTIAL</a>
+        <div class="header-top-right">
+            <div class="header-icons">
+                <a href="#search" title="Tìm kiếm">🔍</a>
+                <a href="#phone" title="Gọi">☎️</a>
+                <a href="#payment">Thanh toán phí bảo hiểm</a>
+            </div>
+            <a href="/login">Đăng nhập</a>
+        </div>
+    </div>
+
+    <!-- Red Navigation Bar -->
+    <nav class="header-nav">
+        <div class="nav-container">
+            <a href="/">BHNT là dễ Phòng thần</a>
+            <a href="/blog">Blog</a>
+            <a href="/products">Sản phẩm bảo hiểm</a>
+            <a href="/support">Chăm sóc khách hàng</a>
+            <a href="/careers">Cơ hội nghề nghiệp</a>
+            <a href="/about">Về Prudential</a>
+        </div>
+    </nav>
+</header>
+
+<script>
+        document.addEventListener('DOMContentLoaded', function () {
+        const headerTop = document.querySelector('.header-top');
+        const headerNav = document.querySelector('.header-nav');
+        const body = document.body;
+
+        window.addEventListener('scroll', function () {
+            const currentScrollY = window.scrollY;
+
+            if (currentScrollY > 80) {
+                // Khi lướt xuống, ẩn phần trắng và dính phần đỏ lên
+                headerTop.classList.add('hidden');
+                headerNav.classList.add('sticky');
+                body.classList.add('nav-sticky');
+            } else {
+                // Khi cuộn lên lại, trả về bình thường
+                headerTop.classList.remove('hidden');
+                headerNav.classList.remove('sticky');
+                body.classList.remove('nav-sticky');
+            }
+        });
+    });
+
+</script>
