@@ -1,0 +1,336 @@
+﻿@model Do_an_NoSQL.Models.Product
+
+@{
+    ViewData["Title"] = "Thêm sản phẩm bảo hiểm mới";
+}
+
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #003366;
+    }
+
+    .btn-back {
+        background: #f5f7fa;
+        color: #666;
+        padding: 10px 18px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .btn-back:hover {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+    .form-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        padding: 30px;
+    }
+
+    .form-section-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #003366;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        margin-bottom: 24px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+        .form-group label {
+            font-weight: 600;
+            color: #003366;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+            .form-group label .required {
+                color: #E31E24;
+            }
+
+    .form-control {
+        padding: 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.3s ease;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #E31E24;
+        }
+
+    .text-danger {
+        color: #E31E24;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #f0f0f0;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #E31E24 0%, #c4161c 100%);
+        color: white;
+        padding: 12px 32px;
+        border-radius: 6px;
+        border: none;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(227, 30, 36, 0.3);
+        }
+
+    .btn-secondary {
+        background: #f5f7fa;
+        color: #666;
+        padding: 12px 32px;
+        border-radius: 6px;
+        border: none;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+    .help-text {
+        font-size: 12px;
+        color: #999;
+        margin-top: 4px;
+    }
+
+    .riders-container {
+        margin-top: 12px;
+    }
+
+    .rider-item {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 12px;
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+        .rider-item input {
+            flex: 1;
+        }
+
+    .btn-remove-rider {
+        background: #fee2e2;
+        color: #991b1b;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .btn-add-rider {
+        background: #dbeafe;
+        color: #1e40af;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        margin-top: 8px;
+    }
+
+    @@media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="page-header">
+    <h1 class="page-title">➕ Thêm sản phẩm bảo hiểm mới</h1>
+    <a href="/Products/Index" class="btn-back">
+        <span>←</span>
+        <span>Quay lại</span>
+    </a>
+</div>
+
+<div class="form-card">
+    <form asp-action="Create" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <h3 class="form-section-title">Thông tin cơ bản</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label asp-for="Name">Tên sản phẩm <span class="required">*</span></label>
+                <input asp-for="Name" class="form-control" placeholder="Nhập tên sản phẩm bảo hiểm" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Type">Loại hình bảo hiểm <span class="required">*</span></label>
+                <select asp-for="Type" class="form-control">
+                    <option value="">Chọn loại hình</option>
+                    <option value="Bảo hiểm liên kết đơn vị">Bảo hiểm liên kết đơn vị</option>
+                    <option value="Bảo hiểm truyền thống">Bảo hiểm truyền thống</option>
+                    <option value="Bảo hiểm sức khỏe">Bảo hiểm sức khỏe</option>
+                    <option value="Bảo hiểm tai nạn">Bảo hiểm tai nạn</option>
+                    <option value="Bảo hiểm giáo dục">Bảo hiểm giáo dục</option>
+                </select>
+                <span asp-validation-for="Type" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="TermYears">Kỳ hạn (năm) <span class="required">*</span></label>
+                <input asp-for="TermYears" type="number" class="form-control" placeholder="Nhập số năm" min="1" max="99" />
+                <span asp-validation-for="TermYears" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Mục đích <span class="required">*</span></label>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
+                    <input type="checkbox" name="Purpose" value="Đầu tư" />
+                    <span>Đầu tư</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
+                    <input type="checkbox" name="Purpose" value="Tích lũy" />
+                    <span>Tích lũy</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
+                    <input type="checkbox" name="Purpose" value="Bảo vệ tài chính" />
+                    <span>Bảo vệ tài chính</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
+                    <input type="checkbox" name="Purpose" value="Sức khỏe" />
+                    <span>Sức khỏe</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
+                    <input type="checkbox" name="Purpose" value="Giáo dục" />
+                    <span>Giáo dục</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
+                    <input type="checkbox" name="Purpose" value="Hưu trí" />
+                    <span>Hưu trí</span>
+                </label>
+            </div>
+            <span class="help-text">Chọn một hoặc nhiều mục đích</span>
+        </div>
+
+        <h3 class="form-section-title">Điều kiện tham gia</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label asp-for="MinAge">Độ tuổi tối thiểu <span class="required">*</span></label>
+                <input asp-for="MinAge" type="number" class="form-control" placeholder="VD: 18" min="0" max="100" />
+                <span asp-validation-for="MinAge" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="MaxAge">Độ tuổi tối đa <span class="required">*</span></label>
+                <input asp-for="MaxAge" type="number" class="form-control" placeholder="VD: 65" min="0" max="100" />
+                <span asp-validation-for="MaxAge" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="MinSumAssured">Số tiền BH tối thiểu (VNĐ) <span class="required">*</span></label>
+                <input asp-for="MinSumAssured" type="number" class="form-control" placeholder="VD: 100000000" />
+                <span asp-validation-for="MinSumAssured" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="MaxSumAssured">Số tiền BH tối đa (VNĐ) <span class="required">*</span></label>
+                <input asp-for="MaxSumAssured" type="number" class="form-control" placeholder="VD: 5000000000" />
+                <span asp-validation-for="MaxSumAssured" class="text-danger"></span>
+            </div>
+        </div>
+
+        <h3 class="form-section-title">Quyền lợi bổ sung (Riders)</h3>
+        <div id="riders-container" class="riders-container">
+            <div class="rider-item">
+                <input type="text" name="Riders[0].Code" class="form-control" placeholder="Mã rider (VD: R001)" />
+                <input type="text" name="Riders[0].Name" class="form-control" placeholder="Tên rider (VD: Bảo hiểm tai nạn)" />
+                <button type="button" class="btn-remove-rider" onclick="removeRider(this)">🗑️ Xóa</button>
+            </div>
+        </div>
+        <button type="button" class="btn-add-rider" onclick="addRider()">➕ Thêm rider</button>
+
+        <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="window.location.href='/Products/Index'">Hủy</button>
+            <button type="submit" class="btn-primary">💾 Lưu sản phẩm</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    let riderIndex = 1;
+
+    function addRider() {
+        const container = document.getElementById('riders-container');
+        const riderItem = document.createElement('div');
+        riderItem.className = 'rider-item';
+        riderItem.innerHTML = `
+            <input type="text" name="Riders[${riderIndex}].Code" class="form-control" placeholder="Mã rider (VD: R00${riderIndex + 1})" />
+            <input type="text" name="Riders[${riderIndex}].Name" class="form-control" placeholder="Tên rider" />
+            <button type="button" class="btn-remove-rider" onclick="removeRider(this)">🗑️ Xóa</button>
+        `;
+        container.appendChild(riderItem);
+        riderIndex++;
+    }
+
+    function removeRider(button) {
+        const container = document.getElementById('riders-container');
+        if (container.children.length > 1) {
+            button.parentElement.remove();
+        } else {
+            alert('Phải có ít nhất 1 rider');
+        }
+    }
+</script>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

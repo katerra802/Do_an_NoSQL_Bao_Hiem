@@ -1,0 +1,384 @@
+﻿@{
+    ViewData["Title"] = "Quản lý thanh toán";
+}
+
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #003366;
+    }
+
+    .toolbar {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .search-box {
+        flex: 1;
+        min-width: 250px;
+        position: relative;
+    }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 12px 10px 38px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .search-box::before {
+            content: "🔍";
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+        }
+
+    /* Tabs */
+    .tabs {
+        display: flex;
+        border-bottom: 2px solid #e0e0e0;
+        margin-bottom: 24px;
+    }
+
+    .tab {
+        padding: 12px 24px;
+        cursor: pointer;
+        border: none;
+        background: none;
+        font-size: 14px;
+        font-weight: 600;
+        color: #666;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+        .tab.active {
+            color: #E31E24;
+        }
+
+            .tab.active::after {
+                content: "";
+                position: absolute;
+                bottom: -2px;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: #E31E24;
+            }
+
+    .tab-content {
+        display: none;
+    }
+
+        .tab-content.active {
+            display: block;
+        }
+
+    .table-wrapper {
+        overflow-x: auto;
+        margin-top: 16px;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        font-size: 13px;
+    }
+
+        .data-table thead {
+            background: #f8f9fa;
+        }
+
+        .data-table th {
+            padding: 12px 10px;
+            text-align: left;
+            font-weight: 600;
+            color: #003366;
+            font-size: 12px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #e0e0e0;
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+            font-size: 13px;
+            vertical-align: middle;
+        }
+
+        .data-table tbody tr {
+            transition: background 0.2s ease;
+        }
+
+            .data-table tbody tr:hover {
+                background: #f8f9fa;
+            }
+
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 16px;
+        font-size: 11px;
+        font-weight: 600;
+        display: inline-block;
+        white-space: nowrap;
+    }
+
+        .status-badge.paid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-badge.overdue {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+    .btn-action {
+        padding: 6px 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        text-decoration: none;
+    }
+
+    .btn-view {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+        .btn-view:hover {
+            background: #bfdbfe;
+        }
+
+    @@media (max-width: 768px) {
+        .tabs {
+            overflow-x: auto;
+        }
+    }
+</style>
+
+<div class="page-header">
+    <h1 class="page-title">💳 Quản lý thanh toán</h1>
+</div>
+
+<div class="content-card">
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(event, 'premium-tab')">💰 Thanh toán phí bảo hiểm</button>
+        <button class="tab" onclick="switchTab(event, 'claim-tab')">🏥 Bồi thường & Chi trả</button>
+    </div>
+
+    <!-- Premium Payments Tab -->
+    <div id="premium-tab" class="tab-content active">
+        <div class="toolbar">
+            <div class="search-box">
+                <input type="text" placeholder="Tìm kiếm theo mã hợp đồng..." id="premiumSearchInput">
+            </div>
+            <select class="form-control" style="width: 180px;">
+                <option>Tất cả trạng thái</option>
+                <option>Paid</option>
+                <option>Pending</option>
+                <option>Overdue</option>
+            </select>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 120px;">Mã hợp đồng</th>
+                        <th style="width: 130px;">Số tiền</th>
+                        <th style="width: 120px;">Ngày đến hạn</th>
+                        <th style="width: 120px;">Ngày thanh toán</th>
+                        <th style="width: 120px;">Kênh TT</th>
+                        <th style="width: 100px;">Trạng thái</th>
+                        <th style="width: 100px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>POL2024001</strong></td>
+                        <td>5,500,000 VNĐ</td>
+                        <td>15/01/2024</td>
+                        <td>14/01/2024</td>
+                        <td>Chuyển khoản</td>
+                        <td><span class="status-badge paid">Paid</span></td>
+                        <td>
+                            <a href="/Payments/PremiumDetails/PM2024001" class="btn-action btn-view">👁️ Xem</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>POL2024001</strong></td>
+                        <td>5,500,000 VNĐ</td>
+                        <td>15/04/2024</td>
+                        <td>13/04/2024</td>
+                        <td>Tiền mặt</td>
+                        <td><span class="status-badge paid">Paid</span></td>
+                        <td>
+                            <a href="/Payments/PremiumDetails/PM2024002" class="btn-action btn-view">👁️ Xem</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>POL2024001</strong></td>
+                        <td>5,500,000 VNĐ</td>
+                        <td>15/07/2024</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td><span class="status-badge pending">Pending</span></td>
+                        <td>
+                            <a href="/Payments/PremiumDetails/PM2024003" class="btn-action btn-view">👁️ Xem</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>POL2024002</strong></td>
+                        <td>8,200,000 VNĐ</td>
+                        <td>20/03/2024</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td><span class="status-badge overdue">Overdue</span></td>
+                        <td>
+                            <a href="/Payments/PremiumDetails/PM2024004" class="btn-action btn-view">👁️ Xem</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Claim Payouts Tab -->
+    <div id="claim-tab" class="tab-content">
+        <div class="toolbar">
+            <div class="search-box">
+                <input type="text" placeholder="Tìm kiếm theo mã bồi thường..." id="claimSearchInput">
+            </div>
+            <select class="form-control" style="width: 180px;">
+                <option>Tất cả trạng thái</option>
+                <option>Đã chi trả</option>
+                <option>Chưa chi trả</option>
+            </select>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 120px;">Mã bồi thường</th>
+                        <th style="width: 150px;">Số tiền duyệt</th>
+                        <th style="width: 150px;">Số tiền đã trả</th>
+                        <th style="width: 130px;">Phương thức</th>
+                        <th style="width: 120px;">Ngày chi trả</th>
+                        <th style="width: 130px;">Mã tham chiếu</th>
+                        <th style="width: 100px;">Trạng thái</th>
+                        <th style="width: 100px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>CL2024001</strong></td>
+                        <td>15,000,000 VNĐ</td>
+                        <td>0 VNĐ</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td><span class="status-badge pending">Pending</span></td>
+                        <td>
+                            <a href="/Payments/ClaimDetails/CL2024001" class="btn-action btn-view">👁️ Xem</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>CL2024002</strong></td>
+                        <td>50,000,000 VNĐ</td>
+                        <td>45,000,000 VNĐ</td>
+                        <td>Chuyển khoản</td>
+                        <td>20/10/2024</td>
+                        <td>REF202410001</td>
+                        <td><span class="status-badge paid">Paid</span></td>
+                        <td>
+                            <a href="/Payments/ClaimDetails/CL2024002" class="btn-action btn-view">👁️ Xem</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>CL2024003</strong></td>
+                        <td>25,000,000 VNĐ</td>
+                        <td>25,000,000 VNĐ</td>
+                        <td>Tiền mặt</td>
+                        <td>15/10/2024</td>
+                        <td>CASH202410001</td>
+                        <td><span class="status-badge paid">Paid</span></td>
+                        <td>
+                            <a href="/Payments/ClaimDetails/CL2024003" class="btn-action btn-view">👁️ Xem</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>CL2024004</strong></td>
+                        <td>30,000,000 VNĐ</td>
+                        <td>0 VNĐ</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td><span class="status-badge pending">Pending</span></td>
+                        <td>
+                            <a href="/Payments/ClaimDetails/CL2024004" class="btn-action btn-view">👁️ Xem</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function switchTab(event, tabId) {
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        event.target.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    // Search for Premium Payments
+    document.getElementById('premiumSearchInput').addEventListener('input', function(e) {
+        const searchText = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('#premium-tab .data-table tbody tr');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchText) ? '' : 'none';
+        });
+    });
+
+    // Search for Claim Payouts
+    document.getElementById('claimSearchInput').addEventListener('input', function(e) {
+        const searchText = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('#claim-tab .data-table tbody tr');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchText) ? '' : 'none';
+        });
+    });
+</script>

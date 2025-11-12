@@ -1,0 +1,262 @@
+﻿@model Do_an_NoSQL.Models.ClaimPayout
+
+@{
+    ViewData["Title"] = "Chi tiết bồi thường";
+    var isPaid = Model?.PaidAt != null;
+}
+
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #003366;
+    }
+
+    .btn-back {
+        background: #f5f7fa;
+        color: #666;
+        padding: 10px 18px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .btn-back:hover {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+    .detail-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        padding: 30px;
+        margin-bottom: 24px;
+    }
+
+    .section-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #003366;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .info-label {
+        font-size: 12px;
+        color: #999;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+        font-weight: 600;
+    }
+
+    .info-value {
+        font-size: 15px;
+        color: #003366;
+        font-weight: 500;
+    }
+
+    .status-badge {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+        .status-badge.paid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+        .form-group label {
+            font-weight: 600;
+            color: #003366;
+            margin-bottom: 8px;
+            font-size: 14px;
+            display: block;
+        }
+
+    .form-control {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #E31E24;
+        }
+
+    .form-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid #f0f0f0;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #E31E24 0%, #c4161c 100%);
+        color: white;
+        padding: 12px 32px;
+        border-radius: 6px;
+        border: none;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(227, 30, 36, 0.3);
+        }
+
+    .btn-secondary {
+        background: #f5f7fa;
+        color: #666;
+        padding: 12px 32px;
+        border-radius: 6px;
+        border: none;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    @@media (max-width: 768px) {
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="page-header">
+    <h1 class="page-title">👁️ Chi tiết bồi thường</h1>
+    <a href="/Payments/Index" class="btn-back">
+        <span>←</span>
+        <span>Quay lại</span>
+    </a>
+</div>
+
+<div class="detail-card">
+    <h3 class="section-title">Thông tin bồi thường</h3>
+    <div class="info-grid">
+        <div class="info-item">
+            <span class="info-label">Mã bồi thường</span>
+            <span class="info-value">@Model?.ClaimNo</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Số tiền được duyệt</span>
+            <span class="info-value">@Model?.ApprovedAmount.ToString("N0") VNĐ</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Số tiền đã chi trả</span>
+            <span class="info-value">@Model?.PaidAmount.ToString("N0") VNĐ</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Phương thức thanh toán</span>
+            <span class="info-value">@(string.IsNullOrEmpty(Model?.PayMethod) ? "-" : Model.PayMethod)</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Ngày chi trả</span>
+            <span class="info-value">@(Model?.PaidAt?.ToString("dd/MM/yyyy HH:mm") ?? "-")</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Mã tham chiếu</span>
+            <span class="info-value">@(string.IsNullOrEmpty(Model?.Reference) ? "-" : Model.Reference)</span>
+        </div>
+        <div class="info-item" style="grid-column: 1 / -1;">
+            <span class="info-label">Trạng thái</span>
+            <span class="info-value">
+                @if (isPaid)
+                {
+                    <span class="status-badge paid">Đã chi trả</span>
+                }
+                else
+                {
+                    <span class="status-badge pending">Chưa chi trả</span>
+                }
+            </span>
+        </div>
+    </div>
+</div>
+
+@if (!isPaid)
+{
+    <div class="detail-card">
+        <h3 class="section-title">Cập nhật chi trả bồi thường</h3>
+        <form asp-action="UpdateClaimStatus" method="post">
+            <input type="hidden" name="id" value="@Model?.Id" />
+            @Html.AntiForgeryToken()
+
+            <div class="form-group">
+                <label>Số tiền chi trả (VNĐ) <span style="color: #E31E24;">*</span></label>
+                <input type="number" name="paidAmount" class="form-control" value="@Model?.ApprovedAmount" placeholder="Nhập số tiền chi trả" required />
+                <small style="color: #999; font-size: 12px; margin-top: 4px; display: block;">
+                    Số tiền được duyệt: @Model?.ApprovedAmount.ToString("N0") VNĐ
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label>Phương thức thanh toán <span style="color: #E31E24;">*</span></label>
+                <select name="payMethod" class="form-control" required>
+                    <option value="">Chọn phương thức</option>
+                    <option value="Chuyển khoản">Chuyển khoản</option>
+                    <option value="Tiền mặt">Tiền mặt</option>
+                    <option value="Séc">Séc</option>
+                    <option value="Ví điện tử">Ví điện tử</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Mã tham chiếu / Số giao dịch</label>
+                <input type="text" name="reference" class="form-control" placeholder="Nhập mã tham chiếu (nếu có)" />
+                <small style="color: #999; font-size: 12px; margin-top: 4px; display: block;">
+                    Ví dụ: Mã giao dịch ngân hàng, số séc, số biên lai, v.v.
+                </small>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" onclick="window.location.href='/Payments/Index'">Hủy</button>
+                <button type="submit" class="btn-primary">💾 Xác nhận chi trả</button>
+            </div>
+        </form>
+    </div>
+}

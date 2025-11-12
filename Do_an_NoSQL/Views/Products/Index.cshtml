@@ -1,9 +1,8 @@
 ﻿@{
-    ViewData["Title"] = "Quản lý khách hàng";
+    ViewData["Title"] = "Quản lý sản phẩm bảo hiểm";
 }
 
 <style>
-    /* Page Header */
     .page-header {
         display: flex;
         justify-content: space-between;
@@ -17,7 +16,6 @@
         color: #003366;
     }
 
-    /* Search and Filter Bar */
     .toolbar {
         display: flex;
         gap: 12px;
@@ -70,13 +68,11 @@
             box-shadow: 0 4px 12px rgba(227, 30, 36, 0.3);
         }
 
-    /* Table Wrapper for Scroll */
     .table-wrapper {
         overflow-x: auto;
         margin-top: 16px;
     }
 
-    /* Main Data Table Styles */
     .data-table {
         width: 100%;
         border-collapse: collapse;
@@ -115,7 +111,6 @@
                 background: #f8f9fa;
             }
 
-    /* Table Actions */
     .action-buttons {
         display: flex;
         gap: 6px;
@@ -165,7 +160,6 @@
             background: #fecaca;
         }
 
-    /* Status Badge */
     .status-badge {
         padding: 5px 10px;
         border-radius: 16px;
@@ -180,10 +174,20 @@
             color: #065f46;
         }
 
-        .status-badge.pending {
-            background: #fef3c7;
-            color: #92400e;
-        }
+    .badge-list {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+
+    .purpose-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        background: #e0e7ff;
+        color: #3730a3;
+    }
 
     @@media (max-width: 768px) {
         .action-buttons {
@@ -199,105 +203,102 @@
     }
 </style>
 
-<!-- Page Header -->
 <div class="page-header">
-    <h1 class="page-title">👥 Quản lý khách hàng</h1>
-    <a href="/Customer/Create" class="btn-primary">
+    <h1 class="page-title">🛡️ Quản lý sản phẩm bảo hiểm</h1>
+    <a href="/Products/Create" class="btn-primary">
         <span>➕</span>
-        <span>Thêm mới</span>
+        <span>Thêm sản phẩm</span>
     </a>
 </div>
 
-<!-- Search and Filter Toolbar -->
 <div class="toolbar">
     <div class="search-box">
-        <input type="text" placeholder="Tìm kiếm theo tên, SĐT, email..." id="searchInput">
+        <input type="text" placeholder="Tìm kiếm theo mã, tên sản phẩm..." id="searchInput">
     </div>
-    <select class="form-control" style="width: 180px;">
-        <option>Tất cả trạng thái</option>
-        <option>Đang hoạt động</option>
-        <option>Ngừng hoạt động</option>
+    <select class="form-control" style="width: 200px;">
+        <option>Tất cả loại hình</option>
+        <option>Bảo hiểm liên kết</option>
+        <option>Bảo hiểm truyền thống</option>
+        <option>Bảo hiểm sức khỏe</option>
     </select>
 </div>
 
-<!-- Customer List Table -->
 <div class="content-card">
     <div class="table-wrapper">
         <table class="data-table">
             <thead>
                 <tr>
-                    <th style="width: 80px;">Mã KH</th>
-                    <th style="width: 150px;">Họ và tên</th>
-                    <th style="width: 100px;">Ngày sinh</th>
-                    <th style="width: 110px;">Số điện thoại</th>
-                    <th style="width: 180px;">Email</th>
-                    <th style="min-width: 200px;">Địa chỉ</th>
-                    <th style="width: 100px;">Trạng thái</th>
+                    <th style="width: 100px;">Mã SP</th>
+                    <th style="width: 250px;">Tên sản phẩm</th>
+                    <th style="width: 180px;">Loại hình</th>
+                    <th style="width: 200px;">Mục đích</th>
+                    <th style="width: 100px;">Kỳ hạn</th>
+                    <th style="width: 120px;">Độ tuổi</th>
+                    <th style="width: 150px;">Số tiền BH</th>
                     <th style="width: 220px;">Thao tác</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td><strong>KH001</strong></td>
-                    <td>Nguyễn Văn An</td>
-                    <td>15/03/1985</td>
-                    <td>0901234567</td>
-                    <td>nguyenvanan@@email.com</td>
-                    <td>123 Nguyễn Huệ, Q1, HCM</td>
-                    <td><span class="status-badge active">Hoạt động</span></td>
+                    <td><strong>PRU001</strong></td>
+                    <td>PRU - Đầu Tư Vững Tiền</td>
+                    <td>Bảo hiểm liên kết đơn vị</td>
+                    <td>
+                        <div class="badge-list">
+                            <span class="purpose-badge">Đầu tư</span>
+                            <span class="purpose-badge">Tích lũy</span>
+                        </div>
+                    </td>
+                    <td>20 năm</td>
+                    <td>18 - 65 tuổi</td>
+                    <td>100M - 5B VNĐ</td>
                     <td>
                         <div class="action-buttons">
-                            <a href="/Customer/Details/KH001" class="btn-action btn-view">👁️ Xem</a>
-                            <a href="/Customer/Edit/KH001" class="btn-action btn-edit">✏️ Sửa</a>
-                            <button class="btn-action btn-delete" onclick="deleteCustomer('KH001')">🗑️ Xóa</button>
+                            <a href="/Products/Details/PRU001" class="btn-action btn-view">👁️ Xem</a>
+                            <a href="/Products/Edit/PRU001" class="btn-action btn-edit">✏️ Sửa</a>
+                            <button class="btn-action btn-delete" onclick="deleteProduct('PRU001')">🗑️ Xóa</button>
                         </div>
                     </td>
                 </tr>
                 <tr>
-                    <td><strong>KH002</strong></td>
-                    <td>Trần Thị Bình</td>
-                    <td>22/07/1990</td>
-                    <td>0912345678</td>
-                    <td>tranthib@@email.com</td>
-                    <td>456 Lê Lợi, Q3, HCM</td>
-                    <td><span class="status-badge active">Hoạt động</span></td>
+                    <td><strong>PRU002</strong></td>
+                    <td>PRU - Bảo Vệ Toàn Diện</td>
+                    <td>Bảo hiểm truyền thống</td>
+                    <td>
+                        <div class="badge-list">
+                            <span class="purpose-badge">Bảo vệ</span>
+                            <span class="purpose-badge">Sức khỏe</span>
+                        </div>
+                    </td>
+                    <td>25 năm</td>
+                    <td>20 - 60 tuổi</td>
+                    <td>50M - 3B VNĐ</td>
                     <td>
                         <div class="action-buttons">
-                            <a href="/Customer/Details/KH002" class="btn-action btn-view">👁️ Xem</a>
-                            <a href="/Customer/Edit/KH002" class="btn-action btn-edit">✏️ Sửa</a>
-                            <button class="btn-action btn-delete" onclick="deleteCustomer('KH002')">🗑️ Xóa</button>
+                            <a href="/Products/Details/PRU002" class="btn-action btn-view">👁️ Xem</a>
+                            <a href="/Products/Edit/PRU002" class="btn-action btn-edit">✏️ Sửa</a>
+                            <button class="btn-action btn-delete" onclick="deleteProduct('PRU002')">🗑️ Xóa</button>
                         </div>
                     </td>
                 </tr>
                 <tr>
-                    <td><strong>KH003</strong></td>
-                    <td>Lê Văn Châu</td>
-                    <td>10/12/1988</td>
-                    <td>0923456789</td>
-                    <td>levanc@@email.com</td>
-                    <td>789 Trần Hưng Đạo, Q5, HCM</td>
-                    <td><span class="status-badge active">Hoạt động</span></td>
+                    <td><strong>PRU003</strong></td>
+                    <td>PRU - Sức Khỏe Vàng</td>
+                    <td>Bảo hiểm sức khỏe</td>
                     <td>
-                        <div class="action-buttons">
-                            <a href="/Customer/Details/KH003" class="btn-action btn-view">👁️ Xem</a>
-                            <a href="/Customer/Edit/KH003" class="btn-action btn-edit">✏️ Sửa</a>
-                            <button class="btn-action btn-delete" onclick="deleteCustomer('KH003')">🗑️ Xóa</button>
+                        <div class="badge-list">
+                            <span class="purpose-badge">Sức khỏe</span>
+                            <span class="purpose-badge">Y tế</span>
                         </div>
                     </td>
-                </tr>
-                <tr>
-                    <td><strong>KH004</strong></td>
-                    <td>Phạm Thị Dung</td>
-                    <td>05/09/1992</td>
-                    <td>0934567890</td>
-                    <td>phamthid@@email.com</td>
-                    <td>321 Võ Văn Tần, Q3, HCM</td>
-                    <td><span class="status-badge pending">Ngừng</span></td>
+                    <td>15 năm</td>
+                    <td>0 - 70 tuổi</td>
+                    <td>30M - 2B VNĐ</td>
                     <td>
                         <div class="action-buttons">
-                            <a href="/Customer/Details/KH004" class="btn-action btn-view">👁️ Xem</a>
-                            <a href="/Customer/Edit/KH004" class="btn-action btn-edit">✏️ Sửa</a>
-                            <button class="btn-action btn-delete" onclick="deleteCustomer('KH004')">🗑️ Xóa</button>
+                            <a href="/Products/Details/PRU003" class="btn-action btn-view">👁️ Xem</a>
+                            <a href="/Products/Edit/PRU003" class="btn-action btn-edit">✏️ Sửa</a>
+                            <button class="btn-action btn-delete" onclick="deleteProduct('PRU003')">🗑️ Xóa</button>
                         </div>
                     </td>
                 </tr>
@@ -307,9 +308,9 @@
 </div>
 
 <script>
-    function deleteCustomer(customerId) {
-        if (confirm('Bạn có chắc chắn muốn xóa khách hàng này?')) {
-            window.location.href = '/Customer/Delete/' + customerId;
+    function deleteProduct(productId) {
+        if (confirm('Bạn có chắc chắn muốn xóa sản phẩm bảo hiểm này?')) {
+            window.location.href = '/Products/Delete/' + productId;
         }
     }
 

@@ -1,0 +1,455 @@
+﻿@model Do_an_NoSQL.Models.Customer
+
+@{
+    ViewData["Title"] = "Chi tiết khách hàng";
+}
+
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #003366;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 12px;
+    }
+
+    .btn-back {
+        background: #f5f7fa;
+        color: #666;
+        padding: 10px 18px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .btn-back:hover {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+    .btn-edit {
+        background: #fef3c7;
+        color: #92400e;
+        padding: 10px 18px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .btn-edit:hover {
+            background: #fde68a;
+            color: #92400e;
+        }
+
+    .detail-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        padding: 30px;
+        margin-bottom: 24px;
+    }
+
+    .section-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #003366;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .info-label {
+        font-size: 12px;
+        color: #999;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+        font-weight: 600;
+    }
+
+    .info-value {
+        font-size: 15px;
+        color: #003366;
+        font-weight: 500;
+        word-break: break-word;
+    }
+
+    .status-badge {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+        .status-badge.active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+    /* Tabs */
+    .tabs {
+        display: flex;
+        border-bottom: 2px solid #e0e0e0;
+        margin-bottom: 24px;
+    }
+
+    .tab {
+        padding: 12px 24px;
+        cursor: pointer;
+        border: none;
+        background: none;
+        font-size: 14px;
+        font-weight: 600;
+        color: #666;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+        .tab.active {
+            color: #E31E24;
+        }
+
+            .tab.active::after {
+                content: "";
+                position: absolute;
+                bottom: -2px;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: #E31E24;
+            }
+
+    .tab-content {
+        display: none;
+    }
+
+        .tab-content.active {
+            display: block;
+        }
+
+    /* Table */
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+        .data-table thead {
+            background: #f8f9fa;
+        }
+
+        .data-table th {
+            padding: 12px 10px;
+            text-align: left;
+            font-weight: 600;
+            color: #003366;
+            font-size: 12px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #e0e0e0;
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+        }
+
+        .data-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+    .status-badge.completed {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .payment-status {
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 11px;
+        font-weight: 600;
+        display: inline-block;
+        white-space: nowrap;
+    }
+
+        .payment-status.paid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .payment-status.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+    .btn-payment {
+        background: #E31E24;
+        color: white;
+        padding: 6px 14px;
+        border-radius: 4px;
+        border: none;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+        .btn-payment:hover {
+            background: #c4161c;
+        }
+
+    @@media (max-width: 768px) {
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .header-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title">👁️ Chi tiết khách hàng</h1>
+    <div class="header-actions">
+        <a href="/Customer/Edit/@Model?.CustomerCode" class="btn-edit">
+            <span>✏️</span>
+            <span>Chỉnh sửa</span>
+        </a>
+        <a href="/Customer/Index" class="btn-back">
+            <span>←</span>
+            <span>Quay lại</span>
+        </a>
+    </div>
+</div>
+
+<!-- Customer Information -->
+<div class="detail-card">
+    <h3 class="section-title">Thông tin cá nhân</h3>
+    <div class="info-grid">
+        <div class="info-item">
+            <span class="info-label">Mã khách hàng</span>
+            <span class="info-value">@Model?.CustomerCode</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Họ và tên</span>
+            <span class="info-value">@Model?.FullName</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Ngày sinh</span>
+            <span class="info-value">@Model?.Dob.ToString("dd/MM/yyyy")</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Giới tính</span>
+            <span class="info-value">@Model?.Gender</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">CMND/CCCD</span>
+            <span class="info-value">@Model?.NationalId</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Nghề nghiệp</span>
+            <span class="info-value">@Model?.Occupation</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Thu nhập</span>
+            <span class="info-value">@Model?.Income.ToString("N0") VNĐ/tháng</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Trạng thái</span>
+            <span class="info-value">
+                <span class="status-badge active">Đang hoạt động</span>
+            </span>
+        </div>
+    </div>
+
+    <h3 class="section-title">Thông tin liên hệ</h3>
+    <div class="info-grid">
+        <div class="info-item">
+            <span class="info-label">Số điện thoại</span>
+            <span class="info-value">@Model?.Phone</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Email</span>
+            <span class="info-value">@Model?.Email</span>
+        </div>
+        <div class="info-item" style="grid-column: 1 / -1;">
+            <span class="info-label">Địa chỉ</span>
+            <span class="info-value">@Model?.Address</span>
+        </div>
+    </div>
+
+    <h3 class="section-title">Thông tin sức khỏe</h3>
+    <div class="info-item">
+        <span class="info-label">Tình trạng sức khỏe</span>
+        <span class="info-value">@Model?.HealthInfo</span>
+    </div>
+</div>
+
+<!-- History Section with Tabs -->
+<div class="detail-card">
+    <h3 class="section-title">Lịch sử giao dịch</h3>
+
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(event, 'policy-tab')">📋 Yêu cầu bảo hiểm</button>
+        <button class="tab" onclick="switchTab(event, 'payment-tab')">💳 Lịch thanh toán</button>
+    </div>
+
+    <!-- Policy Applications Tab -->
+    <div id="policy-tab" class="tab-content active">
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Mã yêu cầu</th>
+                        <th>Loại bảo hiểm</th>
+                        <th>Số tiền</th>
+                        <th>Ngày yêu cầu</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>YC2024001</strong></td>
+                        <td>Bảo hiểm nhân thọ</td>
+                        <td>250,000,000 VNĐ</td>
+                        <td>15/01/2024</td>
+                        <td><span class="status-badge completed">Đã duyệt</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>YC2024045</strong></td>
+                        <td>Bảo hiểm sức khỏe</td>
+                        <td>180,000,000 VNĐ</td>
+                        <td>20/05/2024</td>
+                        <td><span class="status-badge completed">Đã duyệt</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>YC2024089</strong></td>
+                        <td>Bảo hiểm giáo dục</td>
+                        <td>320,000,000 VNĐ</td>
+                        <td>10/10/2024</td>
+                        <td><span class="status-badge pending">Đang xử lý</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Payment Schedule Tab -->
+    <div id="payment-tab" class="tab-content">
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Kỳ thanh toán</th>
+                        <th>Số tiền</th>
+                        <th>Ngày đến hạn</th>
+                        <th>Ngày thanh toán</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Kỳ 1 - Q1/2024</td>
+                        <td>5,500,000 VNĐ</td>
+                        <td>15/01/2024</td>
+                        <td>14/01/2024</td>
+                        <td><span class="payment-status paid">✅ Đã thanh toán</span></td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>Kỳ 2 - Q2/2024</td>
+                        <td>5,500,000 VNĐ</td>
+                        <td>15/04/2024</td>
+                        <td>13/04/2024</td>
+                        <td><span class="payment-status paid">✅ Đã thanh toán</span></td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>Kỳ 3 - Q3/2024</td>
+                        <td>5,500,000 VNĐ</td>
+                        <td>15/07/2024</td>
+                        <td>14/07/2024</td>
+                        <td><span class="payment-status paid">✅ Đã thanh toán</span></td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>Kỳ 4 - Q4/2024</td>
+                        <td>5,500,000 VNĐ</td>
+                        <td>15/10/2024</td>
+                        <td>-</td>
+                        <td><span class="payment-status pending">⏳ Chưa thanh toán</span></td>
+                        <td><button class="btn-payment" onclick="processPayment()">💳 Thanh toán</button></td>
+                    </tr>
+                    <tr>
+                        <td>Kỳ 5 - Q1/2025</td>
+                        <td>5,500,000 VNĐ</td>
+                        <td>15/01/2025</td>
+                        <td>-</td>
+                        <td><span class="payment-status pending">⏳ Chưa đến hạn</span></td>
+                        <td>-</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function switchTab(event, tabId) {
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        event.target.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    function processPayment() {
+        if (confirm('Xác nhận thanh toán khoản phí này?')) {
+            alert('Chuyển đến trang thanh toán...');
+            // window.location.href = '/Payment/Process';
+        }
+    }
+</script>   
