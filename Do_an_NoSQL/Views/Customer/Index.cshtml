@@ -1,0 +1,877 @@
+﻿@{
+    ViewData["Title"] = "Quản lý khách hàng";
+}
+
+<style>
+    /* Page Header */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #003366;
+    }
+
+    /* Search and Filter Bar */
+    .toolbar {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .search-box {
+        flex: 1;
+        min-width: 250px;
+        position: relative;
+    }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 12px 10px 38px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .search-box::before {
+            content: "🔍";
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+        }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #E31E24 0%, #c4161c 100%);
+        color: white;
+        padding: 10px 18px;
+        border-radius: 6px;
+        border: none;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(227, 30, 36, 0.3);
+        }
+
+    /* Table Wrapper for Scroll */
+    .table-wrapper {
+        overflow-x: auto;
+        margin-top: 16px;
+    }
+
+    /* Main Data Table Styles - FIXED */
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        font-size: 13px;
+    }
+
+        .data-table thead {
+            background: #f8f9fa;
+        }
+
+        .data-table th {
+            padding: 12px 10px;
+            text-align: left;
+            font-weight: 600;
+            color: #003366;
+            font-size: 12px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #e0e0e0;
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+            font-size: 13px;
+            vertical-align: middle;
+        }
+
+        .data-table tbody tr {
+            transition: background 0.2s ease;
+        }
+
+            .data-table tbody tr:hover {
+                background: #f8f9fa;
+            }
+
+    /* Table Actions */
+    .action-buttons {
+        display: flex;
+        gap: 6px;
+        flex-wrap: nowrap;
+        align-items: center;
+    }
+
+    .btn-action {
+        padding: 6px 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .btn-view {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+        .btn-view:hover {
+            background: #bfdbfe;
+        }
+
+    .btn-edit {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+        .btn-edit:hover {
+            background: #fde68a;
+        }
+
+    .btn-delete {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+        .btn-delete:hover {
+            background: #fecaca;
+        }
+
+    /* Status Badge in Main Table */
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 16px;
+        font-size: 11px;
+        font-weight: 600;
+        display: inline-block;
+        white-space: nowrap;
+    }
+
+        .status-badge.active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-badge.completed {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+    /* Modal/Dialog Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.6);
+        animation: fadeIn 0.3s ease;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    .modal-content {
+        background-color: #fff;
+        margin: 3% auto;
+        padding: 0;
+        border-radius: 10px;
+        width: 85%;
+        max-width: 900px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        animation: slideDown 0.3s ease;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    @@keyframes slideDown {
+        from {
+            transform: translateY(-50px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .modal-header {
+        padding: 18px 20px;
+        border-bottom: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+        .modal-header h2 {
+            margin: 0;
+            color: #003366;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+    .close {
+        color: #999;
+        font-size: 28px;
+        font-weight: 300;
+        cursor: pointer;
+        transition: color 0.3s ease;
+        line-height: 1;
+    }
+
+        .close:hover {
+            color: #E31E24;
+        }
+
+    .modal-body {
+        padding: 20px;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    /* Customer Detail Info */
+    .customer-info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .info-label {
+        font-size: 11px;
+        color: #999;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-bottom: 4px;
+    }
+
+    .info-value {
+        font-size: 14px;
+        color: #003366;
+        font-weight: 500;
+        word-break: break-word;
+    }
+
+    /* Tabs */
+    .tabs {
+        display: flex;
+        border-bottom: 2px solid #e0e0e0;
+        margin-bottom: 20px;
+    }
+
+    .tab {
+        padding: 10px 16px;
+        cursor: pointer;
+        border: none;
+        background: none;
+        font-size: 13px;
+        font-weight: 600;
+        color: #666;
+        transition: all 0.3s ease;
+        position: relative;
+        white-space: nowrap;
+    }
+
+        .tab.active {
+            color: #E31E24;
+        }
+
+            .tab.active::after {
+                content: "";
+                position: absolute;
+                bottom: -2px;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: #E31E24;
+            }
+
+    .tab-content {
+        display: none;
+    }
+
+        .tab-content.active {
+            display: block;
+        }
+
+    /* Table in Modal - Override for smaller size */
+    .modal-body .data-table {
+        font-size: 12px;
+    }
+
+        .modal-body .data-table th {
+            padding: 10px 8px;
+            font-size: 11px;
+        }
+
+        .modal-body .data-table td {
+            padding: 10px 8px;
+            font-size: 12px;
+        }
+
+    /* Payment Status */
+    .payment-status {
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 11px;
+        font-weight: 600;
+        display: inline-block;
+        white-space: nowrap;
+    }
+
+        .payment-status.paid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .payment-status.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+    .btn-payment {
+        background: #E31E24;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        border: none;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+    }
+
+        .btn-payment:hover {
+            background: #c4161c;
+        }
+
+    /* Form Styles */
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #003366;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 13px;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #E31E24;
+        }
+
+    .modal-footer {
+        padding: 16px 20px;
+        border-top: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    .btn-secondary {
+        background: #f5f7fa;
+        color: #666;
+        padding: 10px 20px;
+        border-radius: 6px;
+        border: none;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+    }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .customer-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .modal-content {
+            width: 95%;
+            margin: 2% auto;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .btn-action {
+            width: 100%;
+            text-align: center;
+            justify-content: center;
+        }
+    }
+</style>
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title">👥 Quản lý khách hàng</h1>
+    <button class="btn-primary" onclick="openAddModal()">
+        <span>➕</span>
+        <span>Thêm mới</span>
+    </button>
+</div>
+
+<!-- Search and Filter Toolbar -->
+<div class="toolbar">
+    <div class="search-box">
+        <input type="text" placeholder="Tìm kiếm theo tên, SĐT, email..." id="searchInput">
+    </div>
+    <select class="form-control" style="width: 180px;">
+        <option>Tất cả trạng thái</option>
+        <option>Đang hoạt động</option>
+        <option>Ngừng hoạt động</option>
+    </select>
+</div>
+
+<!-- Customer List Table -->
+<div class="content-card">
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 80px;">Mã KH</th>
+                    <th style="width: 150px;">Họ và tên</th>
+                    <th style="width: 100px;">Ngày sinh</th>
+                    <th style="width: 110px;">Số điện thoại</th>
+                    <th style="width: 180px;">Email</th>
+                    <th style="min-width: 200px;">Địa chỉ</th>
+                    <th style="width: 100px;">Trạng thái</th>
+                    <th style="width: 220px;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>KH001</strong></td>
+                    <td>Nguyễn Văn An</td>
+                    <td>15/03/1985</td>
+                    <td>0901234567</td>
+                    <td>nguyenvanan@@email.com</td>
+                    <td>123 Nguyễn Huệ, Q1, HCM</td>
+                    <td><span class="status-badge active">Hoạt động</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-view" onclick="openViewModal('KH001')">👁️ Xem</button>
+                            <button class="btn-action btn-edit" onclick="openEditModal('KH001')">✏️ Sửa</button>
+                            <button class="btn-action btn-delete" onclick="deleteCustomer('KH001')">🗑️ Xóa</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>KH002</strong></td>
+                    <td>Trần Thị Bình</td>
+                    <td>22/07/1990</td>
+                    <td>0912345678</td>
+                    <td>tranthib@@email.com</td>
+                    <td>456 Lê Lợi, Q3, HCM</td>
+                    <td><span class="status-badge active">Hoạt động</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-view" onclick="openViewModal('KH002')">👁️ Xem</button>
+                            <button class="btn-action btn-edit" onclick="openEditModal('KH002')">✏️ Sửa</button>
+                            <button class="btn-action btn-delete" onclick="deleteCustomer('KH002')">🗑️ Xóa</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>KH003</strong></td>
+                    <td>Lê Văn Châu</td>
+                    <td>10/12/1988</td>
+                    <td>0923456789</td>
+                    <td>levanc@@email.com</td>
+                    <td>789 Trần Hưng Đạo, Q5, HCM</td>
+                    <td><span class="status-badge active">Hoạt động</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-view" onclick="openViewModal('KH003')">👁️ Xem</button>
+                            <button class="btn-action btn-edit" onclick="openEditModal('KH003')">✏️ Sửa</button>
+                            <button class="btn-action btn-delete" onclick="deleteCustomer('KH003')">🗑️ Xóa</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>KH004</strong></td>
+                    <td>Phạm Thị Dung</td>
+                    <td>05/09/1992</td>
+                    <td>0934567890</td>
+                    <td>phamthid@@email.com</td>
+                    <td>321 Võ Văn Tần, Q3, HCM</td>
+                    <td><span class="status-badge pending">Ngừng</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-view" onclick="openViewModal('KH004')">👁️ Xem</button>
+                            <button class="btn-action btn-edit" onclick="openEditModal('KH004')">✏️ Sửa</button>
+                            <button class="btn-action btn-delete" onclick="deleteCustomer('KH004')">🗑️ Xóa</button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- View Customer Detail Modal -->
+<div id="viewModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>📋 Chi tiết khách hàng</h2>
+            <span class="close" onclick="closeModal('viewModal')">&times;</span>
+        </div>
+        <div class="modal-body">
+            <!-- Customer Basic Info -->
+            <div class="customer-info-grid">
+                <div class="info-item">
+                    <span class="info-label">Mã khách hàng</span>
+                    <span class="info-value">KH001</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Họ và tên</span>
+                    <span class="info-value">Nguyễn Văn An</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Ngày sinh</span>
+                    <span class="info-value">15/03/1985</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Giới tính</span>
+                    <span class="info-value">Nam</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">CMND/CCCD</span>
+                    <span class="info-value">079085001234</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Nghề nghiệp</span>
+                    <span class="info-value">Kỹ sư phần mềm</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Thu nhập</span>
+                    <span class="info-value">25,000,000 VNĐ/tháng</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Số điện thoại</span>
+                    <span class="info-value">0901234567</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Email</span>
+                    <span class="info-value">nguyenvanan@@email.com</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Địa chỉ</span>
+                    <span class="info-value">123 Nguyễn Huệ, Q1, HCM</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Tình trạng sức khỏe</span>
+                    <span class="info-value">Bình thường</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Ngày tạo</span>
+                    <span class="info-value">01/01/2024</span>
+                </div>
+            </div>
+
+            <!-- Tabs for History -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab(event, 'policy-tab')">📋 Yêu cầu BH</button>
+                <button class="tab" onclick="switchTab(event, 'payment-tab')">💳 Lịch thanh toán</button>
+            </div>
+
+            <!-- Policy Applications Tab -->
+            <div id="policy-tab" class="tab-content active">
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Mã YC</th>
+                                <th>Loại BH</th>
+                                <th>Số tiền</th>
+                                <th>Ngày YC</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>YC2024001</strong></td>
+                                <td>BH nhân thọ</td>
+                                <td>250,000,000</td>
+                                <td>15/01/2024</td>
+                                <td><span class="status-badge completed">Đã duyệt</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>YC2024045</strong></td>
+                                <td>BH sức khỏe</td>
+                                <td>180,000,000</td>
+                                <td>20/05/2024</td>
+                                <td><span class="status-badge completed">Đã duyệt</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>YC2024089</strong></td>
+                                <td>BH giáo dục</td>
+                                <td>320,000,000</td>
+                                <td>10/10/2024</td>
+                                <td><span class="status-badge pending">Xử lý</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Payment Schedule Tab -->
+            <div id="payment-tab" class="tab-content">
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Kỳ</th>
+                                <th>Số tiền</th>
+                                <th>Đến hạn</th>
+                                <th>Thanh toán</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Q1/2024</td>
+                                <td>5,500,000</td>
+                                <td>15/01/2024</td>
+                                <td>14/01/2024</td>
+                                <td><span class="payment-status paid">✅ Đã TT</span></td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>Q2/2024</td>
+                                <td>5,500,000</td>
+                                <td>15/04/2024</td>
+                                <td>13/04/2024</td>
+                                <td><span class="payment-status paid">✅ Đã TT</span></td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>Q3/2024</td>
+                                <td>5,500,000</td>
+                                <td>15/07/2024</td>
+                                <td>14/07/2024</td>
+                                <td><span class="payment-status paid">✅ Đã TT</span></td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>Q4/2024</td>
+                                <td>5,500,000</td>
+                                <td>15/10/2024</td>
+                                <td>-</td>
+                                <td><span class="payment-status pending">⏳ Chưa TT</span></td>
+                                <td><button class="btn-payment" onclick="processPayment()">💳 TT</button></td>
+                            </tr>
+                            <tr>
+                                <td>Q1/2025</td>
+                                <td>5,500,000</td>
+                                <td>15/01/2025</td>
+                                <td>-</td>
+                                <td><span class="payment-status pending">⏳ Chưa hạn</span></td>
+                                <td>-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Customer Modal -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="editModalTitle">➕ Thêm khách hàng</h2>
+            <span class="close" onclick="closeModal('editModal')">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="customerForm">
+                <div class="customer-info-grid">
+                    <div class="form-group">
+                        <label>Họ và tên *</label>
+                        <input type="text" class="form-control" placeholder="Nhập họ và tên" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Ngày sinh *</label>
+                        <input type="date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Giới tính *</label>
+                        <select class="form-control" required>
+                            <option value="">Chọn giới tính</option>
+                            <option value="Nam">Nam</option>
+                            <option value="Nữ">Nữ</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>CMND/CCCD *</label>
+                        <input type="text" class="form-control" placeholder="Nhập số CMND/CCCD" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nghề nghiệp</label>
+                        <input type="text" class="form-control" placeholder="Nhập nghề nghiệp">
+                    </div>
+                    <div class="form-group">
+                        <label>Thu nhập (VNĐ/tháng)</label>
+                        <input type="number" class="form-control" placeholder="Nhập thu nhập">
+                    </div>
+                    <div class="form-group">
+                        <label>Số điện thoại *</label>
+                        <input type="tel" class="form-control" placeholder="Nhập số điện thoại" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" class="form-control" placeholder="Nhập email" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Địa chỉ *</label>
+                    <input type="text" class="form-control" placeholder="Nhập địa chỉ" required>
+                </div>
+                <div class="form-group">
+                    <label>Tình trạng sức khỏe</label>
+                    <textarea class="form-control" rows="3" placeholder="Mô tả tình trạng sức khỏe"></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeModal('editModal')">Hủy</button>
+            <button class="btn-primary" onclick="saveCustomer()">
+                <span>💾</span>
+                <span>Lưu</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Modal Functions
+    function openViewModal(customerId) {
+        document.getElementById('viewModal').style.display = 'block';
+    }
+
+    function openAddModal() {
+        document.getElementById('editModalTitle').textContent = '➕ Thêm khách hàng';
+        document.getElementById('customerForm').reset();
+        document.getElementById('editModal').style.display = 'block';
+    }
+
+    function openEditModal(customerId) {
+        document.getElementById('editModalTitle').textContent = '✏️ Sửa thông tin';
+        document.getElementById('editModal').style.display = 'block';
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.style.display = 'none';
+        }
+    }
+
+    // Tab Switching
+    function switchTab(event, tabId) {
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        event.target.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    // Customer Actions
+    function saveCustomer() {
+        alert('Lưu thông tin khách hàng thành công!');
+        closeModal('editModal');
+    }
+
+    function deleteCustomer(customerId) {
+        if (confirm('Bạn có chắc chắn muốn xóa khách hàng này?')) {
+            alert('Đã xóa khách hàng ' + customerId);
+        }
+    }
+
+    function processPayment() {
+        if (confirm('Xác nhận thanh toán khoản phí này?')) {
+            alert('Chuyển đến trang thanh toán...');
+        }
+    }
+
+    // Search Functionality
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+        const searchText = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('.content-card .data-table tbody tr');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchText) ? '' : 'none';
+        });
+    });
+</script>

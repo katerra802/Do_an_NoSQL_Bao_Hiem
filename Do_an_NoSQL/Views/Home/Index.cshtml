@@ -1,787 +1,469 @@
 ﻿@{
-    ViewData["Title"] = "Trang chủ - Prudential";
+    ViewData["Title"] = "Dashboard - Tổng quan";
 }
 
 <style>
-    /* Reset container để full width */
-    .container {
-        max-width: 100%;
-        padding: 0;
-    }
-
-    main.pb-3 {
-        padding-bottom: 0 !important;
-    }
-
-    /* Hero Slider Section */
-    .hero-slider {
-        position: relative;
-        width: 100%;
-        height: 600px;
-        overflow: hidden;
-        margin-bottom: 80px;
-    }
-
-    .slider-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        animation: zoomSlide 20s ease-in-out infinite;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-
-    @@keyframes zoomSlide {
-        0% {
-            transform: scale(1);
-        }
-
-        50% {
-            transform: scale(1.1);
-        }
-
-        100% {
-            transform: scale(1);
-        }
-    }
-
-    .slider-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(to right, rgba(0, 51, 102, 0.7) 0%, rgba(0, 51, 102, 0.3) 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .slider-content {
-        max-width: 1200px;
-        padding: 0 40px;
-        color: white;
-        animation: fadeInUp 1.5s ease-out;
-    }
-
-    @@keyframes fadeInUp {
-        0% {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-
-        100% {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .slider-title {
-        font-size: 56px;
-        font-weight: 700;
-        margin-bottom: 20px;
-        line-height: 1.2;
-        animation: fadeInUp 1.5s ease-out 0.3s both;
-    }
-
-    .slider-subtitle {
-        font-size: 24px;
+    /* Dashboard Header */
+    .dashboard-header {
         margin-bottom: 30px;
-        font-weight: 300;
-        animation: fadeInUp 1.5s ease-out 0.6s both;
     }
 
-    .slider-btn {
-        display: inline-block;
-        background: #E31E24;
-        color: white;
-        padding: 16px 40px;
-        border-radius: 30px;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 16px;
-        transition: all 0.3s ease;
-        animation: fadeInUp 1.5s ease-out 0.9s both;
-    }
-
-        .slider-btn:hover {
-            background: #c4161c;
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(227, 30, 36, 0.4);
-            color: white;
-        }
-
-    /* Content wrapper */
-    .content-wrapper {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 20px;
-    }
-
-    .homepage-section {
-        margin: 60px 0;
-    }
-
-    .section-title {
-        font-size: 32px;
+    .dashboard-title {
+        font-size: 28px;
         font-weight: 700;
-        color: #003366;
-        margin-bottom: 12px;
-    }
-
-    .section-subtitle {
-        font-size: 18px;
-        color: #E31E24;
-        margin-bottom: 40px;
-    }
-
-    .section-description {
-        font-size: 16px;
-        color: #666;
-        line-height: 1.8;
-        margin-bottom: 20px;
-    }
-
-    /* Hero Section - 3 Images Layout */
-    .hero-section {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 24px;
-        margin-bottom: 80px;
-    }
-
-    .hero-card {
-        position: relative;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        background: #fff;
-    }
-
-        .hero-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-        }
-
-    .hero-card-image {
-        width: 100%;
-        height: 280px;
-        object-fit: cover;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-
-    .hero-card-content {
-        padding: 24px;
-    }
-
-    .hero-card-title {
-        font-size: 20px;
-        font-weight: 700;
-        color: #003366;
-        margin-bottom: 12px;
-    }
-
-    .hero-card-text {
-        font-size: 14px;
-        color: #666;
-        line-height: 1.6;
-        margin-bottom: 16px;
-    }
-
-    .hero-card-link {
-        color: #E31E24;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 14px;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-        .hero-card-link:hover {
-            text-decoration: underline;
-        }
-
-    /* Development Section - 2 Images Layout (1 text + 1 image) */
-    .development-section {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 40px;
-        align-items: center;
-        margin-bottom: 80px;
-    }
-
-    .development-content {
-        padding: 20px;
-    }
-
-    .development-image {
-        width: 100%;
-        height: 400px;
-        object-fit: cover;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-
-    /* Management Section - 3 Cards Grid */
-    .management-section {
-        margin-bottom: 80px;
-    }
-
-    .management-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 32px;
-    }
-
-    .management-card {
-        background: #fff;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease;
-    }
-
-        .management-card:hover {
-            transform: translateY(-8px);
-        }
-
-    .management-card-image {
-        width: 100%;
-        height: 220px;
-        object-fit: cover;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-
-    .management-card-content {
-        padding: 24px;
-    }
-
-    .management-card-title {
-        font-size: 18px;
-        font-weight: 700;
-        color: #003366;
-        margin-bottom: 12px;
-    }
-
-    .management-card-text {
-        font-size: 14px;
-        color: #666;
-        line-height: 1.6;
-        margin-bottom: 16px;
-    }
-
-    .btn-red-circle {
-        width: 32px;
-        height: 32px;
-        background: #E31E24;
-        color: white;
-        border: none;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: background 0.3s ease;
-        font-size: 18px;
-    }
-
-        .btn-red-circle:hover {
-            background: #c4161c;
-        }
-
-    /* With You Section - 3 Cards with Gray Background */
-    .with-you-section {
-        background: #f8f9fa;
-        padding: 60px 0;
-        margin: 80px 0;
-    }
-
-    .with-you-header {
-        text-align: center;
-        margin-bottom: 50px;
-    }
-
-    .with-you-title {
-        font-size: 36px;
         color: #003366;
         margin-bottom: 8px;
     }
 
-    .with-you-subtitle {
-        font-size: 24px;
-        color: #E31E24;
-    }
-
-    .with-you-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 32px;
-    }
-
-    .with-you-card {
-        background: #fff;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .with-you-card-image {
-        width: 100%;
-        height: 200px;
-        object-fit: cover;
-        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-    }
-
-    .with-you-card-content {
-        padding: 24px;
-        text-align: center;
-    }
-
-    .with-you-card-title {
-        font-size: 16px;
-        font-weight: 700;
-        color: #003366;
-        margin-bottom: 16px;
-    }
-
-    /* Insurance Knowledge Section - 3 Cards */
-    .insurance-knowledge-section {
-        margin-bottom: 80px;
-    }
-
-    .insurance-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 32px;
-    }
-
-    .insurance-card {
-        background: #fff;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease;
-    }
-
-        .insurance-card:hover {
-            transform: translateY(-8px);
-        }
-
-    .insurance-card-badge {
-        position: absolute;
-        top: 16px;
-        left: 16px;
-        background: #fff;
-        padding: 6px 12px;
-        border-radius: 4px;
-        font-size: 12px;
-        font-weight: 600;
-        color: #003366;
-    }
-
-    .insurance-card-image-container {
-        position: relative;
-    }
-
-    .insurance-card-image {
-        width: 100%;
-        height: 220px;
-        object-fit: cover;
-        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-    }
-
-    .insurance-card-content {
-        padding: 24px;
-    }
-
-    .insurance-card-date {
-        font-size: 12px;
-        color: #999;
-        margin-bottom: 12px;
-    }
-
-    .insurance-card-title {
-        font-size: 16px;
-        font-weight: 700;
-        color: #003366;
-        margin-bottom: 12px;
-        line-height: 1.4;
-    }
-
-    .insurance-card-text {
-        font-size: 14px;
+    .dashboard-subtitle {
         color: #666;
-        line-height: 1.6;
-        margin-bottom: 16px;
-    }
-
-    .btn-view-more {
-        display: inline-block;
-        background: #E31E24;
-        color: white;
-        padding: 12px 32px;
-        border-radius: 24px;
-        text-decoration: none;
-        font-weight: 600;
         font-size: 14px;
-        transition: background 0.3s ease;
-        margin: 40px auto 0;
     }
 
-        .btn-view-more:hover {
-            background: #c4161c;
+    .dashboard-date {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #E31E24;
+        font-weight: 600;
+        margin-top: 12px;
+    }
+
+    /* Quick Actions Buttons */
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 30px;
+    }
+
+    .quick-action-btn {
+        background: linear-gradient(135deg, #E31E24 0%, #c4161c 100%);
+        color: white;
+        padding: 16px 20px;
+        border-radius: 10px;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 600;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+        .quick-action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(227, 30, 36, 0.3);
             color: white;
         }
 
-    .text-center {
-        text-align: center;
+    .quick-action-icon {
+        font-size: 24px;
     }
 
-    /* Single Card Sections - 2-1 Layout */
-    .single-card-section {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 40px;
-        align-items: center;
-        margin-bottom: 80px;
-    }
-
-    .single-card-content {
-        padding: 20px;
-    }
-
-    .single-card-image {
-        width: 100%;
-        height: 400px;
+    /* Activity Feed */
+    .activity-feed {
+        background: #fff;
         border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        padding: 24px;
+        margin-bottom: 24px;
     }
 
-    .order-2 {
-        order: 2;
+    .activity-item {
+        display: flex;
+        gap: 16px;
+        padding: 16px;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background 0.3s ease;
     }
 
-    .order-1 {
-        order: 1;
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-item:hover {
+            background: #f8f9fa;
+        }
+
+    .activity-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
     }
 
-    /* Responsive Design */
-    @@media (max-width: 992px) {
-        .hero-slider {
-            height: 400px;
+        .activity-icon.new {
+            background: #d1fae5;
         }
 
-        .slider-title {
-            font-size: 40px;
+        .activity-icon.pending {
+            background: #fef3c7;
         }
 
-        .slider-subtitle {
-            font-size: 18px;
+        .activity-icon.completed {
+            background: #dbeafe;
         }
 
-        .hero-section,
-        .management-grid,
-        .with-you-grid,
-        .insurance-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .development-section,
-        .single-card-section {
-            grid-template-columns: 1fr;
-        }
-
-        .order-2, .order-1 {
-            order: unset;
-        }
+    .activity-details {
+        flex: 1;
     }
 
-    @@media (max-width: 576px) {
-        .hero-slider {
-            height: 300px;
+    .activity-title {
+        font-weight: 600;
+        color: #003366;
+        margin-bottom: 4px;
+    }
+
+    .activity-desc {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 4px;
+    }
+
+    .activity-time {
+        font-size: 12px;
+        color: #999;
+    }
+
+    .activity-amount {
+        font-weight: 700;
+        color: #E31E24;
+        font-size: 18px;
+    }
+
+    /* Table Styles */
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .data-table thead {
+            background: #f8f9fa;
         }
 
-        .slider-title {
-            font-size: 28px;
+        .data-table th {
+            padding: 14px;
+            text-align: left;
+            font-weight: 600;
+            color: #003366;
+            font-size: 13px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #e0e0e0;
         }
 
-        .slider-subtitle {
-            font-size: 16px;
+        .data-table td {
+            padding: 14px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+            font-size: 14px;
         }
 
-        .hero-section,
-        .management-grid,
-        .with-you-grid,
-        .insurance-grid {
-            grid-template-columns: 1fr;
+        .data-table tbody tr:hover {
+            background: #f8f9fa;
         }
 
-        .section-title {
-            font-size: 24px;
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+        .status-badge.active {
+            background: #d1fae5;
+            color: #065f46;
         }
 
-        .with-you-title {
-            font-size: 28px;
+        .status-badge.pending {
+            background: #fef3c7;
+            color: #92400e;
         }
+
+        .status-badge.completed {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+    /* Chart Placeholder */
+    .chart-container {
+        height: 300px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 18px;
+        font-weight: 600;
     }
 </style>
 
-<!-- Hero Slider Section -->
-<section class="hero-slider">
-    <div class="slider-image">
-        <!-- Thay thế bằng: <img src="~/images/hero-banner.jpg" alt="Prudential Hero" class="slider-image" /> -->
+<!-- Dashboard Header -->
+<div class="dashboard-header">
+    <h1 class="dashboard-title">📊 Tổng quan hệ thống</h1>
+    <p class="dashboard-subtitle">Chào mừng bạn quay trở lại! Dưới đây là thống kê hôm nay.</p>
+    <div class="dashboard-date">
+        <span>📅</span>
+        <span id="currentDate"></span>
     </div>
-    <div class="slider-overlay">
-        <div class="slider-content">
-            <h1 class="slider-title">
-                PRU Đầu Tư Vững Tiền<br />
-                <span style="color: #E31E24;">Dẫn đầu trong cuộc chơi - Đầu tư tỏa sáng</span>
-            </h1>
-            <p class="slider-subtitle">
-                Giải pháp bảo vệ toàn diện cho bạn và gia đình với các sản phẩm bảo hiểm tối ưu
-            </p>
-            <a href="#" class="slider-btn">Tìm hiểu ngay</a>
-        </div>
-    </div>
-</section>
-
-<div class="content-wrapper">
-    <!-- Hero Section - 3 Images -->
-    <section class="homepage-section">
-        <div class="hero-section">
-            <div class="hero-card">
-                <div class="hero-card-image"></div>
-                <div class="hero-card-content">
-                    <h3 class="hero-card-title">Thông tin <span style="color: #E31E24;">các Quỹ đầu tư</span></h3>
-                    <p class="hero-card-text">
-                        Tìm hiểu giá trị ròng tài sản các Quỹ đầu tư có liên kết với hợp đồng bảo hiểm kèm vốn tích lũy đã có hiện nay
-                    </p>
-                    <a href="#" class="hero-card-link">
-                        Xem chi tiết →
-                    </a>
-                </div>
-            </div>
-
-            <div class="hero-card">
-                <div class="hero-card-image"></div>
-                <div class="hero-card-content">
-                    <h3 class="hero-card-title">Phát triển <span style="color: #E31E24;">cộng đồng bền vững</span></h3>
-                    <p class="hero-card-text">
-                        Prudential không ngừng nỗ lực để kết nối và phát triển cộng đồng, tạo nên sự chia sẻ trách nhiệm xã hội thông qua hoạt động thiện nguyện
-                    </p>
-                    <a href="#" class="hero-card-link">
-                        Xem chi tiết →
-                    </a>
-                </div>
-            </div>
-
-            <div class="hero-card">
-                <div class="hero-card-image"></div>
-                <div class="hero-card-content">
-                    <h3 class="hero-card-title">Dễ dàng quản lý <span style="color: #E31E24;">hợp đồng bảo hiểm</span></h3>
-                    <p class="hero-card-text">
-                        Bạn có thể dễ dàng kiểm tra, theo dõi và cập nhật thông tin hợp đồng bảo hiểm của mình mọi lúc, mọi nơi
-                    </p>
-                    <a href="#" class="hero-card-link">
-                        Xem chi tiết →
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Development Section - 2 Layout (Text + Image) -->
-    <section class="homepage-section development-section">
-        <div class="development-content order-1">
-            <h2 class="section-title">Phát triển <span style="color: #E31E24;">cộng đồng bền vững</span></h2>
-            <p class="section-description">
-                Prudential không ngừng nỗ lực để kết nối và phát triển cộng đồng, tạo nên sự chia sẻ trách nhiệm xã hội thông qua các hoạt động thiện nguyện và cộng đồng. Cùng nhau xây dựng một tương lai tốt đẹp hơn cho thế hệ sau.
-            </p>
-            <a href="#" class="hero-card-link" style="font-size: 16px;">
-                Xem chi tiết →
-            </a>
-        </div>
-        <div class="development-image order-2"></div>
-    </section>
-
-    <!-- Management Section - 3 Cards -->
-    <section class="homepage-section management-section">
-        <div class="section-header text-center">
-            <h2 class="section-title">Dễ dàng quản lý <span style="color: #E31E24;">hợp đồng bảo hiểm</span></h2>
-            <p class="section-description" style="max-width: 800px; margin: 0 auto 40px;">
-                Quản lý hợp đồng bảo hiểm trở nên đơn giản và tiện lợi hơn bao giờ hết với các công cụ hiện đại
-            </p>
-        </div>
-
-        <div class="management-grid">
-            <div class="management-card">
-                <div class="management-card-image"></div>
-                <div class="management-card-content">
-                    <h3 class="management-card-title">PRUOnline Quản lý thông tin hợp đồng bảo hiểm nhận thông tin trực tuyến</h3>
-                    <button class="btn-red-circle">→</button>
-                </div>
-            </div>
-
-            <div class="management-card">
-                <div class="management-card-image"></div>
-                <div class="management-card-content">
-                    <h3 class="management-card-title">PRURewards Chương trình chăm sóc khách hàng thân thiết của Prudential</h3>
-                    <button class="btn-red-circle">→</button>
-                </div>
-            </div>
-
-            <div class="management-card">
-                <div class="management-card-image"></div>
-                <div class="management-card-content">
-                    <h3 class="management-card-title">Kênh thanh toán phí bảo hiểm đa dạng, thao tác dễ dàng</h3>
-                    <button class="btn-red-circle">→</button>
-                </div>
-            </div>
-        </div>
-    </section>
 </div>
 
-<!-- With You Section - 3 Cards with Gray Background (Full Width) -->
-<section class="with-you-section">
-    <div class="content-wrapper">
-        <div class="with-you-header">
-            <h2 class="with-you-title">Prudential <span style="color: #E31E24;">đồng hành cùng bạn!</span></h2>
-            <p class="section-description">
-                Chúng tôi giúp bạn thực hiện các mục tiêu trọng đại của cuộc đời nhờ các sản phẩm bảo hiểm tối ưu
-            </p>
+<!-- Stats Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Giao dịch hôm nay</span>
+            <div class="stat-card-icon" style="background: #dbeafe; color: #1e40af;">
+                💳
+            </div>
         </div>
-
-        <div class="with-you-grid">
-            <div class="with-you-card">
-                <div class="with-you-card-image"></div>
-                <div class="with-you-card-content">
-                    <h3 class="with-you-card-title">Nhu cầu bảo vệ gia đình, chăm sóc sức khỏe</h3>
-                    <button class="btn-red-circle">→</button>
-                </div>
-            </div>
-
-            <div class="with-you-card">
-                <div class="with-you-card-image"></div>
-                <div class="with-you-card-content">
-                    <h3 class="with-you-card-title">Nhu cầu tích lũy cho các định hướng tương lai</h3>
-                    <button class="btn-red-circle">→</button>
-                </div>
-            </div>
-
-            <div class="with-you-card">
-                <div class="with-you-card-image"></div>
-                <div class="with-you-card-content">
-                    <h3 class="with-you-card-title">Nhu cầu đầu tư, gia tăng tài sản</h3>
-                    <button class="btn-red-circle">→</button>
-                </div>
-            </div>
+        <div class="stat-card-value">47</div>
+        <div class="stat-card-change positive">
+            ↑ 23% so với hôm qua
         </div>
     </div>
-</section>
 
-<div class="content-wrapper">
-    <!-- Insurance Knowledge Section - 3 Cards -->
-    <section class="homepage-section insurance-knowledge-section">
-        <div class="section-header text-center">
-            <h2 class="section-title">Kiến thức <span style="color: #E31E24;">bảo hiểm</span></h2>
-            <p class="section-description">Bài viết nổi bật</p>
-        </div>
-
-        <div class="insurance-grid">
-            <div class="insurance-card">
-                <div class="insurance-card-image-container">
-                    <span class="insurance-card-badge">01/11/2025</span>
-                    <div class="insurance-card-image"></div>
-                </div>
-                <div class="insurance-card-content">
-                    <p class="insurance-card-date">01/11/2025</p>
-                    <h3 class="insurance-card-title">Cách đóng bảo hiểm xã hội cho bản thân để hưởng lợi ích tốt nhất</h3>
-                    <p class="insurance-card-text">
-                        Tham gia bảo hiểm xã hội tự nguyện là quyết định tài chính quan trọng giúp bảo vệ bạn và gia đình trong tương lai...
-                    </p>
-                </div>
-            </div>
-
-            <div class="insurance-card">
-                <div class="insurance-card-image-container">
-                    <span class="insurance-card-badge">02/11/2025</span>
-                    <div class="insurance-card-image"></div>
-                </div>
-                <div class="insurance-card-content">
-                    <p class="insurance-card-date">02/11/2025</p>
-                    <h3 class="insurance-card-title">Nên mua bảo hiểm từ vong kỳ hạn 60-65 tuổi</h3>
-                    <p class="insurance-card-text">
-                        Bảo hiểm nhân thọ là công cụ bảo vệ tài chính quan trọng cho gia đình bạn trong những tình huống không mong muốn...
-                    </p>
-                </div>
-            </div>
-
-            <div class="insurance-card">
-                <div class="insurance-card-image-container">
-                    <span class="insurance-card-badge">03/11/2025</span>
-                    <div class="insurance-card-image"></div>
-                </div>
-                <div class="insurance-card-content">
-                    <p class="insurance-card-date">03/11/2025</p>
-                    <h3 class="insurance-card-title">Nên mua bảo hiểm sức khỏe với thu nhập từ 60-65 triệu đồng</h3>
-                    <p class="insurance-card-text">
-                        Chi phí y tế ngày càng tăng cao, việc có bảo hiểm sức khỏe phù hợp giúp bảo vệ tài chính và sức khỏe của bạn...
-                    </p>
-                </div>
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Tổng giá trị giao dịch</span>
+            <div class="stat-card-icon" style="background: #d1fae5; color: #065f46;">
+                💰
             </div>
         </div>
-
-        <div class="text-center">
-            <a href="#" class="btn-view-more">Xem thêm</a>
+        <div class="stat-card-value">1.2B VNĐ</div>
+        <div class="stat-card-change positive">
+            ↑ 15.7% so với hôm qua
         </div>
-    </section>
+    </div>
 
-    <!-- Investment Section - 2-1 Layout (Image + Text) -->
-    <section class="homepage-section single-card-section">
-        <div class="single-card-image order-2"></div>
-        <div class="single-card-content order-1">
-            <h2 class="section-title">Sản phẩm bảo hiểm liên kết đơn vị</h2>
-            <h3 class="section-subtitle">PRU-ĐẦU TƯ VỮNG TIỀN</h3>
-            <p class="section-description">
-                Dẫn đầu trong cuộc chơi - đầu tư tỏa sáng
-            </p>
-            <p class="section-description">
-                Giải pháp an tâm đầu tư với các Quỹ đầu tư có khả năng sinh lời hấp dẫn giúp gia tăng giá trị tài sản của bạn
-            </p>
-            <a href="#" class="btn-view-more" style="margin: 20px 0 0 0;">Tìm hiểu thêm</a>
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Hợp đồng mới</span>
+            <div class="stat-card-icon" style="background: #fef3c7; color: #92400e;">
+                📄
+            </div>
         </div>
-    </section>
+        <div class="stat-card-value">12</div>
+        <div class="stat-card-change positive">
+            ↑ 8 hợp đồng
+        </div>
+    </div>
 
-    <!-- Benefits Section - 1-2 Layout (Text + Image) -->
-    <section class="homepage-section single-card-section">
-        <div class="single-card-content order-1">
-            <h2 class="section-title">Giải quyết quyền lợi bảo hiểm</h2>
-            <p class="section-description">
-                Hướng dẫn thanh toán quyền lợi bảo hiểm. Quyền lợi của bạn được thực hiện nhanh chóng, đơn giản
-            </p>
-            <a href="#" class="hero-card-link" style="font-size: 16px;">
-                Chi tiết →
-            </a>
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Yêu cầu chờ xử lý</span>
+            <div class="stat-card-icon" style="background: #fee2e2; color: #991b1b;">
+                ⏰
+            </div>
         </div>
-        <div class="single-card-image order-2"></div>
-    </section>
-
-    <!-- Payment Section - 2-1 Layout (Image + Text) -->
-    <section class="homepage-section single-card-section">
-        <div class="single-card-image order-2"></div>
-        <div class="single-card-content order-1">
-            <h2 class="section-title">Thanh toán <span style="color: #E31E24;">phí bảo hiểm</span></h2>
-            <p class="section-description">
-                An toàn - Dễ dàng - Bảo mật nhanh chóng, đầy đủ tiện ích. Đăng nhập và thanh toán ngay
-            </p>
-            <a href="#" class="hero-card-link" style="font-size: 16px;">
-                Thanh toán →
-            </a>
+        <div class="stat-card-value">8</div>
+        <div class="stat-card-change negative">
+            ↓ 3 yêu cầu đã xử lý
         </div>
-    </section>
+    </div>
 </div>
 
-@await Html.PartialAsync("_Footer")
+<!-- Quick Actions -->
+<div class="content-card">
+    <div class="content-card-header">
+        <h2 class="content-card-title">⚡ Thao tác nhanh</h2>
+    </div>
+    <div class="quick-actions">
+        <a href="/customers" class="quick-action-btn">
+            <span class="quick-action-icon">➕</span>
+            <span>Thêm khách hàng</span>
+        </a>
+        <a href="/contracts" class="quick-action-btn">
+            <span class="quick-action-icon">📝</span>
+            <span>Tạo hợp đồng</span>
+        </a>
+        <a href="/payments" class="quick-action-btn">
+            <span class="quick-action-icon">💳</span>
+            <span>Xử lý thanh toán</span>
+        </a>
+        <a href="/claims" class="quick-action-btn">
+            <span class="quick-action-icon">💰</span>
+            <span>Xem bồi thường</span>
+        </a>
+    </div>
+</div>
+
+<!-- Activity Feed -->
+<div class="content-card activity-feed">
+    <div class="content-card-header">
+        <h2 class="content-card-title">🔔 Hoạt động gần đây</h2>
+        <a href="#" style="color: #E31E24; text-decoration: none; font-weight: 600; font-size: 14px;">Xem tất cả →</a>
+    </div>
+
+    <div class="activity-item">
+        <div class="activity-icon new">
+            ✅
+        </div>
+        <div class="activity-details">
+            <div class="activity-title">Hợp đồng mới được tạo</div>
+            <div class="activity-desc">Nguyễn Văn A - PRU Đầu Tư Vững Tiền</div>
+            <div class="activity-time">5 phút trước</div>
+        </div>
+        <div class="activity-amount">250,000,000 VNĐ</div>
+    </div>
+
+    <div class="activity-item">
+        <div class="activity-icon completed">
+            💳
+        </div>
+        <div class="activity-details">
+            <div class="activity-title">Thanh toán phí bảo hiểm</div>
+            <div class="activity-desc">Trần Thị B - Hợp đồng #HD2025045</div>
+            <div class="activity-time">15 phút trước</div>
+        </div>
+        <div class="activity-amount">5,500,000 VNĐ</div>
+    </div>
+
+    <div class="activity-item">
+        <div class="activity-icon pending">
+            📋
+        </div>
+        <div class="activity-details">
+            <div class="activity-title">Yêu cầu bồi thường mới</div>
+            <div class="activity-desc">Lê Văn C - Yêu cầu #YC2025012</div>
+            <div class="activity-time">30 phút trước</div>
+        </div>
+        <div class="activity-amount">15,000,000 VNĐ</div>
+    </div>
+
+    <div class="activity-item">
+        <div class="activity-icon new">
+            👤
+        </div>
+        <div class="activity-details">
+            <div class="activity-title">Khách hàng mới đăng ký</div>
+            <div class="activity-desc">Phạm Thị D - Email: phamthid@email.com</div>
+            <div class="activity-time">1 giờ trước</div>
+        </div>
+    </div>
+
+    <div class="activity-item">
+        <div class="activity-icon completed">
+            📄
+        </div>
+        <div class="activity-details">
+            <div class="activity-title">Hợp đồng được phê duyệt</div>
+            <div class="activity-desc">Hoàng Văn E - Bảo hiểm sức khỏe</div>
+            <div class="activity-time">2 giờ trước</div>
+        </div>
+        <div class="activity-amount">180,000,000 VNĐ</div>
+    </div>
+</div>
+
+<!-- Today's Transactions Table -->
+<div class="content-card">
+    <div class="content-card-header">
+        <h2 class="content-card-title">💳 Giao dịch hôm nay</h2>
+        <a href="/payments" style="color: #E31E24; text-decoration: none; font-weight: 600; font-size: 14px;">Xem tất cả →</a>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Mã GD</th>
+                <th>Khách hàng</th>
+                <th>Loại giao dịch</th>
+                <th>Số tiền</th>
+                <th>Thời gian</th>
+                <th>Trạng thái</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>GD20251112001</strong></td>
+                <td>Nguyễn Văn A</td>
+                <td>Đóng phí BH</td>
+                <td>5,500,000 VNĐ</td>
+                <td>08:30 AM</td>
+                <td><span class="status-badge completed">Thành công</span></td>
+            </tr>
+            <tr>
+                <td><strong>GD20251112002</strong></td>
+                <td>Trần Thị B</td>
+                <td>Hợp đồng mới</td>
+                <td>250,000,000 VNĐ</td>
+                <td>09:15 AM</td>
+                <td><span class="status-badge completed">Thành công</span></td>
+            </tr>
+            <tr>
+                <td><strong>GD20251112003</strong></td>
+                <td>Lê Văn C</td>
+                <td>Bồi thường</td>
+                <td>15,000,000 VNĐ</td>
+                <td>10:00 AM</td>
+                <td><span class="status-badge pending">Đang xử lý</span></td>
+            </tr>
+            <tr>
+                <td><strong>GD20251112004</strong></td>
+                <td>Phạm Thị D</td>
+                <td>Đóng phí BH</td>
+                <td>8,200,000 VNĐ</td>
+                <td>10:45 AM</td>
+                <td><span class="status-badge completed">Thành công</span></td>
+            </tr>
+            <tr>
+                <td><strong>GD20251112005</strong></td>
+                <td>Hoàng Văn E</td>
+                <td>Hợp đồng mới</td>
+                <td>180,000,000 VNĐ</td>
+                <td>11:20 AM</td>
+                <td><span class="status-badge completed">Thành công</span></td>
+            </tr>
+            <tr>
+                <td><strong>GD20251112006</strong></td>
+                <td>Võ Thị F</td>
+                <td>Đóng phí BH</td>
+                <td>6,800,000 VNĐ</td>
+                <td>02:10 PM</td>
+                <td><span class="status-badge pending">Đang xử lý</span></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Charts Section -->
+<div class="stats-grid">
+    <div class="content-card">
+        <div class="content-card-header">
+            <h2 class="content-card-title">📈 Giao dịch theo giờ</h2>
+        </div>
+        <div class="chart-container">
+            [Biểu đồ giao dịch theo giờ]
+        </div>
+    </div>
+
+    <div class="content-card">
+        <div class="content-card-header">
+            <h2 class="content-card-title">📊 Loại giao dịch</h2>
+        </div>
+        <div class="chart-container">
+            [Biểu đồ phân bổ loại giao dịch]
+        </div>
+    </div>
+</div>
+
+<script>
+    // Display current date
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateElement = document.getElementById('currentDate');
+        const now = new Date();
+        const options = {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        };
+        dateElement.textContent = now.toLocaleDateString('vi-VN', options);
+    });
+</script>
