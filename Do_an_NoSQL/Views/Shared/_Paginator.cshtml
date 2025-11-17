@@ -1,0 +1,146 @@
+﻿@model PagedResult<dynamic>
+
+@{
+    var filters = new Dictionary<string, object?>
+    {
+        { "search", ViewBag.Search },
+        { "status", ViewBag.Status },
+        { "product", ViewBag.Product },
+        { "from_date", ViewBag.FromDate?.ToString("yyyy-MM-dd") },
+        { "to_date", ViewBag.ToDate?.ToString("yyyy-MM-dd") },
+        { "price_from", ViewBag.PriceFrom },
+        { "price_to", ViewBag.PriceTo },
+        { "sort", ViewBag.Sort }
+    };
+}
+
+<div class="pagination-wrapper">
+
+    <!-- LEFT SIDE -->
+    <nav class="d-flex align-items-center gap-1">
+
+        <!-- FIRST -->
+        @if (Model.CurrentPage == 1)
+        {
+            <span class="page-pill page-pill-disabled">
+                <i class="fas fa-angle-double-left"></i>
+            </span>
+        }
+        else
+        {
+            <a href="@Url.Action(null, filters.Concat(new Dictionary<string, object?>
+                       {
+                           { "page", 1 },
+                           { "per_page", Model.PageSize }
+                       }))"
+           class="page-pill">
+            <i class="fas fa-angle-double-left"></i>
+        </a>
+                }
+
+        <!-- PREV -->
+        @if (Model.CurrentPage == 1)
+        {
+            <span class="page-pill page-pill-disabled">
+                <i class="fas fa-angle-left"></i>
+            </span>
+        }
+        else
+        {
+            <a href="@Url.Action(null, filters.Concat(new Dictionary<string, object?>
+                       {
+                           { "page", Model.CurrentPage - 1 },
+                           { "per_page", Model.PageSize }
+                       }))"
+           class="page-pill">
+            <i class="fas fa-angle-left"></i>
+        </a>
+                }
+
+        <!-- PAGE NUMBERS -->
+        @for (int i = 1; i <= Model.TotalPages; i++)
+        {
+            if (i == Model.CurrentPage)
+            {
+                <span class="page-pill page-pill-active">@i</span>
+            }
+            else
+            {
+                <a href="@Url.Action(null, filters.Concat(new Dictionary<string, object?>
+                           {
+                               { "page", i },
+                               { "per_page", Model.PageSize }
+                           }))"
+           class="page-pill">@i</a>
+                }
+        }
+
+        <!-- NEXT -->
+        @if (Model.CurrentPage < Model.TotalPages)
+        {
+            <a href="@Url.Action(null, filters.Concat(new Dictionary<string, object?>
+                       {
+                           { "page", Model.CurrentPage + 1 },
+                           { "per_page", Model.PageSize }
+                       }))"
+           class="page-pill">
+            <i class="fas fa-angle-right"></i>
+        </a>
+                }
+        else
+        {
+            <span class="page-pill page-pill-disabled">
+                <i class="fas fa-angle-right"></i>
+            </span>
+        }
+
+        <!-- LAST -->
+        @if (Model.CurrentPage < Model.TotalPages)
+        {
+            <a href="@Url.Action(null, filters.Concat(new Dictionary<string, object?>
+                       {
+                           { "page", Model.TotalPages },
+                           { "per_page", Model.PageSize }
+                       }))"
+           class="page-pill">
+            <i class="fas fa-angle-double-right"></i>
+        </a>
+                }
+        else
+        {
+            <span class="page-pill page-pill-disabled">
+                <i class="fas fa-angle-double-right"></i>
+            </span>
+        }
+
+    </nav>
+
+    <!-- RIGHT SIDE -->
+    <div class="pagination-right">
+
+        <form method="get" id="perPageForm" class="d-flex align-items-center gap-2">
+
+            @foreach (var f in filters)
+            {
+                <input type="hidden" name="@f.Key" value="@f.Value" />
+            }
+
+            <select id="perPage" name="per_page"
+                    onchange="document.getElementById('perPageForm').submit()"
+                    class="select-input" style="width: 80px;">
+                @foreach (var size in new[] { 5, 10, 25, 50 })
+                {
+                    <option value="@size" selected="@(Model.PageSize == size)">@size</option>
+                }
+            </select>
+        </form>
+
+        @{
+            var from = (Model.CurrentPage - 1) * Model.PageSize + 1;
+            var to = Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalItems);
+        }
+
+        <span>Hiển thị các dòng từ @from đến @to trong tổng @Model.TotalItems</span>
+    </div>
+
+</div>

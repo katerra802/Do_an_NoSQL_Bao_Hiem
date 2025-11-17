@@ -3,23 +3,28 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace Do_an_NoSQL.Models
 {
-    public class UnderwritingDecision: Models.MongoEntity
+    public class UnderwritingDecision : MongoEntity
     {
         [BsonElement("app_no")]
-        public string AppNo { get; set; } // Tham chiếu đến PolicyApplication.app_no
+        public string AppNo { get; set; }
 
-        // --- CẬP NHẬT THAM CHIẾU ---
         [BsonElement("underwriter_id")]
-        [BsonRepresentation(BsonType.ObjectId)]
-        public string UnderwriterId { get; set; } // Tham chiếu đến User._id
-        // --- KẾT THÚC CẬP NHẬT ---
+        public string UnderwriterId { get; set; }
 
         [BsonElement("risk_level")]
         public string RiskLevel { get; set; }
 
+        [BsonElement("base_premium")]
+        [BsonRepresentation(BsonType.Decimal128)]
+        public decimal BasePremium { get; set; }   // ⭐ Thêm mới
+
         [BsonElement("extra_premium")]
         [BsonRepresentation(BsonType.Decimal128)]
         public decimal ExtraPremium { get; set; }
+
+        [BsonElement("approved_premium")]
+        [BsonRepresentation(BsonType.Decimal128)]
+        public decimal ApprovedPremium { get; set; }
 
         [BsonElement("medical_required")]
         public bool MedicalRequired { get; set; }
@@ -31,7 +36,6 @@ namespace Do_an_NoSQL.Models
         public string Notes { get; set; }
 
         [BsonElement("decided_at")]
-        [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         public DateTime DecidedAt { get; set; }
     }
 }

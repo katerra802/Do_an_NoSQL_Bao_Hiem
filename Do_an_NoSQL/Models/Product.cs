@@ -21,6 +21,10 @@ namespace Do_an_NoSQL.Models
         [BsonElement("term_years")]
         public int TermYears { get; set; }
 
+        [BsonElement("premium_rate")]
+        [BsonRepresentation(BsonType.Decimal128)]
+        public decimal PremiumRate { get; set; }
+
         [BsonElement("min_age")]
         public int MinAge { get; set; }
 

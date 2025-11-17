@@ -1,0 +1,459 @@
+﻿@model PagedResult<dynamic>
+
+@functions {
+    string SortIcon(string field)
+    {
+        string sort = (ViewBag.Sort ?? "").ToString();
+
+        return sort switch
+        {
+            "price_asc" when field == "price" => "fa-sort-up",
+            "price_desc" when field == "price" => "fa-sort-down",
+
+            "date_asc" when field == "date" => "fa-sort-up",
+            "date_desc" when field == "date" => "fa-sort-down",
+
+            _ => "fa-sort"
+        };
+    }
+}
+
+<div class="row py-3">
+
+    <!-- Tổng hợp hợp đồng -->
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #ff3b3f, #ff8a00);">
+            <div class="stat-overlay"></div>
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <p class="text-white text-uppercase mb-1">Tổng hợp hợp đồng</p>
+                    <h4 class="text-white fw-bold">@Model.TotalItems</h4>
+                </div>
+                <div class="stat-icon-box">
+                    <i class="fa-solid fa-folder-open text-white fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hiệu lực -->
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #009e60, #0666d0);">
+            <div class="stat-overlay"></div>
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <p class="text-white text-uppercase mb-1">Có hiệu lực</p>
+                    <h4 class="text-white fw-bold">@Model.Items.Count(x => x.Status == "inforce")</h4>
+                </div>
+                <div class="stat-icon-box">
+                    <i class="fa-solid fa-check text-white fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grace -->
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #0284ff, #00d1ff);">
+            <div class="stat-overlay"></div>
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <p class="text-white text-uppercase mb-1">Đang gia hạn</p>
+                    <h4 class="text-white fw-bold">@Model.Items.Count(x => x.Status == "grace")</h4>
+                </div>
+                <div class="stat-icon-box">
+                    <i class="fa-solid fa-spinner text-white fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hết hiệu lực -->
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #e82c70, #ff5ba6);">
+            <div class="stat-overlay"></div>
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <p class="text-white text-uppercase mb-1">Hết hiệu lực</p>
+                    <h4 class="text-white fw-bold">@Model.Items.Count(x => x.Status == "expired")</h4>
+                </div>
+                <div class="stat-icon-box">
+                    <i class="fa-solid fa-ban text-white fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<div class="main-card">
+
+    <!-- Header -->
+    <div class="main-header">
+        <div>
+            <h3>DANH SÁCH HỢP ĐỒNG BẢO HIỂM</h3>
+            <p>Theo dõi, lọc và quản lý hợp đồng bảo hiểm</p>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <a href="javascript:void(0);" id="exportExcelBtn" class="btn btn-outline-red">
+                <i class="fa-solid fa-file-export me-1"></i>
+                Xuất Excel
+            </a>
+        </div>
+
+    </div>
+
+
+    <!-- Bộ lọc -->
+    <div class="filter-section">
+        <form method="get" id="filterForm">
+            <input type="hidden" name="per_page" value="@Model.PageSize" />
+
+            <div class="row mb-2">
+
+                <div class="col-md-3 position-relative">
+                    <i class="fa-solid fa-magnifying-glass search-icon mr-1"></i>
+                    <input type="text" class="input-input" style="padding-left: 30px;" name="search"
+                           value="@ViewBag.Search" placeholder="Mã hợp đồng, tên khách hàng...">
+
+                </div>
+
+                <div class="col-md-2">
+                    <select name="status" class="select-input">
+                        <option value="">Tất cả trạng thái</option>
+
+                        <option value="inforce" selected="@(ViewBag.Status == "inforce")">Hiệu lực</option>
+                        <option value="grace" selected="@(ViewBag.Status == "grace")">Gia hạn phí</option>
+                        <option value="expired" selected="@(ViewBag.Status == "expired")">Hết hiệu lực</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <select name="product" id="productSelect" class="select-input">
+                        <option value="">Tất cả sản phẩm</option>
+
+                        @foreach (var p in ViewBag.Products)
+                        {
+                            <option value="@p.ProductCode" selected="@(ViewBag.Product == p.ProductCode)">
+                                @p.Name
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <select id="advisorSelect" name="advisor" class="select-input">
+                        <option value="">Tất cả tư vấn viên</option>
+                        @foreach (var advisor in ViewBag.Advisors)
+                        {
+                            <option value="@advisor.Code" selected="@(ViewBag.Advisor == advisor.Code)">@advisor.FullName</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-1 d-flex justify-content-center">
+                    <button type="button" class="btn-outline-red"
+                            style="height:42px;"
+                            onclick="window.location='@Url.Action("Index")'">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                </div>
+
+            </div>
+
+
+            <div class="row align-items-end mt-4">
+
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Từ giá</label>
+                    <input type="number" class="input-input" name="price_from"
+                           value="@ViewBag.PriceFrom" placeholder="VNĐ">
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Đến giá</label>
+                    <input type="number" class="input-input" name="price_to"
+                           value="@ViewBag.PriceTo" placeholder="VNĐ">
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Từ ngày</label>
+                    <input type="date" class="input-input" name="from_date"
+                           value="@ViewBag.FromDate">
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Đến ngày</label>
+                    <input type="date" class="input-input" name="to_date"
+                           value="@ViewBag.ToDate">
+                </div>
+
+            </div>
+            <button type="submit" style="display:none"></button>
+        </form>
+
+        <!-- Bulk actions -->
+        <div class="mt-4 d-flex gap-3">
+            <button type="button" class="btn-outline-red" onclick="bulkUpdateStatus()">
+                <i class="fa-solid fa-pen-to-square me-1"></i>
+                Cập nhật trạng thái hàng loạt
+            </button>
+
+            <button type="button" class="btn-red" onclick="bulkDelete()">
+                <i class="fa-solid fa-trash-can me-1"></i>
+                Xóa hàng loạt
+            </button>
+        </div>
+
+    </div>
+
+
+
+    <!-- TABLE -->
+    <div class="table-wrapper">
+
+        <table class="table align-middle mb-0">
+            <thead class="text-center">
+
+                <tr>
+                    <th>
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="checkbox" id="checkAll">
+                            <span>STT</span>
+                        </div>
+                    </th>
+                    <th>MÃ HỢP ĐỒNG</th>
+                    <th>KHÁCH HÀNG</th>
+                    <th>SẢN PHẨM</th>
+                    <th>
+                        SỐ TIỀN
+                        <a href="?sort=@(ViewBag.Sort == "price_asc" ? "price_desc" : "price_asc")">
+                            <i class="fa-solid @SortIcon("price") ms-1"></i>
+                        </a>
+                    </th>
+                    <th>TRẠNG THÁI</th>
+                    <th>
+                        NGÀY CẤP
+                        <a href="?sort=@(ViewBag.Sort == "date_asc" ? "date_desc" : "date_asc")">
+                            <i class="fa-solid @SortIcon("date") ms-1"></i>
+                        </a>
+                    </th>
+                    <th>THAO TÁC</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+                @if (Model.Items.Any())
+                {
+                    var index = (Model.CurrentPage - 1) * Model.PageSize + 1;
+
+                    foreach (var p in Model.Items)
+                    {
+                        string statusVN = p.Status switch
+                        {
+                            "inforce" => "Hiệu lực",
+                            "grace" => "Gia hạn phí",
+                            "expired" => "Hết hiệu lực",
+                            "terminated" => "Đã chấm dứt",
+                            _ => "Không xác định"
+                        };
+
+                        string badge = p.Status switch
+                        {
+                            "inforce" => "status-inforce",
+                            "grace" => "status-grace",
+                            "expired" => "status-expired",
+                            "terminated" => "status-terminated",
+                            _ => "bg-secondary text-white"
+                        };
+
+                        <tr class="text-center">
+
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="checkbox" class="row-check" value="@p.Id">
+                                    <span>@index</span>
+                                </div>
+                            </td>
+
+                            <td class="fw-semibold text-primary">@p.PolicyNo</td>
+                            <td>@p.Customer</td>
+                            <td>@p.Product</td>
+                            <td class="text-end">@String.Format("{0:N0} ₫", p.SumAssured)</td>
+
+                            <td>
+                                <span class="badge-status @badge">@statusVN</span>
+                            </td>
+
+                            <td>@p.IssueDate.ToString("dd/MM/yyyy")</td>
+
+                            <td class="text-center">
+                                <div class="dropdown">
+                                    <button type="button" class="btn btn-action-dropdown dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fa-solid fa-gear"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end ">
+                                        <li>
+                                            <a class="dropdown-item d-flex align-items-center gap-2 text-success"
+                                               href="javascript:void(0);" onclick="viewPolicyDetails('@p.Id')">
+                                                <i class="fa-solid fa-eye"></i> Xem chi tiết
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item d-flex align-items-center gap-2 text-primary"
+                                               href="javascript:void(0);" onclick="editPolicy('@p.Id')">
+                                                <i class="fa-solid fa-pen"></i> Chỉnh sửa
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <button type="button"
+                                                    class="dropdown-item d-flex align-items-center gap-2 text-info"
+                                                    onclick="updateStatus('@p.Id')">
+                                                <i class="fa-solid fa-pen-to-square"></i> Cập nhật trạng thái
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <form asp-action="Delete" asp-route-id="@p.Id" method="post">
+                                                <button type="submit"
+                                                        onclick="return confirm('Xóa hợp đồng này?')"
+                                                        class="dropdown-item d-flex align-items-center gap-2 text-danger">
+                                                    <i class="fa-solid fa-trash-can"></i> Xóa
+                                                </button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+
+                        index++;
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="py-4 text-center text-muted fst-italic">
+                            Không có hợp đồng nào được tìm thấy.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <!-- Footer -->
+    <div class="table-footer">
+        @await Html.PartialAsync("_Paginator", Model)
+    </div>
+
+    <div class="modal fade" id="editPolicyModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Cập nhật thông tin hợp đồng</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="editPolicyContent">
+                    <div class="text-center py-4 text-muted">Đang tải dữ liệu...</div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button class="btn btn-red" id="saveEditBtn">
+                        <i class="fa-solid fa-save me-1"></i> Lưu thay đổi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Chi Tiết Hợp Đồng -->
+    <div class="modal fade" id="policyDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg">
+
+                <!-- HEADER: Gradient + Icon -->
+                <div class="modal-header custom-header">
+                    <div class="d-flex align-items-center justify-content-between w-100">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="header-icon">
+                                <i class="fa-solid fa-file-shield"></i>
+                            </div>
+                            <div>
+                                <h3 class="mb-0 text-white fw-bold">Chi tiết hợp đồng</h3>
+                                <p class="mb-0 text-white-75 small" id="modalPolicyNo"></p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close btn-gray" data-bs-dismiss="modal"></button>
+                    </div>
+                </div>
+
+                <!-- BODY: Card Layout -->
+                <div class="modal-body custom-modal-body" id="policyDetailsContent">
+                    <!-- Loading mặc định -->
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Đang tải...</span>
+                        </div>
+                        <p class="mt-3 text-muted">Đang tải thông tin...</p>
+                    </div>
+
+                    <!-- Thêm bảng người thụ hưởng -->
+                    <div class="col-12">
+                        <label class="fw-semibold">Người thụ hưởng</label>
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Tên</th>
+                                    <th>Quan hệ</th>
+                                    <th>Phần trăm chia sẻ</th>
+                                    <th>Ngày sinh</th>
+                                    <th>Số CMND</th>
+                                </tr>
+                            </thead>
+                            <tbody id="beneficiaryTableBody">
+                                <!-- Người thụ hưởng sẽ được chèn ở đây -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- FOOTER: Nút hành động -->
+                <div class="modal-footer custom-footer d-flex justify-content-between">
+                    <div>
+                        <button type="button" class="btn btn-sm btn-red btn-print me-2">
+                            <i class="fa-solid fa-print"></i> In PDF
+                        </button>
+                        <button type="button" class="btn btn-sm btn-red btn-email">
+                            <i class="fa-solid fa-envelope"></i> Gửi Email
+                        </button>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-gray" data-bs-dismiss="modal">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+
+@section Scripts {
+    <script src="~/js/policies.js"></script>
+}
+@if (TempData["ToastMessage"] != null)
+{
+    <script>
+        localStorage.setItem('toastAfterReload', JSON.stringify({
+            type: '@TempData["ToastType"]',
+            message: '@TempData["ToastMessage"]'
+        }));
+    </script>
+}

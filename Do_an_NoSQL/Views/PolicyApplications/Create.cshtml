@@ -1,0 +1,339 @@
+﻿@model Do_an_NoSQL.Models.ViewModels.PolicyApplicationCreateVM
+
+@{
+    ViewData["Title"] = "Tạo hồ sơ bảo hiểm";
+}
+
+<link rel="stylesheet" href="~/css/policy-application.css" />
+
+<div class="main-card p-4">
+
+    <!-- Title -->
+    <h4 class="fw-bold mb-2">
+        <i class="fa-solid fa-plus text-danger me-2"></i> TẠO HỒ SƠ BẢO HIỂM
+    </h4>
+    <hr class="mb-4" />
+
+    <form method="post" enctype="multipart/form-data">
+        <div class="row">
+
+            <h5 for="beneficiaries">Thông tin chung</h5>
+            <!-- LEFT COLUMN -->
+            <div class="col-md-6">
+
+                <!-- Customer -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Khách hàng</label>
+                    <select name="CustomerId" class="select-input" required>
+                        <option value="" disabled selected>-- Chọn khách hàng --</option>
+                        @foreach (var c in ViewBag.Customers)
+                        {
+                            <option value="@c.CustomerCode">@c.FullName</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Advisor -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Tư vấn viên</label>
+                    <select name="AdvisorId" class="select-input" required>
+                        <option value="" disabled selected>-- Chọn tư vấn viên --</option>
+                        @foreach (var a in ViewBag.Advisors)
+                        {
+                            <option value="@a.Code">@a.FullName</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Product -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Sản phẩm bảo hiểm</label>
+                    <select name="ProductCode" class="select-input" required>
+                        <option value="" disabled selected>-- Chọn sản phẩm --</option>
+                        @foreach (var p in ViewBag.Products)
+                        {
+                            <option value="@p.ProductCode">@p.Name</option>
+                        }
+                    </select>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN -->
+            <div class="col-md-6">
+
+                <!-- Sum assured -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Số tiền bảo hiểm</label>
+                    <input type="number" name="SumAssured" class="input-input" placeholder="Nhập số tiền (VNĐ)...">
+                </div>
+
+                <!-- Premium Mode -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Hình thức đóng phí</label>
+                    <select name="PremiumMode" class="select-input">
+                        <option value="" disabled selected>-- Chọn hình thức --</option>
+                        <option value="yearly">Năm</option>
+                        <option value="halfyear">Nửa năm</option>
+                        <option value="quarter">Quý</option>
+                        <option value="month">Tháng</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Phí gốc (Base Premium)</label>
+                    <input type="text" name="BasePremium" id="BasePremium" class="input-input" readonly />
+                </div>
+
+            </div>
+
+            <!-- Notes -->
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Ghi chú</label>
+                <textarea name="Notes" class="input-input" rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <h5 for="beneficiaries">Người thụ hưởng</h5>
+                <div id="beneficiaries" class="row">
+                    <div class="beneficiary col-md-6">
+                        <label class="form-label fw-semibold">Họ và tên:</label>
+                        <input type="text" name="Beneficiaries[0].FullName" class="input-input" />
+                    </div>
+                    <div class="beneficiary col-md-6">
+                        <label class="form-label fw-semibold">Quan hệ:</label>
+                        <input type="text" name="Beneficiaries[0].Relation" class="input-input" />
+                    </div>
+
+                    <div class="beneficiary col-md-6">
+                        <label class="form-label fw-semibold">Phần trăm chia sẻ:</label>
+                        <input type="number" name="Beneficiaries[0].SharePercent" class="input-input" />
+                    </div>
+                    <div class="beneficiary col-md-6">
+                        <label class="form-label fw-semibold">Ngày sinh:</label>
+                        <input type="date" name="Beneficiaries[0].Dob" class="input-input" />
+                    </div>
+
+                    <div class="beneficiary col-md-6">
+                        <label class="form-label fw-semibold">Số CMND:</label>
+                        <input type="text" name="Beneficiaries[0].NationalId" class="input-input" />
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
+        <!-- FILE UPLOAD -->
+        <div class="mt-4">
+            <label class="form-label fw-semibold">Upload tài liệu</label>
+            <div class="upload-zone p-3 border rounded text-center mb-3" style="border-style: dashed !important; background-color: #f8f9fa; cursor: pointer;">
+                <i class="fa-solid fa-cloud-arrow-up fa-2x text-muted mb-2"></i>
+                <p class="mb-1">Kéo thả file vào đây hoặc <span class="text-primary">chọn file</span></p>
+                <p class="text-muted small mb-0">Cho phép: JPG, PNG, PDF, DOCX (Tối đa 10MB/file)</p>
+                <input type="file" name="Documents" multiple class="form-control d-none" id="fileInput" />
+            </div>
+
+            <!-- FILE PREVIEW -->
+            <div id="fileList" class="file-preview-container"></div>
+        </div>
+        <!-- BUTTONS -->
+        <div class="mt-4">
+            <button type="submit" class="btn-red">
+                <i class="fa-solid fa-save me-1"></i> Lưu hồ sơ
+            </button>
+
+            <a asp-action="Index" class="btn-outline-gray ms-2">
+                <i class="fa-solid fa-xmark me-1"></i> Huỷ
+            </a>
+        </div>
+
+    </form>
+</div>
+
+<script>
+    const uploadZone = document.querySelector(".upload-zone");
+    const fileInput = document.getElementById("fileInput");
+    const fileList = document.getElementById("fileList");
+    const form = document.querySelector("form");
+
+    // Giữ file ở đây (cố định, không bị reset khi chọn mới)
+    let selectedFiles = [];
+
+    // Click vào vùng upload => mở chọn file
+    uploadZone.addEventListener("click", () => fileInput.click());
+
+    // Kéo thả file
+    uploadZone.addEventListener("dragover", e => {
+        e.preventDefault();
+        uploadZone.classList.add("border-primary", "bg-light");
+    });
+    uploadZone.addEventListener("dragleave", () => {
+        uploadZone.classList.remove("border-primary", "bg-light");
+    });
+    uploadZone.addEventListener("drop", e => {
+        e.preventDefault();
+        uploadZone.classList.remove("border-primary", "bg-light");
+        const newFiles = Array.from(e.dataTransfer.files);
+        addFiles(newFiles);
+    });
+
+    // Khi chọn file bằng dialog
+    fileInput.addEventListener("change", e => {
+        const newFiles = Array.from(e.target.files);
+        addFiles(newFiles);
+        fileInput.value = ""; // reset để chọn lại cùng tên
+    });
+
+    // ✅ Thêm file vào danh sách (merge đúng cách)
+    function addFiles(newFiles) {
+        // Bỏ trùng (nếu có)
+        const uniqueNew = newFiles.filter(nf =>
+            !selectedFiles.some(sf => sf.name === nf.name && sf.size === nf.size)
+        );
+
+        // Giới hạn dung lượng
+        const valid = uniqueNew.filter(f => f.size <= 10 * 1024 * 1024);
+        const tooBig = uniqueNew.filter(f => f.size > 10 * 1024 * 1024);
+        if (tooBig.length > 0) {
+            window.showToast?.("warning", "Một số file >10MB đã bị bỏ qua!");
+        }
+
+        selectedFiles = [...selectedFiles, ...valid];
+        renderFileList();
+    }
+
+    // ✅ Hiển thị danh sách
+    function renderFileList() {
+        fileList.innerHTML = "";
+        if (selectedFiles.length === 0) return;
+
+        selectedFiles.forEach((file, i) => {
+            const ext = file.name.split(".").pop().toLowerCase();
+            const imgTypes = ["jpg", "jpeg", "png", "gif", "bmp", "webp"];
+            const icons = {
+                pdf: '<i class="fa-solid fa-file-pdf text-danger"></i>',
+                doc: '<i class="fa-solid fa-file-word text-primary"></i>',
+                docx: '<i class="fa-solid fa-file-word text-primary"></i>',
+                xls: '<i class="fa-solid fa-file-excel text-success"></i>',
+                xlsx: '<i class="fa-solid fa-file-excel text-success"></i>'
+            };
+            const icon = imgTypes.includes(ext)
+                ? `<img src="${URL.createObjectURL(file)}" class="file-thumb" />`
+                : (icons[ext] || '<i class="fa-solid fa-file text-secondary"></i>');
+
+            const div = document.createElement("div");
+            div.className = "file-item";
+            div.innerHTML = `
+                <div class="file-info">
+                    <div class="file-icon">${icon}</div>
+                    <div class="file-meta">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-remove" onclick="removeFile(${i})">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
+            fileList.appendChild(div);
+        });
+    }
+
+    // ✅ Xóa file
+    window.removeFile = function(index) {
+        selectedFiles.splice(index, 1);
+        renderFileList();
+    }
+
+    // ✅ QUAN TRỌNG: Submit form bằng FormData để đảm bảo gửi đủ file
+    form.addEventListener("submit", function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        formData.delete("Documents");
+
+        selectedFiles.forEach(file => {
+            formData.append("Documents", file);
+        });
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Đang lưu...';
+
+        fetch(form.action, {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // ✅ Lưu toast vào localStorage
+                localStorage.setItem('toastAfterReload', JSON.stringify({
+                    type: 'success',
+                    message: data.message
+                }));
+                // ✅ Redirect về Index
+                window.location.href = '@Url.Action("Index", "PolicyApplications")';
+            } else {
+                window.showToast?.("error", data.message || "Có lỗi xảy ra!");
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            window.showToast?.("error", "Có lỗi xảy ra khi lưu hồ sơ!");
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        });
+    });
+</script>
+
+<script>
+
+    async function calcBasePremium() {
+        let sumAssured = Number(document.querySelector("input[name='SumAssured']").value || 0);
+        let mode = document.querySelector("select[name='PremiumMode']").value;
+        let productCode = document.querySelector("select[name='ProductCode']").value;
+
+        // Không đủ dữ liệu -> không tính
+        if (!sumAssured || !mode || !productCode) return;
+
+        let req = {
+            sumAssured: sumAssured,
+            premiumMode: mode,
+            productCode: productCode
+        };
+
+        try {
+            let res = await fetch("/PolicyApplications/CalculatePremium", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(req)
+            });
+
+            let data = await res.json();
+
+            if (data.success && data.basePremium >= 0) {
+                document.getElementById("BasePremium").value =
+                    data.basePremium.toLocaleString("vi-VN") + " đ";
+            }
+
+        } catch (e) {
+            console.error("Premium calc error:", e);
+        }
+    }
+
+    // ===== GẮN SỰ KIỆN =====
+    document.querySelector("input[name='SumAssured']")
+        .addEventListener("input", calcBasePremium);
+
+    document.querySelector("select[name='PremiumMode']")
+        .addEventListener("change", calcBasePremium);
+
+    document.querySelector("select[name='ProductCode']")
+        .addEventListener("change", calcBasePremium);
+
+</script>

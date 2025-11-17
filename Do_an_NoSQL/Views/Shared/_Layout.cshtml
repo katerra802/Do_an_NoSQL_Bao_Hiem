@@ -5,8 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Quản lý Prudential</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <!-- ========== GLOBAL CSS ========== -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/module-common.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Do_an_NoSQL.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    
 
     <style>
         * {
@@ -147,7 +154,6 @@
         }
 
         .sidebar-menu-item {
-            margin-bottom: 8px;
         }
 
         .sidebar-menu-link {
@@ -352,19 +358,19 @@
                         </a>
                     </li>
                     <li class="sidebar-menu-item">
-                        <a href="/customer" class="sidebar-menu-link">
+                        <a href="/customers" class="sidebar-menu-link">
                             <span class="sidebar-menu-icon">👥</span>
                             <span>Quản lý khách hàng</span>
                         </a>
                     </li>
                     <li class="sidebar-menu-item">
-                        <a href="/request-item" class="sidebar-menu-link">
+                        <a href="/PolicyApplications" class="sidebar-menu-link">
                             <span class="sidebar-menu">📝</span>
                             <span>Quản lý yêu cầu bảo hiểm</span>
                         </a>
                     </li>
                     <li class="sidebar-menu-item">
-                        <a href="/contracts" class="sidebar-menu-link">
+                        <a href="/Policies" class="sidebar-menu-link">
                             <span class="sidebar-menu-icon">📄</span>
                             <span>Quản lý hợp đồng</span>
                         </a>
@@ -376,7 +382,7 @@
                         </a>
                     </li>
                     <li class="sidebar-menu-item">
-                        <a href="/claims" class="sidebar-menu-link">
+                        <a href="#" class="sidebar-menu-link">
                             <span class="sidebar-menu-icon">💰</span>
                             <span>Yêu cầu bồi thường</span>
                         </a>
@@ -427,10 +433,18 @@
         </main>
     </div>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/js/module-common.js"></script>
+    <script src="~/js/site.js"></script>
+
+    <!-- Scripts của từng trang -->
     @await RenderSectionAsync("Scripts", required: false)
+
 
     <script>
         // Toggle sidebar on mobile
@@ -470,5 +484,6 @@
             });
         });
     </script>
+
 </body>
 </html>

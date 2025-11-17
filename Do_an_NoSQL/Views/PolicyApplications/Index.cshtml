@@ -1,0 +1,615 @@
+﻿@model PagedResult<dynamic>
+
+@{
+    ViewData["Title"] = "Danh sách yêu cầu bảo hiểm";
+}
+
+
+@functions {
+    string SortIcon(string field)
+    {
+        // field: "price" hoặc "date"
+        string sort = (ViewBag.Sort ?? "").ToString();
+
+        return sort switch
+        {
+            "price_asc" when field == "price" => "fa-sort-up",
+            "price_desc" when field == "price" => "fa-sort-down",
+
+            "date_asc" when field == "date" => "fa-sort-up",
+            "date_desc" when field == "date" => "fa-sort-down",
+
+            _ => "fa-sort"
+        };
+    }
+}
+
+<div class="row py-3">
+    <!-- Tổng hồ sơ -->
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #ff3b3f, #ff8a00);">
+            <div class="stat-overlay"></div>
+            <div class="d-flex align-items-center justify-content-between position-relative" style="z-index:10;">
+                <div>
+                    <p class="text-white text-uppercase mb-1">Tổng hồ sơ</p>
+                    <h4 class="text-white fw-bold">@Model.TotalItems</h4>
+                </div>
+                <div class="stat-icon-box">
+                    <i class="fa-solid fa-folder-open text-white fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Đã duyệt -->
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #009e60, #0666d0);">
+            <div class="stat-overlay"></div>
+            <div class="d-flex align-items-center justify-content-between position-relative" style="z-index:10;">
+                <div>
+                    <p class="text-white text-uppercase mb-1">Đã duyệt</p>
+                    <h4 class="text-white fw-bold">@Model.Items.Count(x => x.Status == "approved")</h4>
+                </div>
+                <div class="stat-icon-box">
+                    <i class="fa-solid fa-check text-white fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Đang xét -->
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #0284ff, #00d1ff);">
+            <div class="stat-overlay"></div>
+            <div class="d-flex align-items-center justify-content-between position-relative" style="z-index:10;">
+                <div>
+                    <p class="text-white text-uppercase mb-1">Đang xét</p>
+                    <h4 class="text-white fw-bold">@Model.Items.Count(x => x.Status == "under_review")</h4>
+                </div>
+                <div class="stat-icon-box">
+                    <i class="fa-solid fa-spinner text-white fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Từ chối -->
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #e82c70, #ff5ba6);">
+            <div class="stat-overlay"></div>
+            <div class="d-flex align-items-center justify-content-between position-relative" style="z-index:10;">
+                <div>
+                    <p class="text-white text-uppercase mb-1">Từ chối</p>
+                    <h4 class="text-white fw-bold">@Model.Items.Count(x => x.Status == "rejected")</h4>
+                </div>
+                <div class="stat-icon-box">
+                    <i class="fa-solid fa-ban text-white fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    <div class="main-card">
+
+
+        <!-- Header -->
+        <div class="main-header">
+            <div>
+                <h3>DANH SÁCH YÊU CẦU BẢO HIỂM</h3>
+                <p>Theo dõi, lọc và quản lý hồ sơ yêu cầu bảo hiểm</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+    <a href="@Url.Action("DownloadTemplate")" class="btn btn-outline-red">
+        <i class="fa-solid fa-file-excel me-1"></i> Tải file mẫu
+    </a>
+    <a href="#" class="btn btn-red" data-bs-toggle="modal" data-bs-target="#importModal">
+        <i class="fa-solid fa-file-import me-1"></i> Import Excel
+    </a>
+    <a href="javascript:void(0);" id="exportExcelBtn" class="btn btn-outline-red">
+    <i class="fa-solid fa-file-export me-1"></i> Xuất Excel
+</a>
+    <a asp-action="Create" class="btn btn-red">
+        <i class="fa-solid fa-plus me-1"></i> Tạo hồ sơ
+    </a>
+</div>
+        </div>
+
+        <!-- Bộ lọc -->
+        <div class="filter-section">
+            <form method="get" id="filterForm">
+            <button type="submit" style="display:none"></button>
+                <div class="row mb-2">
+    <!-- Search -->
+    <div class="col-md-3 position-relative">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text"
+               class="input-input ps-5"
+               name="search"
+               value="@ViewBag.Search"
+               placeholder="Tìm kiếm hồ sơ hoặc khách hàng...">
+    </div>
+
+    <!-- Status select -->
+    <div class="col-md-2">
+                <select name="status" class="select-input">
+                    <option value="">Tất cả trạng thái</option>
+
+                    <option value="approved" selected="@(ViewBag.Status == "approved")">
+                        Đã duyệt
+                    </option>
+
+                    <option value="under_review" selected="@(ViewBag.Status == "under_review")">
+                        Đang xét
+                    </option>
+
+                    <option value="submitted" selected="@(ViewBag.Status == "submitted")">
+                        Đã nộp
+                    </option>
+
+                    <option value="rejected" selected="@(ViewBag.Status == "rejected")">
+                        Từ chối
+                    </option>
+                    </select>
+
+                </div>
+                <!-- Product select (SELECT2) -->
+<div class="col-md-3">
+    <select id="productSelect" name="product" class="select-input">
+        <option value="">Tất cả sản phẩm</option>
+        @foreach (var product in ViewBag.Products)
+        {
+            <option value="@product.ProductCode" selected="@(ViewBag.Product == product.ProductCode)">@product.Name</option>
+        }
+    </select>
+</div>
+
+<!-- Advisor select (SELECT2) -->
+<div class="col-md-3">
+    <select id="advisorSelect" name="advisor" class="select-input">
+        <option value="">Tất cả tư vấn viên</option>
+        @foreach (var advisor in ViewBag.Advisors)
+        {
+            <option value="@advisor.Code" selected="@(ViewBag.Advisor == advisor.Code)">@advisor.FullName</option>
+        }
+    </select>
+</div>
+
+                <!-- Button Reset -->
+                <div class="col-md-1 d-flex justify-content-center">
+                    <button type="button"
+                            class="btn-outline-red"
+                            style="height: 42px;"
+                            onclick="window.location='@Url.Action("Index")'">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="row align-items-end">
+                <!-- Price From -->
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Từ giá</label>
+                    <input type="number"
+                           name="price_from"
+                           class="input-input"
+                           placeholder="VNĐ"
+                           value="@ViewBag.PriceFrom">
+                </div>
+
+                <!-- Price To -->
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Đến giá</label>
+                    <input type="number"
+                           name="price_to"
+                           class="input-input"
+                           placeholder="VNĐ"
+                           value="@ViewBag.PriceTo">
+                </div>
+
+                <!-- From date -->
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Từ ngày</label>
+                    <input type="date" name="from_date" value="@ViewBag.FromDate" class="input-input">
+                </div>
+
+                <!-- To date -->
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Đến ngày</label>
+                    <input type="date" name="to_date" value="@ViewBag.ToDate" class="input-input">
+                </div>
+            </div>
+
+</form>
+
+
+           <!-- Bulk actions -->
+<div class="mt-4 d-flex gap-3">
+    <button type="button" class="btn-outline-red" onclick="bulkUpdateStatus()">
+        <i class="fa-solid fa-pen-to-square me-1"></i> Cập nhật trạng thái hàng loạt
+    </button>
+
+
+    <button type="button" class="btn-red" onclick="bulkDelete()">
+        <i class="fa-solid fa-trash-can me-1"></i> Xóa hàng loạt
+    </button>
+</div>
+        </div>
+
+
+
+    <div class="table-wrapper">
+        <table class="table align-middle mb-0">
+            <thead class="text-center">
+                <tr>
+                    <th>
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="checkbox" id="checkAll">
+                            <span>STT</span>
+                        </div>
+                    </th>
+                    <th>MÃ HỒ SƠ</th>
+                    <th>KHÁCH HÀNG</th>
+                    <th>BẢO HIỂM</th>
+                    <th>
+    SỐ TIỀN
+    <a href="@Url.Action(null, new {
+        sort = (ViewBag.Sort == "price_asc" ? "price_desc" : "price_asc"),
+        search = ViewBag.Search,
+        status = ViewBag.Status,
+        from_date = ViewBag.FromDate?.ToString("yyyy-MM-dd"),
+        to_date = ViewBag.ToDate?.ToString("yyyy-MM-dd"),
+        price_from = ViewBag.PriceFrom,
+        price_to = ViewBag.PriceTo,
+        per_page = Model.PageSize
+    })">
+        <i class="fa-solid @SortIcon("price") ms-1"></i>
+    </a>
+</th>
+                    <th>TRẠNG THÁI</th>
+                    <th>
+    NGÀY NỘP
+    <a href="@Url.Action(null, new {
+        sort = (ViewBag.Sort == "date_asc" ? "date_desc" : "date_asc"),
+        search = ViewBag.Search,
+        status = ViewBag.Status,
+        from_date = ViewBag.FromDate?.ToString("yyyy-MM-dd"),
+        to_date = ViewBag.ToDate?.ToString("yyyy-MM-dd"),
+        price_from = ViewBag.PriceFrom,
+        price_to = ViewBag.PriceTo,
+        per_page = Model.PageSize
+    })">
+        <i class="fa-solid @SortIcon("date") ms-1"></i>
+    </a>
+</th>
+                    <th>THAO TÁC</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (Model.Items.Any())
+                {
+                    var i = (Model.CurrentPage - 1) * Model.PageSize + 1;
+
+                    @foreach (var app in Model.Items)
+                    {
+                        var status = app?.Status?.ToString().ToLower() ?? "chưa xác định";
+
+                        status = app.Status switch
+{
+    "submitted"            => "Đã nộp",
+    "under_review"         => "Đang xét duyệt",
+    "waiting_confirmation" => "Chờ khách xác nhận phí",
+    "confirmed"            => "Khách đã xác nhận phí",
+    "ready_to_issue"       => "Sẵn sàng phát hành",
+    "approved"             => "Đã duyệt rủi ro",
+    "rejected"             => "Từ chối",
+    "issued"               => "Đã phát hành hợp đồng",
+    _                      => "Không xác định"
+};
+
+                        var badge = app.Status switch
+{
+    "submitted"            => "status-submitted",
+    "under_review"         => "status-review",
+    "waiting_confirmation" => "status-waiting",
+    "confirmed"            => "status-confirmed",
+    "ready_to_issue"       => "status-ready",
+    "approved"             => "status-approved",
+    "rejected"             => "status-rejected",
+    "issued"               => "status-issued",
+    _                      => "bg-secondary text-white"
+};  
+
+                        <tr class="text-center">
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="checkbox" name="ids" value="@app.Id" class="row-check" form="bulkForm">
+                                    <span>@i</span>
+                                </div>
+                            </td>
+                            <td class="fw-semibold text-primary">@app.AppNo</td>
+                            <td>@app.Customer</td>
+                            <td>@app.Product</td>
+                            <td class="text-end">@String.Format("{0:N0} ₫", app.SumAssured)</td>
+                            <td><span class="badge-status @badge">@status</span></td>
+                            <td>@app.SubmittedAt.ToString("dd/MM/yyyy")</td>
+                            <td class="text-center">
+                                <div class="dropdown">
+                                    <button class="btn btn-action-dropdown dropdown-toggle"
+                                            type="button"
+                                            data-bs-toggle="dropdown"
+                                            aria-expanded="false">
+                                        <i class="fa-solid fa-gear"></i>
+                                    </button>
+
+                                    <ul class="dropdown-menu dropdown-menu-end">
+
+    <!-- Xem chi tiết -->
+    <li>
+        <a class="dropdown-item d-flex align-items-center gap-2 text-success"
+           href="javascript:void(0);" onclick="viewPolicyDetails('@app.Id')">
+            <i class="fa-solid fa-eye"></i>
+            <span>Xem chi tiết</span>
+        </a>
+    </li>
+
+    <!-- Chỉnh sửa -->
+    <li>
+        <a class="dropdown-item d-flex align-items-center gap-2 text-primary"
+           asp-action="Edit" asp-route-id="@app.Id">
+            <i class="fa-solid fa-pen"></i>
+            <span>Chỉnh sửa</span>
+        </a>
+    </li>
+
+    <!-- Duyệt hồ sơ (Thẩm định) -->
+    @if (app.Status == "submitted" || app.Status == "under_review")
+    {
+        <li>
+            <a class="dropdown-item text-success fw-semibold" 
+               href="javascript:void(0)" 
+               onclick="openUnderwritingModal('@app.Id', @app.BasePremium)">
+               <i class="fa-solid fa-user-check"></i> Duyệt hồ sơ
+            </a>
+        </li>
+    }
+
+    <!-- Khách hàng xác nhận phí -->
+@if (app.Status == "approved")
+{
+    <li>
+        <button class="dropdown-item d-flex align-items-center gap-2 text-primary"
+                onclick="confirmPremium('@app.Id')">
+            <i class="fa-solid fa-clipboard-check"></i>
+            Khách hàng xác nhận phí
+        </button>
+    </li>
+}
+else
+{
+    <li>
+        <button class="dropdown-item d-flex align-items-center gap-2 text-muted disabled">
+            <i class="fa-solid fa-clipboard-check"></i>
+            Khách hàng xác nhận phí
+        </button>
+    </li>
+}
+
+
+    <!-- Thu phí bảo hiểm đầu tiên -->
+    @if (app.Status == "confirmed")
+    {
+        <li>
+            <button class="dropdown-item d-flex align-items-center gap-2 text-warning"
+                    onclick="collectFirstPremium('@app.Id')">
+                <i class="fa-solid fa-dollar-sign"></i>
+                Thu phí đầu tiên
+            </button>
+        </li>
+    }
+    else
+    {
+        <li>
+            <button class="dropdown-item d-flex align-items-center gap-2 text-muted disabled">
+                <i class="fa-solid fa-dollar-sign"></i>
+                Thu phí đầu tiên
+            </button>
+        </li>
+    }
+
+    <!-- Tạo hợp đồng (ready_to_issue) -->
+    @if (app.Status == "ready_to_issue")
+    {
+        <li>
+            <a class="dropdown-item d-flex align-items-center gap-2 text-danger"
+               href="javascript:void(0)"
+               onclick="previewContract('@app.Id')">
+                <i class="fa-solid fa-file-signature"></i>
+                <span>Tạo hợp đồng</span>
+            </a>
+        </li>
+    }
+    else
+    {
+        <li>
+            <a class="dropdown-item d-flex align-items-center gap-2 text-muted disabled"
+               href="javascript:void(0)">
+                <i class="fa-solid fa-file-signature"></i>
+                <span>Tạo hợp đồng</span>
+            </a>
+        </li>
+    }
+
+    <!-- Xóa -->
+    <li>
+        <button type="button"
+                class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                onclick="confirmDelete('@app.Id')">
+            <i class="fa-solid fa-trash-can"></i>
+            <span>Xóa</span>
+        </button>
+    </li>
+
+</ul>
+
+                                </div>
+                            </td>
+                        </tr>
+
+                        i++;
+                    }
+
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="10" class="py-4 text-center text-muted fst-italic">Không có hồ sơ nào được tìm thấy.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-footer">
+        <div>@await Html.PartialAsync("_Paginator", Model)</div>
+    </div>
+
+
+    <!-- Modal để Import File Excel -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importModalLabel">Import File Excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form asp-action="ImportExcel" method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label">Chọn file Excel để Import</label>
+                        <input type="file" name="file" class="form-control" required />
+                    </div>
+                    <button type="submit" class="btn btn-red">Import</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal Chi Tiết Hồ Sơ -->
+<div class="modal fade" id="policyDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+            
+            <!-- HEADER: Gradient + Icon -->
+            <div class="modal-header custom-header">
+                <div class="d-flex align-items-center justify-content-between w-100">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="header-icon">
+                            <i class="fa-solid fa-file-shield"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0 text-white fw-bold">Hồ Sơ Bảo Hiểm</h3>
+                            <p class="mb-0 text-white-75 small" id="modalAppNo"></p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-gray" data-bs-dismiss="modal"></button>
+                </div>
+            </div>
+
+            <!-- BODY: Card Layout -->
+            <div class="modal-body custom-modal-body" id="policyDetailsContent">
+                <!-- Loading mặc định -->
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Đang tải...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Đang tải thông tin...</p>
+                </div>
+            </div>
+
+            <!-- FOOTER: Nút hành động -->
+            <div class="modal-footer custom-footer d-flex justify-content-between">
+                <div>
+                    <button type="button" class="btn btn-sm btn-red btn-print me-2">
+                        <i class="fa-solid fa-print"></i> In PDF
+                    </button>
+                    <button type="button" class="btn btn-sm btn-red btn-email">
+                        <i class="fa-solid fa-envelope"></i> Gửi Email
+                    </button>
+                </div>
+                <button type="button" class="btn btn-sm btn-gray" data-bs-dismiss="modal">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL TẠO HỢP ĐỒNG -->
+<div class="modal fade" id="createPolicyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+            
+            <!-- HEADER -->
+            <div class="modal-header custom-header">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="header-icon">
+                        <i class="fa-solid fa-file-contract"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0 text-white fw-bold">Tạo Hợp Đồng</h3>
+                        <p class="mb-0 text-white-75 small" id="modalPolicyAppNo"></p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-gray" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- BODY -->
+            <div class="modal-body custom-modal-body" id="createPolicyContent">
+                <!-- Loading mặc định -->
+                <div class="text-center py-5" id="loadingDiv">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-3 text-muted">Đang tải thông tin...</p>
+                </div>
+
+                <!-- Hiển thị thông tin sau khi tải -->
+                <div id="policyDetailsDiv" style="display: none;">
+                    <h5 class="text-primary">Thông tin hợp đồng</h5>
+                    <p><strong>Số hợp đồng:</strong> <span id="policyNo"></span></p>
+                    <p><strong>Ngày phát hành:</strong> <span id="issueDate"></span></p>
+                    <p><strong>Ngày có hiệu lực:</strong> <span id="effectiveDate"></span></p>
+
+                    <h5 class="text-primary mt-4">Thông tin người thụ hưởng</h5>
+<div id="beneficiaryInputList"></div>
+                </div>
+            </div>
+
+            <!-- FOOTER -->
+            <div class="modal-footer custom-footer d-flex justify-content-between">
+                <button id="confirmCreatePolicyBtn" class="btn btn-sm btn-red" onclick="confirmCreatePolicy()">
+                    <i class="fa-solid fa-check"></i> Xác nhận tạo hợp đồng
+                </button>
+
+                <button type="button" class="btn btn-sm btn-gray" data-bs-dismiss="modal">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/policy-applications.js"></script>
+}
+
+</div>
+@if (TempData["ToastMessage"] != null)
+{
+    <script>
+        localStorage.setItem('toastAfterReload', JSON.stringify({
+            type: '@TempData["ToastType"]',
+            message: '@TempData["ToastMessage"]'
+        }));
+    </script>
+}

@@ -1,0 +1,330 @@
+﻿@model Do_an_NoSQL.Models.ViewModels.PolicyApplicationCreateVM
+
+@{
+    ViewData["Title"] = "Chỉnh sửa hồ sơ bảo hiểm";
+}
+
+<div class="main-card p-4">
+
+    <!-- Title -->
+    <h4 class="fw-bold mb-2">
+        <i class="fa-solid fa-pen-to-square text-primary me-2"></i> CHỈNH SỬA HỒ SƠ BẢO HIỂM
+    </h4>
+    <hr class="mb-4" />
+
+    <form asp-action="Edit" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="Id" value="@Model.Id" />
+        <input type="hidden" id="removeFilesInput" name="RemoveFiles" />
+
+        <div class="row">
+            <!-- LEFT -->
+            <div class="col-md-6">
+
+                <!-- Customer -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Khách hàng</label>
+                    <select name="CustomerId" class="select-input" required>
+                        <option value="" disabled>-- Chọn khách hàng --</option>
+                        @foreach (var c in ViewBag.Customers)
+                        {
+                            <option value="@c.CustomerCode" selected="@(Model.CustomerId == c.CustomerCode)">
+                                @c.FullName
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Advisor -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Tư vấn viên</label>
+                    <select name="AdvisorId" class="select-input" required>
+                        <option value="" disabled>-- Chọn tư vấn viên --</option>
+                        @foreach (var a in ViewBag.Advisors)
+                        {
+                            <option value="@a.Code" selected="@(Model.AdvisorId == a.Code)">
+                                @a.FullName
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Product -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Sản phẩm bảo hiểm</label>
+                    <select name="ProductCode" class="select-input" required>
+                        <option value="" disabled>-- Chọn sản phẩm --</option>
+                        @foreach (var p in ViewBag.Products)
+                        {
+                            <option value="@p.ProductCode" selected="@(Model.ProductCode == p.ProductCode)">
+                                @p.Name
+                            </option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <!-- RIGHT -->
+            <div class="col-md-6">
+                <!-- Sum assured -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Số tiền bảo hiểm</label>
+                    <input type="number" name="SumAssured" class="input-input"
+                           value="@Model.SumAssured" placeholder="Nhập số tiền (VNĐ)..." />
+                </div>
+
+                <!-- Premium -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Hình thức đóng phí</label>
+                    <select name="PremiumMode" class="select-input">
+                        <option value="yearly" selected="@(Model.PremiumMode == "yearly")">Năm</option>
+                        <option value="halfyear" selected="@(Model.PremiumMode == "halfyear")">Nửa năm</option>
+                        <option value="quarter" selected="@(Model.PremiumMode == "quarter")">Quý</option>
+                        <option value="month" selected="@(Model.PremiumMode == "month")">Tháng</option>
+                    </select>
+                </div>
+
+                <!-- Status -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Trạng thái</label>
+                    <select name="Status" class="select-input">
+                        <option value="submitted" selected="@(Model.Status == "submitted")">Đã nộp</option>
+                        <option value="under_review" selected="@(Model.Status == "under_review")">Đang xét duyệt</option>
+                        <option value="approved" selected="@(Model.Status == "approved")">Đã duyệt</option>
+                        <option value="rejected" selected="@(Model.Status == "rejected")">Từ chối</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Ghi chú</label>
+            <textarea name="Notes" class="input-input" rows="3">@Model.Notes</textarea>
+        </div>
+
+        <!-- FILE UPLOAD -->
+        <div class="mt-4">
+            <input type="hidden" id="removeFilesInput" name="RemoveFiles" />
+            <label class="form-label fw-semibold">Tài liệu hiện có</label>
+
+            @if (Model.ExistingFiles != null && Model.ExistingFiles.Any())
+            {
+                <div class="file-preview-container mb-3">
+                    @foreach (var file in Model.ExistingFiles)
+                    {
+                        var fileUrl = Url.Content("~/uploads/" + file);
+                        var ext = System.IO.Path.GetExtension(file).ToLower();
+
+                        string iconHtml = ext switch
+                        {
+                            ".pdf" => "<i class='fa-solid fa-file-pdf text-danger'></i>",
+                            ".doc" or ".docx" => "<i class='fa-solid fa-file-word text-primary'></i>",
+                            ".xls" or ".xlsx" => "<i class='fa-solid fa-file-excel text-success'></i>",
+                            ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".webp"
+                            => $"<img src='{fileUrl}' class='file-thumb' />",
+                            _ => "<i class='fa-solid fa-file text-secondary'></i>"
+                        };
+
+                        <div class="file-item">
+                            <div class="file-info">
+                                <div class="file-icon">@Html.Raw(iconHtml)</div>
+                                <div class="file-meta">
+                                    <a href="@fileUrl" target="_blank" class="file-name text-decoration-none">@file</a>
+                                    <div class="text-muted small">Tài liệu cũ</div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-remove" onclick="removeExistingFile('@file', this)">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                            <input type="hidden" name="ExistingFiles" value="@file" />
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-muted fst-italic">Chưa có file nào được tải lên.</p>
+            }
+
+            <!-- Upload zone -->
+            <label class="form-label fw-semibold mt-3">Thêm tài liệu mới</label>
+            <div class="upload-zone p-3 border rounded text-center mb-3"
+                 style="border-style: dashed !important; background-color: #f8f9fa; cursor: pointer;">
+                <i class="fa-solid fa-cloud-arrow-up fa-2x text-muted mb-2"></i>
+                <p class="mb-1">Kéo thả file vào đây hoặc <span class="text-primary">chọn file</span></p>
+                <p class="text-muted small mb-0">Cho phép: JPG, PNG, PDF, DOCX (Tối đa 10MB/file)</p>
+                <input type="file" name="Documents" multiple class="form-control d-none" id="fileInput" />
+            </div>
+
+            <!-- New file preview -->
+            <div id="fileList" class="file-preview-container"></div>
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="mt-4">
+            <button type="submit" class="btn-red">
+                <i class="fa-solid fa-save me-1"></i> Lưu thay đổi
+            </button>
+            <a asp-action="Index" class="btn-outline-gray ms-2">
+                <i class="fa-solid fa-xmark me-1"></i> Huỷ
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+    // ==============================
+    // BIẾN TOÀN CỤC
+    // ==============================
+    const uploadZone = document.querySelector(".upload-zone");
+    const fileInput = document.getElementById("fileInput");
+    const fileList = document.getElementById("fileList");
+    const form = document.querySelector("form");
+    const removeFilesInput = document.getElementById("removeFilesInput");
+
+    let selectedFiles = [];    // Danh sách file mới thêm
+    let removeFiles = [];      // Danh sách file cũ bị xóa
+
+    // ==============================
+    // XỬ LÝ KHU VỰC KÉO THẢ FILE
+    // ==============================
+    uploadZone.addEventListener("click", () => fileInput.click());
+
+    uploadZone.addEventListener("dragover", e => {
+        e.preventDefault();
+        uploadZone.classList.add("border-primary", "bg-light");
+    });
+
+    uploadZone.addEventListener("dragleave", () => {
+        uploadZone.classList.remove("border-primary", "bg-light");
+    });
+
+    uploadZone.addEventListener("drop", e => {
+        e.preventDefault();
+        uploadZone.classList.remove("border-primary", "bg-light");
+        addFiles(Array.from(e.dataTransfer.files));
+    });
+
+    fileInput.addEventListener("change", e => {
+        addFiles(Array.from(e.target.files));
+        fileInput.value = ""; // reset input để chọn lại file trùng tên
+    });
+
+    // ==============================
+    // THÊM FILE MỚI VÀ HIỂN THỊ
+    // ==============================
+    function addFiles(newFiles) {
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        const valid = [];
+        const tooBig = [];
+
+        newFiles.forEach(f => {
+            if (f.size <= maxSize) valid.push(f);
+            else tooBig.push(f);
+        });
+
+        if (tooBig.length > 0)
+            alert("Một số file vượt quá 10MB và đã bị bỏ qua!");
+
+        selectedFiles = [...selectedFiles, ...valid];
+        renderFileList();
+    }
+
+    // ==============================
+    // HIỂN THỊ DANH SÁCH FILE MỚI
+    // ==============================
+    function renderFileList() {
+        fileList.innerHTML = "";
+        selectedFiles.forEach((f, i) => {
+            const ext = f.name.split(".").pop().toLowerCase();
+            const imgTypes = ["jpg", "jpeg", "png", "gif", "bmp", "webp"];
+            const icons = {
+                pdf: '<i class="fa-solid fa-file-pdf text-danger"></i>',
+                doc: '<i class="fa-solid fa-file-word text-primary"></i>',
+                docx: '<i class="fa-solid fa-file-word text-primary"></i>',
+                xls: '<i class="fa-solid fa-file-excel text-success"></i>',
+                xlsx: '<i class="fa-solid fa-file-excel text-success"></i>'
+            };
+            const icon = imgTypes.includes(ext)
+                ? `<img src="${URL.createObjectURL(f)}" class="file-thumb" />`
+                : (icons[ext] || '<i class="fa-solid fa-file text-secondary"></i>');
+
+            const div = document.createElement("div");
+            div.className = "file-item";
+            div.innerHTML = `
+                <div class="file-info">
+                    <div class="file-icon">${icon}</div>
+                    <div class="file-meta">
+                        <div class="file-name">${f.name}</div>
+                        <div class="file-size">${(f.size / 1024 / 1024).toFixed(1)} MB</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-remove" onclick="removeFile(${i})">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
+            fileList.appendChild(div);
+        });
+
+        // Cập nhật lại input file (để form gửi đúng file)
+        const dt = new DataTransfer();
+        selectedFiles.forEach(f => dt.items.add(f));
+        fileInput.files = dt.files;
+    }
+
+    // ==============================
+    // XÓA FILE MỚI (trong preview)
+    // ==============================
+    function removeFile(index) {
+        selectedFiles.splice(index, 1);
+        renderFileList();
+    }
+
+    // ==============================
+    // XÓA FILE CŨ (đã upload trước đó)
+    // ==============================
+    function removeExistingFile(filename, button) {
+        removeFiles.push(filename);
+        removeFilesInput.value = removeFiles.join(",");
+        // Xóa phần tử hiển thị trên UI
+        const item = button.closest(".file-item");
+        if (item) item.remove();
+    }
+
+    // ==============================
+    // GỬI FORM DẠNG FORMDATA
+    // ==============================
+        form.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        formData.delete("Documents");
+
+        selectedFiles.forEach(file => formData.append("Documents", file));
+
+        fetch(form.action, {
+            method: "POST",
+            body: formData
+        })
+        .then(res => res.json())  // ✅ Đổi thành json()
+        .then(data => {
+            if (data.success) {
+                // ✅ Lưu vào localStorage
+                localStorage.setItem('toastAfterReload', JSON.stringify({
+                    type: 'success',
+                    message: data.message
+                }));
+                // ✅ Redirect về Index
+                window.location.href = '@Url.Action("Index", "PolicyApplications")';
+            } else {
+                alert('Có lỗi xảy ra!');
+            }
+        })
+        .catch(err => {
+            console.error("Lỗi upload:", err);
+            alert('Có lỗi xảy ra khi gửi form!');
+        });
+    });
+</script>
+
+
