@@ -1,0 +1,493 @@
+﻿@model PagedResult<dynamic>
+
+@{
+    ViewData["Title"] = "Danh sách yêu cầu bồi thường";
+}
+
+@{
+    // Kiểm tra Model và Model.Items trước khi truy cập
+    var total = Model?.TotalItems ?? 0;
+    var submitted = Model?.Items?.Count(x => x.Status == "submitted") ?? 0;
+    var approved = Model?.Items?.Count(x => x.Status == "approved") ?? 0;
+    var rejected = Model?.Items?.Count(x => x.Status == "rejected") ?? 0;
+}
+
+<div class="row py-3 g-3">
+    <!-- Tổng yêu cầu -->
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+            <div class="stat-overlay"></div>
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <p class="text-white text-uppercase mb-1">Tổng yêu cầu</p>
+                    <h4 class="text-white fw-bold">@total</h4>
+                </div>
+                <div class="stat-icon-box">
+                    <i class="fa-solid fa-file-invoice-dollar text-white fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chờ xử lý -->
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+            <div class="stat-overlay"></div>
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <p class="text-white text-uppercase mb-1">Chờ xử lý</p>
+                    <h4 class="text-white fw-bold">@submitted</h4>
+                </div>
+                <div class="stat-icon-box">
+                    <i class="fa-solid fa-clock text-white fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Đã duyệt -->
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+            <div class="stat-overlay"></div>
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <p class="text-white text-uppercase mb-1">Đã duyệt</p>
+                    <h4 class="text-white fw-bold">@approved</h4>
+                </div>
+                <div class="stat-icon-box">
+                    <i class="fa-solid fa-circle-check text-white fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Từ chối -->
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card" style="background: linear-gradient(135deg, #fa709a, #fee140);">
+            <div class="stat-overlay"></div>
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <p class="text-white text-uppercase mb-1">Từ chối</p>
+                    <h4 class="text-white fw-bold">@rejected</h4>
+                </div>
+                <div class="stat-icon-box">
+                    <i class="fa-solid fa-circle-xmark text-white fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="main-card">
+    <!-- HEADER -->
+    <div class="main-header">
+        <div>
+            <h3>YÊU CẦU BỒI THƯỜNG</h3>
+            <p>Quản lý yêu cầu và giải quyết quyền lợi bảo hiểm</p>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <button type="button" id="exportExcelBtn" class="btn btn-outline-red">
+                <i class="fa-solid fa-file-export me-1"></i> Xuất Excel
+            </button>
+        </div>
+    </div>
+
+    <!-- BỘ LỌC -->
+    <div class="filter-section">
+        <form method="get" id="filterForm">
+            <button type="submit" style="display:none"></button>
+
+            <div class="row mb-2 align-items-end">
+                <!-- Ô tìm kiếm -->
+                <div class="col-md-3 position-relative">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" name="search" value="@ViewBag.Search"
+                           class="input-input ps-5"
+                           placeholder="Tìm mã claim, policy...">
+                </div>
+
+                <!-- Trạng thái -->
+                <div class="col-md-2">
+                    <select name="status" class="select-input" onchange="this.form.submit()">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="submitted" selected="@(ViewBag.Status == "submitted")">Chờ xử lý</option>
+                        <option value="under_review" selected="@(ViewBag.Status == "under_review")">Đang thẩm định</option>
+                        <option value="approved" selected="@(ViewBag.Status == "approved")">Đã duyệt</option>
+                        <option value="approved" selected="@(ViewBag.Status == "paid")">Đã chi trả</option>
+                        <option value="rejected" selected="@(ViewBag.Status == "rejected")">Từ chối</option>
+                    </select>
+                </div>
+
+                <!-- Loại yêu cầu -->
+                <div class="col-md-2">
+                    <select name="claim_type" class="select-input" onchange="this.form.submit()">
+                        <option value="">Tất cả loại</option>
+                        <option value="hospitalization" selected="@(ViewBag.ClaimType == "hospitalization")">Nằm viện</option>
+                        <option value="surgery" selected="@(ViewBag.ClaimType == "surgery")">Phẫu thuật</option>
+                        <option value="critical_illness" selected="@(ViewBag.ClaimType == "critical_illness")">Bệnh hiểm nghèo</option>
+                        <option value="accident" selected="@(ViewBag.ClaimType == "accident")">Tai nạn</option>
+                        <option value="death" selected="@(ViewBag.ClaimType == "death")">Tử vong</option>
+                        <option value="disability" selected="@(ViewBag.ClaimType == "disability")">Thương tật</option>
+                    </select>
+                </div>
+
+                <div class="row col-md-5 align-items-end">
+                    <!-- Khoảng thời gian -->
+                    <div class="col-md-5">
+                        <label class="form-label fw-semibold">Từ ngày</label>
+                        <input type="date" name="from_date" class="input-input" value="@ViewBag.FromDate">
+                    </div>
+
+                    <div class="col-md-5">
+                        <label class="form-label fw-semibold">Đến ngày</label>
+                        <input type="date" name="to_date" class="input-input" value="@ViewBag.ToDate">
+                    </div>
+
+                    <!-- Nút reset -->
+                    <div class="col-md-2 d-flex justify-content-center">
+                        <button type="button" class="btn-outline-red" style="height:42px;"
+                                onclick="window.location='@Url.Action("Index")'">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <div class="mt-4">
+            <button type="button" class="btn-red" onclick="bulkDeleteClaims()">
+                <i class="fa-solid fa-trash-can me-1"></i> Xóa hàng loạt
+            </button>
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrapper">
+        <table class="table align-middle mb-0">
+            <thead class="text-center">
+                <tr>
+                    <th>
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="checkbox" id="checkAll">
+                            <span>STT</span>
+                        </div>
+                    </th>
+                    <th>MÃ YÊU CẦU</th>
+                    <th>MÃ HỢP ĐỒNG</th>
+                    <th>NGƯỜI THỤ HƯỞNG</th>
+                    <th>LOẠI YÊU CẦU</th>
+                    <th>SỐ TIỀN</th>
+                    <th>TRẠNG THÁI</th>
+                    <th>NGÀY YÊU CẦU</th>
+                    <th>THAO TÁC</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (Model.Items.Any())
+                {
+                    var index = (Model.CurrentPage - 1) * Model.PageSize + 1;
+
+                    foreach (var c in Model.Items)
+                    {
+                        <tr class="text-center">
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="checkbox" class="row-check" value="@c.Id">
+                                    <span>@index</span>
+                                </div>
+                            </td>
+                            <td class="fw-semibold text-primary">@c.ClaimNo</td>
+                            <td>@c.PolicyNo</td>
+                            <td>@c.BeneficiaryName</td>
+                            <td>
+                                @switch (c.ClaimType)
+                                {
+                                    case "hospitalization":
+                                        <span class="badge-status bg-info text-light">Nằm viện</span>
+                                        break;
+                                    case "surgery":
+                                        <span class="badge-status bg-warning text-light">Phẫu thuật</span>
+                                        break;
+                                    case "critical_illness":
+                                        <span class="badge-status bg-danger text-light">Bệnh hiểm nghèo</span>
+                                        break;
+                                    case "accident":
+                                        <span class="badge-status bg-secondary text-light">Tai nạn</span>
+                                        break;
+                                    case "death":
+                                        <span class="badge-status bg-dark text-light">Tử vong</span>
+                                        break;
+                                    case "disability":
+                                        <span class="badge-status bg-warning text-light">Thương tật</span>
+                                        break;
+                                    default:
+                                        <span class="badge-status bg-light text-dark">@c.ClaimType</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="fw-bold text-success">@(c.ApprovedAmount > 0 ? c.ApprovedAmount.ToString("N0") + " VNĐ" : "---")</td>
+                            <td>
+                                @switch (c.Status)
+                                {
+                                    case "submitted":
+                                        <span class="badge-status status-submitted">Chờ xử lý</span>
+                                        break;
+                                    case "under_review":
+                                        <span class="badge-status status-review">Đang thẩm định</span>
+                                        break;
+                                    case "approved":
+                                        <span class="badge-status status-approved">Đã duyệt</span>
+                                        break;
+                                    case "paid":
+                                        <span class="badge-status bg-success text-light">Đã chi trả</span>
+                                        break;
+                                    case "rejected":
+                                        <span class="badge-status status-rejected">Từ chối</span>
+                                        break;
+                                    default:
+                                        <span class="badge-status bg-secondary">@c.Status</span>
+                                        break;
+                                }
+                            </td>
+                            <td>@c.SubmittedAt.ToString("dd/MM/yyyy")</td>
+                            <td class="text-center">
+                                <div class="dropdown">
+                                    <button type="button" class="btn btn-action-dropdown dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fa-solid fa-gear"></i>
+                                    </button>
+
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li>
+                                            <button type="button"
+                                                    class="dropdown-item d-flex align-items-center gap-2 text-warning"
+                                                    onclick="viewClaimDetail('@c.Id')">
+                                                <i class="fa-solid fa-hourglass-half"></i>
+                                                <span>Xem chi tiết</span>
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button type="button"
+                                                    class="dropdown-item d-flex align-items-center gap-2 text-success @((c.Status != "submitted" && c.Status != "under_review") ? "disabled text-muted" : "")"
+                                                    @((c.Status != "submitted" && c.Status != "under_review") ? "disabled" : "")
+                                                    onclick="openClaimApprovalModal('@c.Id', @c.RequestedAmount)">
+                                                <i class="fa-solid fa-circle-check"></i>
+                                                <span>Phê duyệt</span>
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button type="button"
+                                                    class="dropdown-item d-flex align-items-center gap-2 text-primary @((c.Status == "approved") ? "" : "disabled text-muted")"
+                                                    @((c.Status != "approved") ? "disabled" : "")
+                                                    onclick="openPayoutModal('@c.Id', '@c.ClaimNo', @c.ApprovedAmount, '@c.PolicyNo')">
+                                                <i class="fa-solid fa-hand-holding-dollar"></i>
+                                                <span>Chi trả tiền</span>
+                                            </button>
+                                        </li>
+
+                                        <li>
+                                            <button type="button"
+                                                    class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                                                    onclick="deleteClaim('@c.Id')">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                                <span>Xóa</span>
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+
+                        </tr>
+                        index++; // Place this outside the Razor markup and on its own line
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="9" class="text-center">Không có dữ liệu</td>
+                    </tr>
+                }
+            </tbody>
+
+        </table>
+    </div>
+
+    <!-- PHÂN TRANG -->
+    <div class="table-footer">
+        <div>@await Html.PartialAsync("_Paginator", Model)</div>
+    </div>
+
+    <!-- MODAL CHI TRẢ QUYỀN LỢI BẢO HIỂM -->
+    <div class="modal fade" id="payoutModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg">
+
+                <!-- HEADER -->
+                <div class="modal-header custom-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="header-icon">
+                            <i class="fa-solid fa-hand-holding-dollar"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0 text-white fw-bold">Chi Trả Quyền Lợi Bảo Hiểm</h3>
+                            <p class="mb-0 text-white-75 small" id="payoutClaimPolicy"></p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-gray" data-bs-dismiss="modal"></button>
+                </div>
+
+                <!-- BODY -->
+                <div class="custom-modal-body">
+                    <form id="payoutForm" class="row g-3">
+
+                        <input type="hidden" name="claimId" id="payoutClaimId">
+
+                        <!-- Mã yêu cầu -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Mã yêu cầu</label>
+                            <input type="text" id="payoutClaimNo" class="form-control input-input bg-white" readonly />
+                        </div>
+
+                        <!-- Ngày chi trả -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Ngày chi trả</label>
+                            <input type="date" name="paidAt" id="payoutDate" class="form-control input-input" required />
+                        </div>
+
+                        <!-- Số tiền được duyệt -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-success">Số tiền được duyệt (₫)</label>
+                            <input type="text" id="payoutApprovedAmount" class="form-control input-input bg-light text-success fw-bold" readonly />
+                        </div>
+
+                        <!-- Số tiền thực chi -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Số tiền chi trả (₫)</label>
+                            <input type="number" name="paidAmount" id="payoutAmount" class="form-control input-input" required />
+                        </div>
+
+                        <!-- Phương thức -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Phương thức thanh toán</label>
+                            <select name="payMethod" id="payoutMethod" class="select-input" required>
+                                <option value="bank_transfer">Chuyển khoản</option>
+                                <option value="cash">Tiền mặt</option>
+                            </select>
+                        </div>
+
+                        <!-- Mã tham chiếu -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Mã tham chiếu</label>
+                            <input type="text" name="reference" id="payoutReference" class="form-control input-input" placeholder="Nhập mã giao dịch hoặc số chứng từ..." />
+                        </div>
+
+                    </form>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="modal-footer custom-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-sm btn-gray" data-bs-dismiss="modal">
+                        Đóng
+                    </button>
+                    <button type="button" class="btn btn-sm btn-red" onclick="confirmPayout()">
+                        <i class="fa-solid fa-paper-plane"></i> Xác nhận chi trả
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CHI TIẾT YÊU CẦU BỒI THƯỜNG -->
+    <div class="modal fade" id="claimDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg">
+
+                <!-- HEADER -->
+                <div class="modal-header custom-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="header-icon">
+                            <i class="fa-solid fa-file-medical"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0 text-white fw-bold">Chi tiết yêu cầu bồi thường</h3>
+                            <p class="mb-0 text-white-75 small" id="claimDetailHeader"></p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-gray" data-bs-dismiss="modal"></button>
+                </div>
+
+                <!-- BODY -->
+                <div class="modal-body custom-modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Mã yêu cầu</label>
+                            <input type="text" id="detailClaimNo" class="input-input bg-white" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Mã hợp đồng</label>
+                            <input type="text" id="detailPolicyNo" class="input-input bg-white" readonly />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="fw-semibold">Người thụ hưởng</label>
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Tên</th>
+                                        <th>Quan hệ</th>
+                                        <th>Phần trăm chia sẻ</th>
+                                        <th>Số CMND</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="beneficiaryTableBody">
+                                    <!-- Người thụ hưởng sẽ được chèn ở đây -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Loại yêu cầu</label>
+                            <input type="text" id="detailClaimType" class="input-input bg-white" readonly />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Ngày yêu cầu</label>
+                            <input type="text" id="detailSubmittedAt" class="input-input bg-white" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Trạng thái</label>
+                            <input type="text" id="detailStatus" class="input-input bg-white" readonly />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Số tiền yêu cầu (₫)</label>
+                            <input type="text" id="detailRequestedAmount" class="input-input bg-white text-dark fw-bold" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-success">Số tiền được duyệt (₫)</label>
+                            <input type="text" id="detailApprovedAmount" class="input-input bg-white text-success fw-bold" readonly />
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Ghi chú</label>
+                            <textarea id="detailNotes" class="input-input bg-white" rows="3" readonly></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="modal-footer custom-footer d-flex justify-content-end">
+                    <button type="button" class="btn btn-sm btn-gray" data-bs-dismiss="modal">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+
+@section Scripts {
+    <script src="~/js/claims.js"></script>
+}

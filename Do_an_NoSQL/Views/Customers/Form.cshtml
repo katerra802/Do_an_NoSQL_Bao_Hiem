@@ -1,0 +1,115 @@
+﻿@model Do_an_NoSQL.Models.ViewModels.CustomerCreateVM
+
+@{
+    var mode = ViewData["Mode"]?.ToString() ?? "create";
+    bool isEdit = mode == "edit";
+    ViewData["Title"] = isEdit ? "Chỉnh sửa khách hàng" : "Tạo khách hàng mới";
+}
+
+<link rel="stylesheet" href="~/css/policy-application.css" />
+
+<div class="main-card p-4">
+    <h4 class="fw-bold mb-2">
+        <i class="fa-solid @(isEdit ? "fa-user-pen" : "fa-user-plus") text-danger me-2"></i>
+        @(isEdit ? "CHỈNH SỬA KHÁCH HÀNG" : "TẠO KHÁCH HÀNG MỚI")
+    </h4>
+    @if (isEdit)
+    {
+        <p class="text-muted mb-2">Mã khách hàng: <strong>@ViewBag.Code</strong></p>
+    }
+    <hr class="mb-4" />
+
+    <form asp-action="@(isEdit ? "Edit" : "Create")" method="post" id="customerForm">
+        @if (isEdit)
+        {
+            <input type="hidden" name="Id" value="@ViewBag.Id" />
+        }
+
+        <div class="row">
+            <!-- Cột trái -->
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Họ và tên</label>
+                    <input type="text" name="FullName" class="input-input" value="@Model.FullName" placeholder="VD: Nguyễn Văn An" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Ngày sinh</label>
+                    <input type="date" name="Dob" class="input-input" value="@(Model.Dob == default ? "" : Model.Dob.ToString("yyyy-MM-dd"))" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Giới tính</label>
+                    <select name="Gender" class="select-input" required>
+                        <option value="">-- Chọn giới tính --</option>
+                        <option value="M" selected="@(Model.Gender == "M")">Nam</option>
+                        <option value="F" selected="@(Model.Gender == "F")">Nữ</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Số CMND/CCCD</label>
+                    <input type="text" name="NationalId" class="input-input" value="@Model.NationalId" placeholder="VD: 079012345678" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Thu nhập hàng tháng (VNĐ)</label>
+                    <input type="number" name="Income" class="input-input" value="@Model.Income" step="100000" placeholder="VD: 20000000" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Địa chỉ</label>
+                    <textarea name="Address" class="input-input" rows="2" placeholder="VD: 12 Nguyễn Văn Bảo, P.4, Gò Vấp, TP.HCM" required>@Model.Address</textarea>
+                </div>
+            </div>
+
+            <!-- Cột phải -->
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Số điện thoại</label>
+                    <input type="tel" name="Phone" class="input-input" value="@Model.Phone" placeholder="VD: 0912345678" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Email</label>
+                    <input type="email" name="Email" class="input-input" value="@Model.Email" placeholder="VD: an.nguyen@gmail.com" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Nghề nghiệp</label>
+                    <input type="text" name="Occupation" class="input-input" value="@Model.Occupation" placeholder="VD: Kỹ sư phần mềm" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Nguồn khách hàng</label>
+                    <select name="Source" class="select-input">
+                        <option value="">-- Chọn nguồn --</option>
+                        <option value="online" selected="@(Model.Source == "online")">Online / Website</option>
+                        <option value="referral" selected="@(Model.Source == "referral")">Giới thiệu</option>
+                        <option value="event" selected="@(Model.Source == "event")">Sự kiện / Hội thảo</option>
+                        <option value="branch" selected="@(Model.Source == "branch")">Chi nhánh / Văn phòng</option>
+                        <option value="advisor" selected="@(Model.Source == "advisor")">Tư vấn viên</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Tình trạng sức khỏe</label>
+                    <textarea name="HealthInfo" class="input-input" rows="3">@Model.HealthInfo</textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 d-flex justify-content-end">
+            <a asp-action="Index" class="btn-outline-gray">
+                <i class="fa-solid fa-xmark me-1"></i> Huỷ
+            </a>
+            <button type="submit" class="btn-red ms-2">
+                <i class="fa-solid fa-save me-1"></i> @(isEdit ? "Cập nhật khách hàng" : "Lưu khách hàng")
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="~/js/customers.js"></script>
+}

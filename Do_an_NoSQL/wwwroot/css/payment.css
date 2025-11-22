@@ -1,0 +1,78 @@
+﻿.payment-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid #e5e7eb;
+    margin-bottom: 2rem;
+    padding: 0;
+    list-style: none;
+}
+
+    .payment-tabs .tab-item {
+        flex: 1;
+    }
+
+    .payment-tabs .tab-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 1rem 1.5rem;
+        text-decoration: none;
+        color: #6b7280;
+        font-weight: 500;
+        font-size: 0.95rem;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+        .payment-tabs .tab-link:hover {
+            color: #f26363;
+            background-color: #f3f4f6;
+        }
+
+        .payment-tabs .tab-link.active {
+            color: #f26363;
+            border-bottom-color: #f26363;
+            background-color: #ffe8e8;
+        }
+
+        .payment-tabs .tab-link i {
+            font-size: 1.1rem;
+        }
+
+.status-pending {
+    background-color: #feffed;
+    color: #adb516;
+    border: 1px solid #adb516;
+}
+
+.status-overdue {
+    background-color: #D7D7D7;
+    color: #555555;
+    border: 1px solid #555555;
+}
+
+.status-paid {
+    background-color: #e2f5e1;
+    color: #007F54;
+    border: 1px solid #007F54;
+}
+/* Tab Content Animation */
+.tab-content-wrapper {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+

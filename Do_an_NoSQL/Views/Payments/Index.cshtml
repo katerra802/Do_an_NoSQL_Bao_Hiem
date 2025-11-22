@@ -1,384 +1,438 @@
-﻿@{
-    ViewData["Title"] = "Quản lý thanh toán";
+﻿@model PagedResult<dynamic>
+@{
+    ViewData["Title"] = "Quản lý thanh toán & chi trả quyền lợi";
+    string activeTab = ViewBag.ActiveTab ?? "premium";
 }
 
-<style>
-    .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24px;
-    }
 
-    .page-title {
-        font-size: 24px;
-        font-weight: 700;
-        color: #003366;
-    }
+    <link rel="stylesheet" href="~/css/payment.css" asp-append-version="true" />
 
-    .toolbar {
-        display: flex;
-        gap: 12px;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-    }
+<!-- ========================== -->
+<!-- HEADER -->
+<!-- ========================== -->
+<div class="main-card">
+    <div class="main-header">
+        <div>
+            <h3>QUẢN LÝ THANH TOÁN & CHI TRẢ</h3>
+            <p>Theo dõi lịch sử đóng phí và chi trả quyền lợi bảo hiểm</p>
+        </div>
+    </div>
 
-    .search-box {
-        flex: 1;
-        min-width: 250px;
-        position: relative;
-    }
+    <!-- ========================== -->
+    <!-- MODERN TABS -->
+    <!-- ========================== -->
+    <ul class="payment-tabs">
+        <li class="tab-item">
+            <a class="tab-link @(activeTab == "premium" ? "active" : "")"
+               href="@Url.Action("Index", new { tab = "premium" })"
+               data-tab="premium">
+                <i class="fa-solid fa-wallet"></i>
+                <span>Lịch sử đóng phí</span>
+            </a>
+        </li>
+        <li class="tab-item">
+            <a class="tab-link @(activeTab == "payout" ? "active" : "")"
+               href="@Url.Action("Index", new { tab = "payout" })"
+               data-tab="payout">
+                <i class="fa-solid fa-hand-holding-dollar"></i>
+                <span>Chi trả quyền lợi</span>
+            </a>
+        </li>
+    </ul>
 
-        .search-box input {
-            width: 100%;
-            padding: 10px 12px 10px 38px;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 13px;
+    <!-- ========================== -->
+    <!-- TAB CONTENT -->
+    <!-- ========================== -->
+    <div class="tab-content-wrapper">
+        @if (activeTab == "premium")
+        {
+            <!-- ========================== -->
+            <!-- TAB: PREMIUM PAYMENTS -->
+            <!-- ========================== -->
+            <div class="filter-section mb-4">
+                <form method="get" id="filterForm">
+                    <input type="hidden" name="tab" value="premium" />
+                    <div class="row mb-4 align-items-end">
+                        <div class="col-md-4 position-relative">
+                            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                            <input type="text" name="search" value="@ViewBag.Search"
+                                   class="input-input ps-5" placeholder="Tìm mã hợp đồng, tham chiếu...">
+                        </div>
+
+                        <div class="col-md-4">
+                            <select name="status" class="select-input" onchange="this.form.submit()">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="paid" selected="@(ViewBag.Status == "paid")">Đã thanh toán</option>
+                                <option value="pending" selected="@(ViewBag.Status == "pending")">Đang chờ</option>
+                                <option value="overdue" selected="@(ViewBag.Status == "overdue")">Quá hạn</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select name="channel" class="select-input" onchange="this.form.submit()">
+                                <option value="">Tất cả kênh</option>
+                                <option value="bank" selected="@(ViewBag.Channel == "bank")">Ngân hàng</option>
+                                <option value="agent" selected="@(ViewBag.Channel == "agent")">Tư vấn viên</option>
+                                <option value="office" selected="@(ViewBag.Channel == "office")">Văn phòng công ty</option>
+                            </select>
+                        </div>
+                    </div>
+
+                        <div class="row mb-2 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Từ ngày</label>
+                            <input type="date" name="from_date" class="input-input" value="@ViewBag.FromDate">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Đến ngày</label>
+                            <input type="date" name="to_date" class="input-input" value="@ViewBag.ToDate">
+                        </div>
+                        <div class="col-md-2 d-flex justify-content-start">
+                            <button type="button" class="btn-outline-red"
+                                    style="height:42px;"
+                                    onclick="window.location='@Url.Action("Index", new { tab = "premium" })'">
+                                <i class="fa-solid fa-rotate-left"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+
+
+            <div class="table-wrapper mt-3">
+                <table class="table align-middle mb-0">
+                    <thead class="text-center">
+                        <tr>
+                            <th>
+                                    <span>STT</span>
+                            </th>
+                            <th>MÃ HỢP ĐỒNG</th>
+                            <th>NGÀY ĐẾN HẠN</th>
+                            <th>NGÀY THANH TOÁN</th>
+                            <th>SỐ TIỀN (₫)</th>
+                            <th>TRẠNG THÁI</th>
+                            <th>KÊNH THANH TOÁN</th>
+                            <th>THAM CHIẾU</th>
+                            <th>THAO TÁC</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Items.Any())
+                        {
+                            var index = (Model.CurrentPage - 1) * Model.PageSize + 1;
+                            foreach (var p in Model.Items)
+                            {
+                                <tr class="text-center">
+                                    <td>
+                                            <span>@index</span>
+                                    </td>
+                                    <td class="fw-semibold text-primary">@p.PolicyNo</td>
+                                    <td>@p.DueDate.ToString("dd/MM/yyyy")</td>
+                                    <td>@(p.PaidDate != null ? ((DateTime)p.PaidDate).ToString("dd/MM/yyyy") : "-")</td>
+                                    <td>@String.Format("{0:N0}", p.Amount)</td>
+                                    <td>
+                                        @switch (p.Status)
+                                        {
+                                            case "paid":
+                                                <span class="badge-status status-paid">Đã thanh toán</span>
+                                                break;
+                                            case "pending":
+                                                <span class="badge-status status-pending">Đang chờ</span>
+                                                break;
+                                            case "overdue":
+                                                <span class="badge-status status-overdue">Quá hạn</span>
+                                                break;
+                                            default:
+                                                <span class="badge-status bg-secondary">@p.Status</span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td>
+                                        @{
+                                            var channelVN = p.Channel switch
+                                            {
+                                                "bank" => "Ngân hàng",
+                                                "mobile_app" => "Ứng dụng di động",
+                                                "website" => "Website Prudential",
+                                                "agent" => "Tư vấn viên",
+                                                "office" => "Văn phòng công ty",
+                                                _ => p.Channel ?? "-"
+                                            };
+                                        }
+                                        @channelVN
+                                    </td>
+                                    <td>@(p.Reference ?? "-")</td>
+                                    <td>
+                                        <button class="dropdown-item text-dark" onclick="viewPaymentDetail('@p.Id')">
+                                            <i class="fa-solid fa-eye"></i> 
+                                        </button>
+                                    </td>
+                                </tr>
+                                index++;
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4 fst-italic">
+                                    Không có giao dịch nào được tìm thấy.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         }
 
-        .search-box::before {
-            content: "🔍";
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 16px;
+        @if (activeTab == "payout")
+        {
+            <!-- ========================== -->
+            <!-- TAB: CLAIM PAYOUTS -->
+            <!-- ========================== -->
+            <div class="filter-section mb-3">
+                <form method="get" id="filterForm2">
+                    <input type="hidden" name="tab" value="payout" />
+                    <div class="row mb-2 align-items-end">
+                        <div class="col-md-4 position-relative">
+                            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                            <input type="text" name="search" value="@ViewBag.Search"
+                                   class="input-input ps-5" placeholder="Tìm mã yêu cầu hoặc hợp đồng...">
+                        </div>
+                        <div class="col-md-3">
+                            <select name="pay_method" class="select-input" onchange="this.form.submit()">
+                                <option value="">Tất cả phương thức</option>
+                                <option value="bank_transfer" selected="@(ViewBag.PayMethod == "bank_transfer")">Chuyển khoản ngân hàng</option>
+                                <option value="cash" selected="@(ViewBag.PayMethod == "cash")">Tiền mặt</option>
+                                <option value="credit_card" selected="@(ViewBag.PayMethod == "credit_card")">Thẻ tín dụng</option>
+                                <option value="online" selected="@(ViewBag.PayMethod == "online")">Cổng thanh toán trực tuyến</option>
+                            </select>
+                        </div>
+
+
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">Từ ngày</label>
+                            <input type="date" name="from_date" class="input-input" value="@ViewBag.FromDate">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">Đến ngày</label>
+                            <input type="date" name="to_date" class="input-input" value="@ViewBag.ToDate">
+                        </div>
+                        <div class="col-md-1 d-flex justify-content-start">
+                            <button type="button" class="btn-outline-red"
+                                    style="height:42px;"
+                                    onclick="window.location='@Url.Action("Index", new { tab = "payout" })'">
+                                <i class="fa-solid fa-rotate-left"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+
+            <div class="table-wrapper mt-3">
+                <table class="table align-middle mb-0">
+                    <thead class="text-center">
+                        <tr>
+                            <th>
+                                    <span>STT</span>
+                            </th>
+                            <th>MÃ YÊU CẦU</th>
+                            <th>SỐ TIỀN (₫)</th>
+                            <th>THỰC CHI (₫)</th>
+                            <th>PHƯƠNG THỨC</th>
+                            <th>NGÀY CHI TRẢ</th>
+                            <th>THAM CHIẾU</th>
+                            <th>THAO TÁC</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Items.Any())
+                        {
+                            var index = (Model.CurrentPage - 1) * Model.PageSize + 1;
+                            foreach (var p in Model.Items)
+                            {
+                                <tr class="text-center">
+                                    <td>
+                                            <span>@index</span>
+                                    </td>
+                                    <td class="fw-semibold text-primary">@p.ClaimNo</td>
+                                    <td>@String.Format("{0:N0}", p.ApprovedAmount)</td>
+                                    <td>@String.Format("{0:N0}", p.PaidAmount)</td>
+                                    <td>
+                                        @{
+                                            var payMethodVN = p.PayMethod switch
+                                            {
+                                                "bank_transfer" => "Chuyển khoản ngân hàng",
+                                                "cash" => "Tiền mặt",
+                                                "credit_card" => "Thẻ tín dụng",
+                                                "online" => "Cổng thanh toán trực tuyến",
+                                                _ => p.PayMethod ?? "-"
+                                            };
+                                        }
+                                        @payMethodVN
+                                    </td>
+                                    <td>@(p.PaidAt != null ? ((DateTime)p.PaidAt).ToString("dd/MM/yyyy") : "-")</td>
+                                    <td>@(p.Reference ?? "-")</td>
+                                    <td class="text-center">
+                                        <button type="button" class="dropdown-item textdark"
+                                                onclick="viewPayoutDetail('@p.Id')">
+                                            <i class="fa-solid fa-eye"></i> 
+                                        </button>
+                                    </td>
+                                </tr>
+                                index++;
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4 fst-italic">
+                                    Không có chi trả nào được tìm thấy.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         }
 
-    /* Tabs */
-    .tabs {
-        display: flex;
-        border-bottom: 2px solid #e0e0e0;
-        margin-bottom: 24px;
-    }
+        <div class="table-footer mt-3">
+            @await Html.PartialAsync("_Paginator", Model)
+        </div>
+    </div>
 
-    .tab {
-        padding: 12px 24px;
-        cursor: pointer;
-        border: none;
-        background: none;
-        font-size: 14px;
-        font-weight: 600;
-        color: #666;
-        transition: all 0.3s ease;
-        position: relative;
-    }
+    <!-- MODAL: Chi tiết lịch sử đóng phí -->
+    <div class="modal fade" id="paymentDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg">
 
-        .tab.active {
-            color: #E31E24;
-        }
+                <!-- HEADER -->
+                <div class="modal-header custom-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="header-icon">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0 text-white fw-bold">Chi tiết thanh toán phí bảo hiểm</h3>
+                            <p class="mb-0 text-white-75 small" id="detailPolicyNo"></p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-gray" data-bs-dismiss="modal"></button>
+                </div>
 
-            .tab.active::after {
-                content: "";
-                position: absolute;
-                bottom: -2px;
-                left: 0;
-                right: 0;
-                height: 2px;
-                background: #E31E24;
-            }
+                <!-- BODY -->
+                <div class="modal-body custom-modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Mã hợp đồng</label>
+                            <input type="text" id="detailPolicy" class="input-input bg-white" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Ngày đến hạn</label>
+                            <input type="text" id="detailDueDate" class="input-input bg-white" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Ngày thanh toán</label>
+                            <input type="text" id="detailPaidDate" class="input-input bg-white" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Số tiền (₫)</label>
+                            <input type="text" id="detailAmount" class="input-input bg-white" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Kênh thanh toán</label>
+                            <input type="text" id="detailChannel" class="input-input bg-white" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Mã tham chiếu</label>
+                            <input type="text" id="detailRef" class="input-input bg-white" readonly />
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Trạng thái</label>
+                            <input type="text" id="detailStatus" class="input-input bg-white" readonly />
+                        </div>
+                    </div>
+                </div>
 
-    .tab-content {
-        display: none;
-    }
+                <!-- FOOTER -->
+                <div class="modal-footer custom-footer d-flex justify-content-end">
+                    <button type="button" class="btn btn-sm btn-gray" data-bs-dismiss="modal">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        .tab-content.active {
-            display: block;
-        }
+    <!-- MODAL: Chi tiết chi trả quyền lợi -->
+    <div class="modal fade" id="payoutDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg">
 
-    .table-wrapper {
-        overflow-x: auto;
-        margin-top: 16px;
-    }
+                <!-- HEADER -->
+                <div class="modal-header custom-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="header-icon">
+                            <i class="fa-solid fa-hand-holding-dollar"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0 text-white fw-bold">Chi tiết chi trả quyền lợi</h3>
+                            <p class="mb-0 text-white-75 small" id="payoutClaimNoHeader"></p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-gray" data-bs-dismiss="modal"></button>
+                </div>
 
-    .data-table {
-        width: 100%;
-        border-collapse: collapse;
-        background: white;
-        font-size: 13px;
-    }
+                <!-- BODY -->
+                <div class="modal-body custom-modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Mã yêu cầu</label>
+                            <input type="text" id="payoutClaimNo" class="input-input bg-white" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Mã hợp đồng</label>
+                            <input type="text" id="payoutPolicyNo" class="input-input bg-white" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Số tiền yêu cầu (₫)</label>
+                            <input type="text" id="payoutRequestedAmount" class="input-input bg-white text-dark" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-success">Số tiền được duyệt (₫)</label>
+                            <input type="text" id="payoutApprovedAmount" class="input-input bg-white text-success fw-bold" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Số tiền thực chi (₫)</label>
+                            <input type="text" id="payoutPaidAmount" class="input-input bg-white text-primary fw-bold" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Phương thức thanh toán</label>
+                            <input type="text" id="payoutMethod" class="input-input bg-white" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Ngày chi trả</label>
+                            <input type="text" id="payoutDate" class="input-input bg-white" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Mã tham chiếu</label>
+                            <input type="text" id="payoutReference" class="input-input bg-white" readonly />
+                        </div>
+                    </div>
+                </div>
 
-        .data-table thead {
-            background: #f8f9fa;
-        }
+                <!-- FOOTER -->
+                <div class="modal-footer custom-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-sm btn-gray" data-bs-dismiss="modal">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        .data-table th {
-            padding: 12px 10px;
-            text-align: left;
-            font-weight: 600;
-            color: #003366;
-            font-size: 12px;
-            text-transform: uppercase;
-            border-bottom: 2px solid #e0e0e0;
-            white-space: nowrap;
-        }
-
-        .data-table td {
-            padding: 12px 10px;
-            border-bottom: 1px solid #f0f0f0;
-            color: #333;
-            font-size: 13px;
-            vertical-align: middle;
-        }
-
-        .data-table tbody tr {
-            transition: background 0.2s ease;
-        }
-
-            .data-table tbody tr:hover {
-                background: #f8f9fa;
-            }
-
-    .status-badge {
-        padding: 5px 10px;
-        border-radius: 16px;
-        font-size: 11px;
-        font-weight: 600;
-        display: inline-block;
-        white-space: nowrap;
-    }
-
-        .status-badge.paid {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .status-badge.pending {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .status-badge.overdue {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-    .btn-action {
-        padding: 6px 10px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 12px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        white-space: nowrap;
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        text-decoration: none;
-    }
-
-    .btn-view {
-        background: #dbeafe;
-        color: #1e40af;
-    }
-
-        .btn-view:hover {
-            background: #bfdbfe;
-        }
-
-    @@media (max-width: 768px) {
-        .tabs {
-            overflow-x: auto;
-        }
-    }
-</style>
-
-<div class="page-header">
-    <h1 class="page-title">💳 Quản lý thanh toán</h1>
 </div>
 
-<div class="content-card">
-    <div class="tabs">
-        <button class="tab active" onclick="switchTab(event, 'premium-tab')">💰 Thanh toán phí bảo hiểm</button>
-        <button class="tab" onclick="switchTab(event, 'claim-tab')">🏥 Bồi thường & Chi trả</button>
-    </div>
-
-    <!-- Premium Payments Tab -->
-    <div id="premium-tab" class="tab-content active">
-        <div class="toolbar">
-            <div class="search-box">
-                <input type="text" placeholder="Tìm kiếm theo mã hợp đồng..." id="premiumSearchInput">
-            </div>
-            <select class="form-control" style="width: 180px;">
-                <option>Tất cả trạng thái</option>
-                <option>Paid</option>
-                <option>Pending</option>
-                <option>Overdue</option>
-            </select>
-        </div>
-
-        <div class="table-wrapper">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th style="width: 120px;">Mã hợp đồng</th>
-                        <th style="width: 130px;">Số tiền</th>
-                        <th style="width: 120px;">Ngày đến hạn</th>
-                        <th style="width: 120px;">Ngày thanh toán</th>
-                        <th style="width: 120px;">Kênh TT</th>
-                        <th style="width: 100px;">Trạng thái</th>
-                        <th style="width: 100px;">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>POL2024001</strong></td>
-                        <td>5,500,000 VNĐ</td>
-                        <td>15/01/2024</td>
-                        <td>14/01/2024</td>
-                        <td>Chuyển khoản</td>
-                        <td><span class="status-badge paid">Paid</span></td>
-                        <td>
-                            <a href="/Payments/PremiumDetails/PM2024001" class="btn-action btn-view">👁️ Xem</a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>POL2024001</strong></td>
-                        <td>5,500,000 VNĐ</td>
-                        <td>15/04/2024</td>
-                        <td>13/04/2024</td>
-                        <td>Tiền mặt</td>
-                        <td><span class="status-badge paid">Paid</span></td>
-                        <td>
-                            <a href="/Payments/PremiumDetails/PM2024002" class="btn-action btn-view">👁️ Xem</a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>POL2024001</strong></td>
-                        <td>5,500,000 VNĐ</td>
-                        <td>15/07/2024</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td><span class="status-badge pending">Pending</span></td>
-                        <td>
-                            <a href="/Payments/PremiumDetails/PM2024003" class="btn-action btn-view">👁️ Xem</a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>POL2024002</strong></td>
-                        <td>8,200,000 VNĐ</td>
-                        <td>20/03/2024</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td><span class="status-badge overdue">Overdue</span></td>
-                        <td>
-                            <a href="/Payments/PremiumDetails/PM2024004" class="btn-action btn-view">👁️ Xem</a>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Claim Payouts Tab -->
-    <div id="claim-tab" class="tab-content">
-        <div class="toolbar">
-            <div class="search-box">
-                <input type="text" placeholder="Tìm kiếm theo mã bồi thường..." id="claimSearchInput">
-            </div>
-            <select class="form-control" style="width: 180px;">
-                <option>Tất cả trạng thái</option>
-                <option>Đã chi trả</option>
-                <option>Chưa chi trả</option>
-            </select>
-        </div>
-
-        <div class="table-wrapper">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th style="width: 120px;">Mã bồi thường</th>
-                        <th style="width: 150px;">Số tiền duyệt</th>
-                        <th style="width: 150px;">Số tiền đã trả</th>
-                        <th style="width: 130px;">Phương thức</th>
-                        <th style="width: 120px;">Ngày chi trả</th>
-                        <th style="width: 130px;">Mã tham chiếu</th>
-                        <th style="width: 100px;">Trạng thái</th>
-                        <th style="width: 100px;">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>CL2024001</strong></td>
-                        <td>15,000,000 VNĐ</td>
-                        <td>0 VNĐ</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td><span class="status-badge pending">Pending</span></td>
-                        <td>
-                            <a href="/Payments/ClaimDetails/CL2024001" class="btn-action btn-view">👁️ Xem</a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>CL2024002</strong></td>
-                        <td>50,000,000 VNĐ</td>
-                        <td>45,000,000 VNĐ</td>
-                        <td>Chuyển khoản</td>
-                        <td>20/10/2024</td>
-                        <td>REF202410001</td>
-                        <td><span class="status-badge paid">Paid</span></td>
-                        <td>
-                            <a href="/Payments/ClaimDetails/CL2024002" class="btn-action btn-view">👁️ Xem</a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>CL2024003</strong></td>
-                        <td>25,000,000 VNĐ</td>
-                        <td>25,000,000 VNĐ</td>
-                        <td>Tiền mặt</td>
-                        <td>15/10/2024</td>
-                        <td>CASH202410001</td>
-                        <td><span class="status-badge paid">Paid</span></td>
-                        <td>
-                            <a href="/Payments/ClaimDetails/CL2024003" class="btn-action btn-view">👁️ Xem</a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>CL2024004</strong></td>
-                        <td>30,000,000 VNĐ</td>
-                        <td>0 VNĐ</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td><span class="status-badge pending">Pending</span></td>
-                        <td>
-                            <a href="/Payments/ClaimDetails/CL2024004" class="btn-action btn-view">👁️ Xem</a>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<script>
-    function switchTab(event, tabId) {
-        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        event.target.classList.add('active');
-        document.getElementById(tabId).classList.add('active');
-    }
-
-    // Search for Premium Payments
-    document.getElementById('premiumSearchInput').addEventListener('input', function(e) {
-        const searchText = e.target.value.toLowerCase();
-        const rows = document.querySelectorAll('#premium-tab .data-table tbody tr');
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(searchText) ? '' : 'none';
-        });
-    });
-
-    // Search for Claim Payouts
-    document.getElementById('claimSearchInput').addEventListener('input', function(e) {
-        const searchText = e.target.value.toLowerCase();
-        const rows = document.querySelectorAll('#claim-tab .data-table tbody tr');
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(searchText) ? '' : 'none';
-        });
-    });
-</script>
+@section Scripts {
+    <script src="~/js/payment.js" asp-append-version="true"></script>
+}

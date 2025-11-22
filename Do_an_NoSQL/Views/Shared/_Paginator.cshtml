@@ -119,7 +119,7 @@
     <div class="pagination-right">
 
         <form method="get" id="perPageForm" class="d-flex align-items-center gap-2">
-
+            <input type="hidden" name="tab" value="@ViewBag.ActiveTab" />
             @foreach (var f in filters)
             {
                 <input type="hidden" name="@f.Key" value="@f.Value" />

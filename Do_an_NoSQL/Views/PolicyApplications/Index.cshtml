@@ -24,15 +24,29 @@
     }
 }
 
-<div class="row py-3">
+@{
+    var statusStats = new List<(string Code, string Name, string Color, string Icon)>
+    {
+        ("submitted", "Đã nộp", "linear-gradient(135deg, #f39c12, #f1c40f)", "fa-file-upload"),
+        ("under_review", "Đang xét", "linear-gradient(135deg, #007bff, #33b5e5)", "fa-spinner"),
+        ("approved", "Đã duyệt", "linear-gradient(135deg, #28a745, #58d68d)", "fa-check-circle"),
+        ("rejected", "Từ chối", "linear-gradient(135deg, #e82c70, #ff5ba6)", "fa-ban"),
+        ("ready_to_issue", "Sẵn sàng phát hành", "linear-gradient(135deg, #9b59b6, #af7ac5)", "fa-file-signature"),
+        ("issued", "Đã phát hành", "linear-gradient(135deg, #16a085, #48c9b0)", "fa-file-shield"),
+    };
+
+    var totalApps = Model.TotalItems;
+}
+
+<div class="row py-3 g-3">
     <!-- Tổng hồ sơ -->
-    <div class="col-md-3">
+    <div class="col-md-3 col-sm-6">
         <div class="stat-card" style="background: linear-gradient(135deg, #ff3b3f, #ff8a00);">
             <div class="stat-overlay"></div>
-            <div class="d-flex align-items-center justify-content-between position-relative" style="z-index:10;">
+            <div class="d-flex align-items-center justify-content-between">
                 <div>
                     <p class="text-white text-uppercase mb-1">Tổng hồ sơ</p>
-                    <h4 class="text-white fw-bold">@Model.TotalItems</h4>
+                    <h4 class="text-white fw-bold">@totalApps</h4>
                 </div>
                 <div class="stat-icon-box">
                     <i class="fa-solid fa-folder-open text-white fs-4"></i>
@@ -41,53 +55,26 @@
         </div>
     </div>
 
-    <!-- Đã duyệt -->
-    <div class="col-md-3">
-        <div class="stat-card" style="background: linear-gradient(135deg, #009e60, #0666d0);">
-            <div class="stat-overlay"></div>
-            <div class="d-flex align-items-center justify-content-between position-relative" style="z-index:10;">
-                <div>
-                    <p class="text-white text-uppercase mb-1">Đã duyệt</p>
-                    <h4 class="text-white fw-bold">@Model.Items.Count(x => x.Status == "approved")</h4>
-                </div>
-                <div class="stat-icon-box">
-                    <i class="fa-solid fa-check text-white fs-4"></i>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Hiển thị động theo trạng thái -->
+    @foreach (var st in statusStats)
+    {
+        var count = Model.Items.Count(x => x.Status == st.Code);
 
-    <!-- Đang xét -->
-    <div class="col-md-3">
-        <div class="stat-card" style="background: linear-gradient(135deg, #0284ff, #00d1ff);">
-            <div class="stat-overlay"></div>
-            <div class="d-flex align-items-center justify-content-between position-relative" style="z-index:10;">
-                <div>
-                    <p class="text-white text-uppercase mb-1">Đang xét</p>
-                    <h4 class="text-white fw-bold">@Model.Items.Count(x => x.Status == "under_review")</h4>
-                </div>
-                <div class="stat-icon-box">
-                    <i class="fa-solid fa-spinner text-white fs-4"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Từ chối -->
-    <div class="col-md-3">
-        <div class="stat-card" style="background: linear-gradient(135deg, #e82c70, #ff5ba6);">
-            <div class="stat-overlay"></div>
-            <div class="d-flex align-items-center justify-content-between position-relative" style="z-index:10;">
-                <div>
-                    <p class="text-white text-uppercase mb-1">Từ chối</p>
-                    <h4 class="text-white fw-bold">@Model.Items.Count(x => x.Status == "rejected")</h4>
-                </div>
-                <div class="stat-icon-box">
-                    <i class="fa-solid fa-ban text-white fs-4"></i>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card" style="background: @st.Color;">
+                <div class="stat-overlay"></div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-white text-uppercase mb-1">@st.Name</p>
+                        <h4 class="text-white fw-bold">@count</h4>
+                    </div>
+                    <div class="stat-icon-box">
+                        <i class="fa-solid @st.Icon text-white fs-4"></i>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    }
 </div>
 
 
@@ -132,28 +119,17 @@
     </div>
 
     <!-- Status select -->
-    <div class="col-md-2">
-                <select name="status" class="select-input">
-                    <option value="">Tất cả trạng thái</option>
-
-                    <option value="approved" selected="@(ViewBag.Status == "approved")">
-                        Đã duyệt
-                    </option>
-
-                    <option value="under_review" selected="@(ViewBag.Status == "under_review")">
-                        Đang xét
-                    </option>
-
-                    <option value="submitted" selected="@(ViewBag.Status == "submitted")">
-                        Đã nộp
-                    </option>
-
-                    <option value="rejected" selected="@(ViewBag.Status == "rejected")">
-                        Từ chối
-                    </option>
-                    </select>
-
-                </div>
+<div class="col-md-2">
+    <select name="status" class="select-input" onchange="this.form.submit()">
+        <option value="">Tất cả trạng thái</option>
+        <option value="submitted" selected="@(ViewBag.Status == "submitted")">Đã nộp</option>
+        <option value="under_review" selected="@(ViewBag.Status == "under_review")">Đang xét</option>
+        <option value="approved" selected="@(ViewBag.Status == "approved")">Đã duyệt</option>
+        <option value="ready_to_issue" selected="@(ViewBag.Status == "ready_to_issue")">Sẵn sàng phát hành</option>
+        <option value="issued" selected="@(ViewBag.Status == "issued")">Đã phát hành</option>
+        <option value="rejected" selected="@(ViewBag.Status == "rejected")">Từ chối</option>
+    </select>
+</div>
                 <!-- Product select (SELECT2) -->
 <div class="col-md-3">
     <select id="productSelect" name="product" class="select-input">

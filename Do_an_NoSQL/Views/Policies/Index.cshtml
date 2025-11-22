@@ -97,6 +97,7 @@
         </div>
 
         <div class="d-flex flex-wrap gap-2">
+           
             <a href="javascript:void(0);" id="exportExcelBtn" class="btn btn-outline-red">
                 <i class="fa-solid fa-file-export me-1"></i>
                 Xuất Excel
@@ -127,8 +128,10 @@
                         <option value="inforce" selected="@(ViewBag.Status == "inforce")">Hiệu lực</option>
                         <option value="grace" selected="@(ViewBag.Status == "grace")">Gia hạn phí</option>
                         <option value="expired" selected="@(ViewBag.Status == "expired")">Hết hiệu lực</option>
+                        <option value="terminated" selected="@(ViewBag.Status == "terminated")">Đã chấm dứt</option>
                     </select>
                 </div>
+
 
                 <div class="col-md-3">
                     <select name="product" id="productSelect" class="select-input">
@@ -316,13 +319,35 @@
                                             </button>
                                         </li>
                                         <li>
-                                            <form asp-action="Delete" asp-route-id="@p.Id" method="post">
-                                                <button type="submit"
-                                                        onclick="return confirm('Xóa hợp đồng này?')"
-                                                        class="dropdown-item d-flex align-items-center gap-2 text-danger">
-                                                    <i class="fa-solid fa-trash-can"></i> Xóa
+                                            @if (p.Status != "inforce")
+                                            {
+                                                <!-- Nếu KHÔNG được tạo claim -->
+                                                <button type="button"
+                                                        class="dropdown-item d-flex align-items-center gap-2 text-muted disabled"
+                                                        title="Không thể tạo hồ sơ cho hợp đồng bị từ chối hoặc đang gia hạn phí"
+                                                        disabled>
+                                                    <i class="fa-solid fa-file-alt"></i>
+                                                    Tạo hồ sơ yêu cầu giải quyết quyền lợi
+                                                </button>                                                
+                                            }
+                                            else
+                                            {
+                                                <!-- Nếu được phép -->
+                                                <button type="button"
+                                                        class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                                                        onclick="loadPolicyDetails('@p.Id')">
+                                                    <i class="fa-solid fa-file-alt"></i>
+                                                    Tạo hồ sơ yêu cầu giải quyết quyền lợi
                                                 </button>
-                                            </form>
+                                            }
+                                        </li>
+                                        <li>
+                                            <button type="button"
+                                                    class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                                                    onclick="confirmDeletePolicy('@p.Id')">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                                <span>Xóa</span>
+                                            </button>
                                         </li>
                                     </ul>
                                 </div>
@@ -441,8 +466,129 @@
         </div>
     </div>
 
+    <!-- Modal Tạo Hồ Sơ Yêu Cầu Giải Quyết Quyền Lợi -->
+    <div class="modal fade" id="createClaimModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg">
+                <!-- HEADER -->
+                <div class="modal-header custom-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="header-icon">
+                            <i class="fa-solid fa-file-alt"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0 text-white fw-bold">Tạo Hồ Sơ Yêu Cầu Giải Quyết Quyền Lợi</h3>
+                            <p class="mb-0 text-white-75 small" id="modalClaimPolicyNo"></p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-gray" data-bs-dismiss="modal"></button>
+                </div>
 
-</div>
+                <!-- BODY -->
+                <div class="modal-body custom-modal-body" id="createClaimContent">
+                    <!-- Loading mặc định -->
+                    <div class="text-center py-5" id="loadingDiv">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-3 text-muted">Đang tải thông tin...</p>
+                    </div>
+
+                    <!-- Hiển thị thông tin sau khi tải -->
+                    <div id="claimDetailsDiv" style="display: none;">
+                        <!-- Thông tin hợp đồng -->
+                        <h5 class="fw-bold text-danger mb-3">Thông tin hợp đồng</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Số hợp đồng</label>
+                                <input id="policyNo" class="form-control bg-white input-input" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Ngày phát hành</label>
+                                <input id="issueDate" type="date" class="form-control input-input bg-white" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Ngày có hiệu lực</label>
+                                <input id="effectiveDate" class="form-control bg-white input-input" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Ngày đáo hạn</label>
+                                <input id="maturityDate" class="form-control bg-white input-input" readonly />
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Thông tin người thụ hưởng -->
+                        <h5 class="fw-bold text-danger mb-3">Thông tin người thụ hưởng</h5>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Tên người thụ hưởng</th>
+                                        <th>Quan hệ</th>
+                                        <th>Phần trăm chia sẻ</th>
+                                        <th>Số CMND</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="beneficiaryInputList">
+                                    
+                                </tbody>
+                            </table>
+                        </div>
+                        <hr class="my-4">
+
+                        <!-- Thông tin hồ sơ yêu cầu -->
+                        <h5 class="fw-bold text-danger mb-3">Thông tin hồ sơ yêu cầu</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Loại yêu cầu</label>
+                                <select class="select-input" id="claimType" required>
+                                    <option value="accident">Tai nạn</option>
+                                    <option value="hospitalization">Nằm viện</option>
+                                    <option value="surgery">Phẫu thuật</option>
+                                    <option value="critical_illness">Bệnh hiểm nghèo</option>
+                                    <option value="death">Tử vong</option>
+                                    <option value="disability">Thương tật</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Địa điểm xảy ra sự kiện</label>
+                                <input type="text" class="form-control input-input" id="eventPlace" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Ngày sự kiện</label>
+                                <input type="date" class="form-control input-input" id="eventDate" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Nguyên nhân</label>
+                                <input type="text" class="form-control input-input" id="cause" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Số tiền yêu cầu bồi thường (₫)</label>
+                                <input type="number" class="form-control input-input" id="requestedAmount" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Mô tả sự kiện</label>
+                                <textarea class="form-control input-input" id="description" rows="3" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- FOOTER -->
+                <div class="modal-footer custom-footer d-flex justify-content-between">
+
+                    <button type="button" class="btn btn-sm btn-gray" data-bs-dismiss="modal">
+                        Đóng
+                    </button>
+                    <button type="submit" class="btn btn-sm btn-red" onclick="confirmCreateClaim()">
+                        <i class="fa-solid fa-check"></i> Xác nhận tạo hồ sơ yêu cầu
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
 
 
 @section Scripts {

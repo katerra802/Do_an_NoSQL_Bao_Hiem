@@ -1,0 +1,134 @@
+﻿@model Do_an_NoSQL.Models.ViewModels.ProductCreateVM
+
+@{
+    var mode = ViewData["Mode"]?.ToString() ?? "create";
+    bool isEdit = mode == "edit";
+    ViewData["Title"] = isEdit ? "Chỉnh sửa sản phẩm bảo hiểm" : "Tạo sản phẩm bảo hiểm";
+}
+
+<link rel="stylesheet" href="~/css/policy-application.css" />
+
+<div class="main-card p-4">
+
+    <h4 class="fw-bold mb-2">
+        <i class="fa-solid @(isEdit ? "fa-pen-to-square" : "fa-plus") text-danger me-2"></i>
+        @(isEdit ? "CHỈNH SỬA SẢN PHẨM BẢO HIỂM" : "TẠO SẢN PHẨM BẢO HIỂM")
+    </h4>
+    <hr class="mb-4" />
+
+    <form asp-action="@(isEdit ? "Edit" : "Create")" method="post" id="productForm">
+        @if (isEdit)
+        {
+            <input type="hidden" name="Id" value="@Model.Id" />
+        }
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Mã sản phẩm</label>
+                    <input type="text" name="ProductCode" class="input-input" value="@Model.ProductCode" placeholder="VD: PRU_TERM_10Y" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Tên sản phẩm</label>
+                    <input type="text" name="Name" class="input-input" value="@Model.Name" placeholder="VD: Bảo hiểm tử kỳ 10 năm" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Loại sản phẩm</label>
+                    <select name="Type" class="select-input" asp-items="ViewBag.TypeOptions" required>
+                        <option value="" disabled selected>-- Chọn loại sản phẩm --</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Số tiền bảo hiểm tối thiểu</label>
+                    <input type="number" name="MinSumAssured" class="input-input" value="@Model.MinSumAssured" placeholder="VD: 100000000" required />
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Thời hạn (năm)</label>
+                    <input type="number" name="TermYears" class="input-input" value="@Model.TermYears" min="1" max="99" placeholder="VD: 20" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Phí cơ bản (Premium Rate)</label>
+                    <input type="number" name="PremiumRate" class="input-input" value="@Model.PremiumRate" step="0.001" placeholder="VD: 0.05" required />
+                </div>
+
+                <div class="mb-3 d-flex gap-2">
+                    <div class="flex-fill">
+                        <label class="form-label fw-semibold">Tuổi tối thiểu</label>
+                        <input type="number" name="MinAge" class="input-input" value="@Model.MinAge" placeholder="VD: 18" required />
+                    </div>
+                    <div class="flex-fill">
+                        <label class="form-label fw-semibold">Tuổi tối đa</label>
+                        <input type="number" name="MaxAge" class="input-input" value="@Model.MaxAge" placeholder="VD: 65" required />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Số tiền bảo hiểm tối đa</label>
+                    <input type="number" name="MaxSumAssured" class="input-input" value="@Model.MaxSumAssured" placeholder="VD: 2000000000" required />
+                </div>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label fw-semibold">Mục đích sản phẩm</label>
+                <div class="d-flex gap-5 flex-wrap">
+                    @foreach (var purpose in new[] { "bảo vệ", "tích lũy", "đầu tư", "hưu trí", "giáo dục", "di sản" })
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="Purpose" value="@purpose" @(Model.Purpose.Contains(purpose) ? "checked" : "") />
+                            <label class="form-check-label">@purpose</label>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="col-12">
+                <h5 class="mt-3">Sản phẩm bổ trợ (Riders)</h5>
+                <div id="ridersContainer" class="mt-2">
+                    @if (Model.Riders != null && Model.Riders.Any())
+                    {
+                        foreach (var r in Model.Riders)
+                        {
+                            <div class="rider-item d-flex gap-2 align-items-center mb-2">
+                                <input type="text" name="Riders[@Model.Riders.IndexOf(r)].Code"
+                                       class="input-input flex-fill"
+                                       value="@r.Code"
+                                       placeholder="Mã Rider (VD: RDR_HEALTH)" required />
+                                <input type="text" name="Riders[@Model.Riders.IndexOf(r)].Name"
+                                       class="input-input flex-fill"
+                                       value="@r.Name"
+                                       placeholder="Tên Rider (VD: Bảo hiểm sức khỏe nâng cao)" required />
+                                <button type="button" class="btn btn-sm btn-outline-danger remove-rider">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        }
+                    }
+                </div>
+
+                <button type="button" class="btn-outline-red mt-2" id="addRiderBtn">
+                    <i class="fa-solid fa-plus"></i> Thêm Rider
+                </button>
+            </div>
+        </div>
+
+        <div class="mt-4 d-flex justify-content-end">
+            <a asp-action="Index" class="btn-outline-gray">
+                <i class="fa-solid fa-xmark me-1"></i> Huỷ
+            </a>
+            <button type="submit" class="btn-red ms-2">
+                <i class="fa-solid fa-save me-1"></i> @(isEdit ? "Cập nhật sản phẩm" : "Lưu sản phẩm")
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="~/js/products.js"></script>
+}

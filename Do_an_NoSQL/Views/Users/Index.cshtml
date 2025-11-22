@@ -1,0 +1,302 @@
+﻿@model PagedResult<dynamic>
+
+@{
+    ViewData["Title"] = "Danh sách người dùng";
+}
+
+<div class="main-card">
+    <!-- HEADER -->
+    <div class="main-header">
+        <div>
+            <h3>DANH SÁCH NGƯỜI DÙNG</h3>
+            <p>Quản lý tài khoản hệ thống và phân quyền người dùng</p>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <a href="/Users/DownloadTemplate" class="btn btn-outline-red">
+                <i class="fa-solid fa-file-arrow-down me-1"></i> Tải file mẫu
+            </a>
+            <button class="btn btn-red" data-bs-toggle="modal" data-bs-target="#importUserModal">
+                <i class="fa-solid fa-file-import me-1"></i> Import Excel
+            </button>
+            <button id="exportUserExcelBtn" class="btn btn-outline-red">
+                <i class="fa-solid fa-file-export me-1"></i> Xuất Excel
+            </button>
+            <a asp-action="Create" class="btn btn-red">
+                <i class="fa-solid fa-plus me-1"></i> Thêm người dùng
+            </a>
+        </div>
+    </div>
+
+    <!-- BỘ LỌC -->
+    <div class="filter-section">
+        <form method="get" id="filterForm">
+            <button type="submit" style="display:none"></button>
+
+            <div class="row mb-2 align-items-end">
+                <div class="col-md-4 position-relative">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" name="search" value="@ViewBag.Search"
+                           class="input-input ps-5"
+                           placeholder="Tìm username, họ tên hoặc email...">
+                </div>
+
+                <div class="col-md-3">
+                    <select name="role" class="select-input" onchange="this.form.submit()">
+                        <option value="">Tất cả vai trò</option>
+                        @foreach (var role in ViewBag.Roles)
+                        {
+                            <option value="@role.Id" selected="@(ViewBag.Role == role.Id)">
+                                @role.Name
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <select name="status" class="select-input" onchange="this.form.submit()">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="active" selected="@(ViewBag.Status == "active")">Hoạt động</option>
+                        <option value="inactive" selected="@(ViewBag.Status == "inactive")">Ngưng hoạt động</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2 d-flex justify-content-center">
+                    <button type="button" class="btn-outline-red" style="height:42px;"
+                            onclick="window.location='@Url.Action("Index")'">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <div class="mt-4">
+            <button type="button" class="btn-red" onclick="bulkDeleteUsers()">
+                <i class="fa-solid fa-trash-can me-1"></i> Xóa hàng loạt
+            </button>
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrapper">
+        <table class="table align-middle mb-0">
+            <thead class="text-center">
+                <tr>
+                    <th>
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="checkbox" id="checkAll">
+                            <span>STT</span>
+                        </div>
+                    </th>
+                    <th>TÊN ĐĂNG NHẬP</th>
+                    <th>HỌ TÊN</th>
+                    <th>EMAIL</th>
+                    <th>VAI TRÒ</th>
+                    <th>TRẠNG THÁI</th>
+                    <th>THAO TÁC</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Any())
+                {
+                    var index = (Model.CurrentPage - 1) * Model.PageSize + 1;
+                    foreach (var u in Model.Items)
+                    {
+                        <tr class="text-center">
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="checkbox" class="row-check" value="@u.Id">
+                                    <span>@index</span>
+                                </div>
+                            </td>
+                            <td class="fw-semibold text-primary">@u.Username</td>
+                            <td>@u.FullName</td>
+                            <td>@u.Email</td>
+                            <td>@u.RoleName</td>
+                            <td>
+                                <span class="badge-status @(u.Status == "active" ? "status-issued" : "status-terminated")">
+                                    @(u.Status == "active" ? "Hoạt động" : "Ngưng hoạt động")
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <div class="dropdown">
+                                    <button class="btn btn-action-dropdown dropdown-toggle" type="button"
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fa-solid fa-gear"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li>
+                                            <a class="dropdown-item text-success d-flex align-items-center gap-2"
+                                               href="javascript:void(0);" onclick="viewUserDetails('@u.Id')">
+                                                <i class="fa-solid fa-eye"></i> Xem chi tiết
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item text-primary d-flex align-items-center gap-2"
+                                               asp-action="Edit" asp-route-id="@u.Id">
+                                                <i class="fa-solid fa-pen"></i> Chỉnh sửa
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <button class="dropdown-item text-warning d-flex align-items-center gap-2"
+                                                    onclick="updateUserStatus('@u.Id')">
+                                                <i class="fa-solid fa-rotate me-1"></i> Cập nhật trạng thái
+                                            </button>
+                                        </li>
+
+                                        <li>
+                                            <button class="dropdown-item text-danger d-flex align-items-center gap-2"
+                                                    onclick="confirmDeleteUser('@u.Id')">
+                                                <i class="fa-solid fa-trash-can"></i> Xóa
+                                            </button>
+                                        </li>
+                                    </ul>
+
+                                </div>
+                            </td>
+                        </tr>
+                        index++;
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4 fst-italic">
+                            Không có người dùng nào được tìm thấy.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-footer">
+        @await Html.PartialAsync("_Paginator", Model)
+    </div>
+
+    <div class="modal fade" id="importUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header custom-header rounded-top-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="header-icon"><i class="fa-solid fa-file-import"></i></div>
+                        <div>
+                            <h3 class="mb-0 text-white fw-bold">Import Danh Sách Người Dùng</h3>
+                            <p class="mb-0 text-white-75 small">Tải lên file Excel theo mẫu</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-gray" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body custom-modal-body">
+                    <form id="importUserForm" enctype="multipart/form-data" class="p-2">
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Chọn file Excel</label>
+                            <div class="upload-box text-center p-4 border border-2 rounded-3 bg-light hover-shadow-sm">
+                                <i class="fa-solid fa-cloud-arrow-up fa-2x text-danger mb-2"></i>
+                                <p class="mb-1 fw-semibold">Kéo thả file vào đây hoặc</p>
+                                <button type="button" id="importUserBtn" class="btn btn-red btn-sm">
+                                    <i class="fa-solid fa-upload me-1"></i> Chọn tệp
+                                </button>
+                                <input type="file" id="importUserInput" name="file" class="d-none" accept=".xlsx,.xls">
+                                <p id="selectedUserFile" class="mt-2 text-muted fst-italic">Chưa chọn tệp</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="/Users/DownloadTemplate" class="text-decoration-none text-danger fw-semibold">
+                                <i class="fa-solid fa-file-arrow-down me-1"></i> Tải file mẫu Excel
+                            </a>
+
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-gray" data-bs-dismiss="modal">Đóng</button>
+                                <button type="button" class="btn btn-red" onclick="handleImportUserExcel()">
+                                    <i class="fa-solid fa-check me-1"></i> Bắt đầu import
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- MODAL: CHI TIẾT NGƯỜI DÙNG -->
+    <div class="modal fade" id="userDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header custom-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="header-icon"><i class="fa-solid fa-user-shield"></i></div>
+                        <div>
+                            <h3 class="mb-0 text-white fw-bold">Chi tiết người dùng</h3>
+                            <p class="mb-0 text-white-75 small" id="userDetailHeader"></p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-gray" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body custom-modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tên đăng nhập</label>
+                            <input type="text" id="detailUsername" class="input-input bg-white" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Họ tên</label>
+                            <input type="text" id="detailFullName" class="input-input bg-white" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Email</label>
+                            <input type="text" id="detailEmail" class="input-input bg-white" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Vai trò</label>
+                            <input type="text" id="detailRole" class="input-input bg-white" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Trạng thái</label>
+                            <input type="text" id="detailStatus" class="input-input bg-white" readonly />
+                        </div>
+                        <hr class="my-4" />
+                        <div class="col-12">
+                            <h5 class="fw-bold text-danger mb-3">Danh sách quyền</h5>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-sm align-middle">
+                                    <thead class="table-light text-center">
+                                        <tr>
+                                            <th>Mã quyền</th>
+                                            <th>Tên quyền</th>
+                                            <th>Phân hệ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="userPermissionTableBody">
+                                        <tr><td colspan="3" class="text-center text-muted fst-italic">Không có quyền nào</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer custom-footer d-flex justify-content-end">
+                    <button type="button" class="btn btn-sm btn-gray" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/users.js"></script>
+}
+@if (TempData["ToastMessage"] != null)
+{
+    <script>
+        localStorage.setItem('toastAfterReload', JSON.stringify({
+            type: '@TempData["ToastType"]',
+            message: '@TempData["ToastMessage"]'
+        }));
+    </script>
+}

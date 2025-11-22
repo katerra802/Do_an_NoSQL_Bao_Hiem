@@ -693,32 +693,32 @@ function editPolicy(id) {
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="fw-semibold">Khách hàng</label>
-                        <input class="form-control" value="${p.customer?.full_name || ''}" readonly>
+                        <input class="input-input opacity-50" value="${p.customer?.full_name || ''}" readonly>
                     </div>
 
                     <div class="col-md-6">
                         <label class="fw-semibold">Sản phẩm</label>
-                        <input class="form-control" value="${p.product?.name || ''}" readonly>
+                        <input class="input-input opacity-50" value="${p.product?.name || ''}" readonly>
                     </div>
 
                     <div class="col-md-6">
                         <label class="fw-semibold">Tư vấn viên</label>
-                        <input class="form-control" name="advisor_name" value="${p.advisor?.full_name || ''}">
+                        <input class="input-input" name="advisor_name" value="${p.advisor?.full_name || ''}">
                     </div>
 
                     <div class="col-md-6">
                         <label class="fw-semibold">Số tiền bảo hiểm (₫)</label>
-                        <input class="form-control" name="sum_assured" value="${p.sum_assured}">
+                        <input class="input-input" name="sum_assured" value="${p.sum_assured}">
                     </div>
 
                     <div class="col-md-6">
                         <label class="fw-semibold">Ngày cấp</label>
-                        <input type="date" class="form-control" name="issue_date" value="${p.issue_date?.split('T')[0] || ''}">
+                        <input type="date" class="input-input" name="issue_date" value="${p.issue_date?.split('T')[0] || ''}">
                     </div>
 
                     <div class="col-md-6">
                         <label class="fw-semibold">Ghi chú</label>
-                        <input class="form-control" name="notes" value="${p.notes || ''}">
+                        <input class="input-input" name="notes" value="${p.notes || ''}">
                     </div>
                 </div>
             </form>
@@ -757,91 +757,151 @@ $("#saveEditBtn").click(function () {
     });
 });
 
-window.updateStatus = function (policyId) {
-    const statuses = {
-        inforce: "Đang hiệu lực",
-        grace: "Gia hạn phí",
-        expired: "Hết hiệu lực",
-        terminated: "Đã chấm dứt"
+function loadPolicyDetails(policyId) {
+    console.log("policyId received:", policyId);
+
+    if (!policyId) {
+        // Lưu toast thông báo lỗi vào localStorage
+        const toastMessage = {
+            type: "error",
+            message: "Mã hợp đồng không hợp lệ!"
+        };
+        localStorage.setItem("toastAfterReload", JSON.stringify(toastMessage));
+        return;
+    }
+
+    // Hiển thị modal với loading
+    $('#createClaimModal').modal('show');
+    $('#loadingDiv').show();
+    $('#claimDetailsDiv').hide();
+
+    const url = `/Policies/GetPolicyDetails/${policyId}`;
+    console.log("Request URL:", url);
+
+    $.get(url, function (data) {
+        console.log("Response data:", data);
+
+        if (data.success) {
+            // Ẩn loading, hiện nội dung
+            $('#loadingDiv').hide();
+            $('#claimDetailsDiv').show();
+
+            // Điền thông tin hợp đồng
+            $('#modalClaimPolicyNo').text(`Hợp đồng: ${data.policy_no}`);
+
+            // Điền ngày tháng
+            $('#policyNo').val(data.policy_no);
+            $('#issueDate').val(data.issue_date ? new Date(data.issue_date).toISOString().split('T')[0] : 'N/A');
+            $('#effectiveDate').val(data.effective_date ? new Date(data.effective_date).toLocaleDateString('vi-VN') : 'N/A');
+            $('#maturityDate').val(data.maturity_date ? new Date(data.maturity_date).toLocaleDateString('vi-VN') : 'N/A');
+
+            // Điền thông tin người thụ hưởng
+            if (data.beneficiaries && data.beneficiaries.length > 0) {
+                const beneficiaryHTML = data.beneficiaries.map(b => {
+                    const fullName = b.full_name || 'Không có tên';
+                    const relation = b.relation || 'Không có quan hệ';
+                    const national_id = b.national_id || '0';
+                    const sharePercent = b.share_percent || '0';
+                    return `
+                        <tr>
+                            <td>${fullName}</td>
+                            <td>${relation}</td>
+                            <td>${sharePercent}%</td>
+                            <td>${national_id}</td>
+                        </tr>
+                    `;
+                }).join('');
+                $('#beneficiaryInputList').html(beneficiaryHTML);
+            } else {
+                $('#beneficiaryInputList').html('<p class="text-muted">Không có thông tin người thụ hưởng</p>');
+            }
+
+        } else {
+            // Lưu toast thông báo lỗi vào localStorage
+            const toastMessage = {
+                type: "error",
+                message: data.message || 'Không tìm thấy thông tin hợp đồng'
+            };
+            localStorage.setItem("toastAfterReload", JSON.stringify(toastMessage));
+            $('#createClaimModal').modal('hide');
+        }
+    })
+        .fail(function (xhr, status, error) {
+            console.error("AJAX Error:", xhr.responseText);
+            console.error("Status:", status);
+            console.error("Error:", error);
+
+            // Lưu toast thông báo lỗi vào localStorage
+            const toastMessage = {
+                type: "error",
+                message: 'Lỗi khi tải thông tin hợp đồng: ' + (xhr.responseJSON?.message || error)
+            };
+            localStorage.setItem("toastAfterReload", JSON.stringify(toastMessage));
+            $('#createClaimModal').modal('hide');
+        });
+}
+
+function confirmCreateClaim() {
+    console.log('Button clicked!');
+    const policyNo = $('#policyNo').val();
+    const claimType = $('#claimType').val();
+    const eventDate = $('#eventDate').val();
+    const eventPlace = $('#eventPlace').val();
+    const description = $('#description').val();
+    const requestedAmount = parseFloat($('#requestedAmount').val() || 0);
+    const cause = $('#cause').val();
+    const beneficiaryName = $('#beneficiaryInputList tr:first td:first').text() || '';
+
+    // Validate
+    if (!eventDate || !eventPlace || !description || !cause || requestedAmount <= 0) {
+        window.showToast("error", "Vui lòng điền đầy đủ thông tin!");
+        return;
+    }
+
+    const payload = {
+        policyNo,
+        claimType,
+        eventDate,
+        eventPlace,
+        description,
+        cause,
+        requestedAmount,
+        beneficiaryName
     };
 
-    const options = Object.entries(statuses)
-        .map(([code, name]) => `<option value="${code}">${name}</option>`)
-        .join("");
+    console.log("Creating claim with payload:", payload);
 
-    Swal.fire({
-        title: "Cập nhật trạng thái hợp đồng",
-        html: `
-            <div class="text-start">
-                <label class="fw-semibold">Trạng thái mới</label>
-                <select id="statusSelect" class="select-input w-100 mt-2">
-                    ${options}
-                </select>
-
-                <label class="fw-semibold mt-3">Ghi chú</label>
-                <textarea id="statusNotes" class="input-input w-100 mt-1" rows="3" placeholder="Nhập ghi chú (nếu có)..."></textarea>
-
-                <div id="lockFields" class="mt-3" style="display:none;">
-                    <label class="fw-semibold">Lý do chấm dứt</label>
-                    <input id="lockReason" type="text" class="input-input w-100" placeholder="Ví dụ: khách hàng hủy hợp đồng">
-                </div>
-            </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: "Cập nhật",
-        cancelButtonText: "Hủy bỏ",
-        reverseButtons: true,
-        customClass: {
-            popup: "custom-swal-popup",
-            confirmButton: "custom-swal-confirm-btn",
-            cancelButton: "custom-swal-cancel-btn",
-        },
-        preConfirm: () => {
-            const newStatus = document.getElementById("statusSelect").value;
-            const notes = document.getElementById("statusNotes").value;
-            const lockReason = document.getElementById("lockReason").value;
-            const isLocked = newStatus === "expired" || newStatus === "terminated";
-            return { newStatus, notes, isLocked, lockReason };
-        }
-    }).then(async (result) => {
-        if (result.isConfirmed) {
-            try {
-                const res = await fetch(`/Policies/UpdateStatus`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        id: policyId,
-                        newStatus: result.value.newStatus,
-                        notes: result.value.notes,
-                        isLocked: result.value.isLocked,
-                        lockReason: result.value.lockReason
-                    })
-                });
-
-                if (res.ok) {   
-                    localStorage.setItem("toastAfterReload", JSON.stringify({
+    $.ajax({
+        url: '/Claims/CreateClaimFromPolicy',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(payload),
+        success: function (response) {
+            if (response.success) {
+                // 🔥 Lưu thông báo vào localStorage trước khi reload
+                localStorage.setItem(
+                    "toastAfterReload",
+                    JSON.stringify({
                         type: "success",
-                        message: "Cập nhật trạng thái thành công!"
-                    }));
+                        message: "Hồ sơ yêu cầu đã được tạo thành công!"
+                    })
+                );
 
-                    location.reload();
-                } else {
-                    window.showToast("error", "Cập nhật thất bại.");
+                $('#createClaimModal').modal('hide');
+                location.reload(); // reload rồi mới hiển thị toast
+            } else {
+                window.showToast("error", 'Đã có lỗi khi tạo hồ sơ yêu cầu: ' + (response.message || ''));
+                if (response.errors) {
+                    console.log("Errors from server:", response.errors);
+                    window.showToast("error", "Chi tiết lỗi: " + response.errors.join(", "));
                 }
-
-            } catch (err) {
-                window.showToast("error", "Lỗi kết nối máy chủ.");
             }
+        },
+        error: function (xhr) {
+            const errorMessage = xhr.responseJSON?.message || 'Không xác định';
+            window.showToast("error", 'Lỗi server: ' + errorMessage);
+            console.error("AJAX Error:", xhr.responseText);
         }
     });
+}
 
-    // Khi chọn trạng thái "expired" hoặc "terminated" => hiện ô nhập lý do
-    $(document).on("change", "#statusSelect", function () {
-        const val = $(this).val();
-        if (val === "expired" || val === "terminated") {
-            $("#lockFields").slideDown();
-        } else {
-            $("#lockFields").slideUp();
-        }
-    });
-};

@@ -50,5 +50,11 @@ namespace Do_an_NoSQL.Database
 
         public IMongoCollection<User> Users
             => _database.GetCollection<User>("users");
+
+        public IMongoCollection<Permission> Permissions
+             => _database.GetCollection<Permission>("permissions");
+
+        public IMongoCollection<RolePermission> RolePermissions
+            => _database.GetCollection<RolePermission>("role_permissions");
     }
 }

@@ -154,6 +154,12 @@ label {
     border-radius: 50rem;
     padding: 0.35rem 0.75rem;
     font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2; 
+    word-break: break-word;
+    text-align: center;
 }
 
 /* STATUS COLORS */
@@ -241,6 +247,35 @@ label {
     border: 1px solid #842029;
 }
 
+.purpose-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.purpose-chip {
+    background: #f5f8ff;
+    color: #0d6efd;
+    border: 1px solid #d0e2ff;
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+    .purpose-chip i {
+        color: #0d6efd;
+        font-size: 13px;
+    }
+
+    .purpose-chip:hover {
+        background: #e7f0ff;
+        transform: translateY(-1px);
+    }
+
 
 /* WRAPPER PAGINATION */
 .pagination-wrapper {
@@ -298,6 +333,10 @@ label {
     gap: 0.75rem;
     font-size: 0.875rem;
     color: #6b7280; /* gray-500 */
+}
+/* Nếu table wrapper có overflow, tắt nó đi để dropdown thoát ra */
+.table-wrapper {
+    overflow: visible !important;
 }
 
 .table-footer {
@@ -653,6 +692,8 @@ label {
     border: 1px solid rgba(0, 0, 0, 0.1);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     padding: 0.25rem 0;
+    position: absolute !important;
+    z-index: 2000 !important; 
 }
 
 /* ITEM TRONG DROPDOWN */
@@ -711,6 +752,18 @@ label {
     font-size: 0.875rem;
     color: rgba(255, 255, 255, 0.75);
 }
+
+/* UPLOAD */
+.upload-box {
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+    .upload-box:hover {
+        background-color: #fff6f6;
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 8px rgba(220, 53, 69, 0.25);
+    }
 
 /* CHUNG CHO MODAL BODY VỚI BORDER OUTLINE */
 .custom-modal-body {
@@ -803,4 +856,3 @@ label {
     .btn-close:hover {
         color: #f8f9fa;
     }
-

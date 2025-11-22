@@ -1,0 +1,420 @@
+﻿@model PagedResult<dynamic>
+
+@{
+    ViewData["Title"] = "Danh sách khách hàng";
+}
+
+@functions {
+    string SortIcon(string field)
+    {
+        string sort = (ViewBag.Sort ?? "").ToString();
+        return sort switch
+        {
+            "date_asc" when field == "date" => "fa-sort-up",
+            "date_desc" when field == "date" => "fa-sort-down",
+            _ => "fa-sort"
+        };
+    }
+}
+
+@{
+    // Thống kê giới tính (Nam/Nữ)
+    var total = Model.TotalItems;
+    var male = Model.Items.Count(x => x.Gender == "M");
+    var female = Model.Items.Count(x => x.Gender == "F");
+}
+
+<div class="row py-3 g-3">
+    <!-- Tổng khách hàng -->
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card" style="background: linear-gradient(135deg, #ff3b3f, #ff8a00);">
+            <div class="stat-overlay"></div>
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <p class="text-white text-uppercase mb-1">Tổng khách hàng</p>
+                    <h4 class="text-white fw-bold">@total</h4>
+                </div>
+                <div class="stat-icon-box">
+                    <i class="fa-solid fa-users text-white fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nam -->
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card" style="background: linear-gradient(135deg, #007bff, #33b5e5);">
+            <div class="stat-overlay"></div>
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <p class="text-white text-uppercase mb-1">Nam</p>
+                    <h4 class="text-white fw-bold">@male</h4>
+                </div>
+                <div class="stat-icon-box">
+                    <i class="fa-solid fa-mars text-white fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nữ -->
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card" style="background: linear-gradient(135deg, #e82c70, #ff5ba6);">
+            <div class="stat-overlay"></div>
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <p class="text-white text-uppercase mb-1">Nữ</p>
+                    <h4 class="text-white fw-bold">@female</h4>
+                </div>
+                <div class="stat-icon-box">
+                    <i class="fa-solid fa-venus text-white fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="main-card">
+    <!-- HEADER -->
+    <div class="main-header">
+        <div>
+            <h3>DANH SÁCH KHÁCH HÀNG</h3>
+            <p>Theo dõi, lọc và quản lý khách hàng bảo hiểm</p>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <a href="/Customers/DownloadTemplate" class="btn btn-outline-red">
+                <i class="fa-solid fa-file-arrow-down me-1"></i> Tải file mẫu
+            </a>
+            <button class="btn btn-red" data-bs-toggle="modal" data-bs-target="#importCustomerModal">
+                <i class="fa-solid fa-file-import me-1"></i> Import Excel
+            </button>
+            <button id="exportCustomerExcelBtn" class="btn btn-outline-red">
+                <i class="fa-solid fa-file-export me-1"></i> Xuất Excel
+            </button>
+            <a asp-action="Create" class="btn btn-red">
+                <i class="fa-solid fa-plus me-1"></i> Thêm khách hàng
+            </a>
+        </div>
+    </div>
+
+    <!-- BỘ LỌC -->
+    <div class="filter-section">
+        <form method="get" id="filterForm">
+            <button type="submit" style="display:none"></button>
+
+            <div class="row mb-2 align-items-end">
+                <!-- Ô tìm kiếm -->
+                <div class="col-md-4 position-relative">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" name="search" value="@ViewBag.Search"
+                           class="input-input ps-5"
+                           placeholder="Tìm mã KH hoặc họ tên...">
+                </div>
+
+                <!-- Giới tính -->
+                <div class="col-md-2">
+                    <select name="gender" class="select-input" onchange="this.form.submit()">
+                        <option value="">Tất cả giới tính</option>
+                        <option value="M" selected="@(ViewBag.Gender == "M")">Nam</option>
+                        <option value="F" selected="@(ViewBag.Gender == "F")">Nữ</option>
+                    </select>
+                </div>
+                <div class="row col-md-6 align-items-end">
+                <!-- Khoảng thời gian -->
+                <div class="col-md-5">
+                    <label class="form-label fw-semibold">Từ ngày</label>
+                    <input type="date" name="from_date" class="input-input" value="@ViewBag.FromDate">
+                </div>
+
+                <div class="col-md-5">
+                    <label class="form-label fw-semibold">Đến ngày</label>
+                    <input type="date" name="to_date" class="input-input" value="@ViewBag.ToDate">
+                </div>
+
+                <!-- Nút reset -->
+                <div class="col-md-2 d-flex justify-content-center">
+                    <button type="button" class="btn-outline-red" style="height:42px;"
+                            onclick="window.location='@Url.Action("Index")'">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <div class="mt-4">
+            <button type="button" class="btn-red" onclick="bulkDeleteCustomers()">
+                <i class="fa-solid fa-trash-can me-1"></i> Xóa hàng loạt
+            </button>
+        </div>
+    </div>
+
+
+
+    <!-- TABLE -->
+    <div class="table-wrapper">
+        <table class="table align-middle mb-0">
+            <thead class="text-center">
+                <tr>
+                    <th>
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="checkbox" id="checkAll">
+                            <span>STT</span>
+                        </div>
+                    </th>
+                    <th>MÃ KHÁCH HÀNG</th>
+                    <th>HỌ TÊN</th>
+                    <th>EMAIL</th>
+                    <th>GIỚI TÍNH</th>
+                    <th>NGÀY SINH</th>
+                    <th>SỐ CMND</th>
+                    <th>THAO TÁC</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (Model.Items.Any())
+                {
+                    var index = (Model.CurrentPage - 1) * Model.PageSize + 1;
+
+                    foreach (var c in Model.Items)
+                    {
+                        <tr class="text-center">
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="checkbox" class="row-check" value="@c.Id">
+                                    <span>@index</span>
+                                </div>
+                            </td>
+                            <td class="fw-semibold text-primary">@c.CustomerCode</td>
+                            <td>@c.FullName</td>
+                            <td>@c.Email</td>
+                            <td>@(c.Gender == "M" ? "Nam" : "Nữ")</td>
+                            <td>@c.Dob.ToString("dd/MM/yyyy")</td>
+                            <td>@c.NationalId</td>
+                            <td class="text-center">
+                                <div class="dropdown">
+                                    <button class="btn btn-action-dropdown dropdown-toggle" type="button"
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fa-solid fa-gear"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li>
+                                            <a class="dropdown-item text-success d-flex align-items-center gap-2"
+                                               href="javascript:void(0);" onclick="viewCustomerDetails('@c.Id')">
+                                                <i class="fa-solid fa-eye"></i> Xem chi tiết
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item text-primary d-flex align-items-center gap-2"
+                                               asp-action="Edit" asp-route-id="@c.Id">
+                                                <i class="fa-solid fa-pen"></i> Chỉnh sửa
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item text-danger d-flex align-items-center gap-2"
+                                                    onclick="confirmDeleteCustomer('@c.Id')">
+                                                <i class="fa-solid fa-trash-can"></i> Xóa
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+
+                        index++;
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="12" class="text-center text-muted py-4 fst-italic">
+                            Không có khách hàng nào được tìm thấy.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="table-footer">
+        @await Html.PartialAsync("_Paginator", Model)
+    </div>
+    <!-- MODAL: Import Excel Khách Hàng -->
+    <div class="modal fade" id="importCustomerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+
+                <!-- HEADER -->
+                <div class="modal-header custom-header rounded-top-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="header-icon">
+                            <i class="fa-solid fa-file-import"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0 text-white fw-bold">Import Danh Sách Khách Hàng</h3>
+                            <p class="mb-0 text-white-75 small">Tải lên file Excel theo mẫu có sẵn</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-gray" data-bs-dismiss="modal"></button>
+                </div>
+
+                <!-- BODY -->
+                <div class="modal-body custom-modal-body">
+                    <form id="importCustomerForm" enctype="multipart/form-data" class="p-2">
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Chọn file Excel</label>
+                            <div class="upload-box text-center p-4 border border-2 rounded-3 bg-light hover-shadow-sm">
+                                <i class="fa-solid fa-cloud-arrow-up fa-2x text-danger mb-2"></i>
+                                <p class="mb-1 fw-semibold">Kéo thả file vào đây hoặc</p>
+                                <button type="button" id="importCustomerBtn" class="btn btn-red btn-sm">
+                                    <i class="fa-solid fa-upload me-1"></i> Chọn tệp
+                                </button>
+                                <input type="file" id="importCustomerInput" name="file" class="d-none" accept=".xlsx,.xls">
+                                <p id="selectedCustomerFile" class="mt-2 text-muted fst-italic">Chưa chọn tệp</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="/Customers/DownloadTemplate" class="text-decoration-none text-danger fw-semibold">
+                                <i class="fa-solid fa-file-arrow-down me-1"></i> Tải file mẫu Excel
+                            </a>
+
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-gray" data-bs-dismiss="modal">
+                                    Đóng
+                                </button>
+                                <button type="button" class="btn btn-red" onclick="handleImportCustomerExcel()">
+                                    <i class="fa-solid fa-check me-1"></i> Bắt đầu import
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <!-- MODAL: CHI TIẾT KHÁCH HÀNG -->
+    <div class="modal fade" id="customerDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg">
+
+                <!-- HEADER -->
+                <div class="modal-header custom-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="header-icon">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0 text-white fw-bold">Chi tiết khách hàng</h3>
+                            <p class="mb-0 text-white-75 small" id="customerDetailHeader"></p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-gray" data-bs-dismiss="modal"></button>
+                </div>
+
+                <!-- BODY -->
+                <div class="modal-body custom-modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Mã khách hàng</label>
+                            <input type="text" id="detailCustomerCode" class="input-input bg-white" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Họ và tên</label>
+                            <input type="text" id="detailCustomerName" class="input-input bg-white" readonly />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Ngày sinh</label>
+                            <input type="text" id="detailDob" class="input-input bg-white" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Giới tính</label>
+                            <input type="text" id="detailGender" class="input-input bg-white" readonly />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">CMND/CCCD</label>
+                            <input type="text" id="detailNationalId" class="input-input bg-white" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Số điện thoại</label>
+                            <input type="text" id="detailPhone" class="input-input bg-white" readonly />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Email</label>
+                            <input type="text" id="detailEmail" class="input-input bg-white" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nghề nghiệp</label>
+                            <input type="text" id="detailOccupation" class="input-input bg-white" readonly />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Thu nhập</label>
+                            <input type="text" id="detailIncome" class="input-input bg-white" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nguồn khách hàng</label>
+                            <input type="text" id="detailSource" class="input-input bg-white" readonly />
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Địa chỉ</label>
+                            <textarea id="detailAddress" class="input-input bg-white" rows="2" readonly></textarea>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Tình trạng sức khỏe</label>
+                            <textarea id="detailHealth" class="input-input bg-white" rows="3" readonly></textarea>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Ngày tạo</label>
+                            <input type="text" id="detailCreatedAt" class="input-input bg-white" readonly />
+                        </div>
+                    </div>
+
+                    <!-- Thống kê -->
+                    <hr class="my-4" />
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <h5 class="fw-bold text-primary" id="statApplications">0</h5>
+                            <p class="text-muted mb-0">Hồ sơ yêu cầu</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h5 class="fw-bold text-success" id="statPolicies">0</h5>
+                            <p class="text-muted mb-0">Hợp đồng</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h5 class="fw-bold text-warning" id="statClaims">0</h5>
+                            <p class="text-muted mb-0">Yêu cầu bồi thường</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h5 class="fw-bold text-danger" id="statTotalPaid">0 ₫</h5>
+                            <p class="text-muted mb-0">Tổng tiền chi trả</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="modal-footer custom-footer d-flex justify-content-end">
+                    <button type="button" class="btn btn-sm btn-gray" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+@section Scripts {
+    <script src="~/js/customers.js"></script>
+}
+

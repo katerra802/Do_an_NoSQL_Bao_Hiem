@@ -4,6 +4,7 @@ using Do_an_NoSQL.Database;
 using Do_an_NoSQL.Models;
 using Do_an_NoSQL.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using OfficeOpenXml;
 using System.Globalization;
@@ -14,10 +15,12 @@ namespace Do_an_NoSQL.Controllers
     public class PoliciesController : Controller
     {
         private readonly MongoDbContext _context;
+        private readonly ILogger<PoliciesController> _logger;
 
-        public PoliciesController(MongoDbContext context)
+        public PoliciesController(MongoDbContext context, ILogger<PoliciesController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         private IMongoCollection<Policy> Collection => _context.Policies;
@@ -544,48 +547,58 @@ namespace Do_an_NoSQL.Controllers
             if (string.IsNullOrEmpty(id))
                 return BadRequest(new { message = "Thiếu ID hợp đồng." });
 
-            var policy = _context.Policies.Find(x => x.Id == id).FirstOrDefault();
-            if (policy == null)
-                return NotFound(new { message = "Không tìm thấy hợp đồng." });
-
-            // Lấy thông tin liên quan
-            policy.Customer = _context.Customers.Find(x => x.CustomerCode == policy.CustomerId).FirstOrDefault();
-            policy.Advisor = _context.Advisors.Find(x => x.Code == policy.AdvisorId).FirstOrDefault();
-            policy.Product = _context.Products.Find(x => x.ProductCode == policy.ProductCode).FirstOrDefault();
-
-            // Lấy thông tin người thụ hưởng từ PolicyNo thay vì AppNo
-            var beneficiaries = _context.Beneficiaries
-                .Find(b => b.PolicyNo == policy.PolicyNo) // Lấy người thụ hưởng liên kết với PolicyNo
-                .ToList();
-
-            // Kiểm tra và trả về thông tin người thụ hưởng chính xác
-            return Json(new
+            try
             {
-                policy_no = policy.PolicyNo,
-                app_no = policy.AppNo,
-                customer = policy.Customer != null ? new { full_name = policy.Customer.FullName } : null,
-                advisor = policy.Advisor != null ? new { full_name = policy.Advisor.FullName } : null,
-                product = policy.Product != null ? new { name = policy.Product.Name } : null,
-                issue_date = policy.IssueDate,
-                effective_date = policy.EffectiveDate,
-                maturity_date = policy.MaturityDate,
-                premium_mode = policy.PremiumMode,
-                term_years = policy.TermYears,
-                sum_assured = policy.SumAssured,
-                annual_premium = policy.AnnualPremium,
-                status = policy.Status,
-                notes = policy.Notes,
-                is_locked = policy.IsLocked,
-                lock_reason = policy.LockReason,
-                beneficiaries = beneficiaries.Select(b => new
+                _logger.LogInformation($"Searching for policy with Id: {id}");
+                var policy = _context.Policies.Find(x => x.Id == id).FirstOrDefault();
+                if (policy == null)
+                    return NotFound(new { message = "Không tìm thấy hợp đồng." });
+
+                // Lấy thông tin liên quan
+                policy.Customer = _context.Customers.Find(x => x.CustomerCode == policy.CustomerId).FirstOrDefault();
+                policy.Advisor = _context.Advisors.Find(x => x.Code == policy.AdvisorId).FirstOrDefault();
+                policy.Product = _context.Products.Find(x => x.ProductCode == policy.ProductCode).FirstOrDefault();
+
+                // Lấy thông tin người thụ hưởng từ PolicyNo thay vì AppNo
+                var beneficiaries = _context.Beneficiaries
+                    .Find(b => b.PolicyNo == policy.PolicyNo)
+                    .ToList();
+
+                // Kiểm tra và trả về thông tin người thụ hưởng chính xác
+                return Json(new
                 {
-                    full_name = b.FullName,
-                    relation = b.Relation,
-                    share_percent = b.SharePercent,
-                    dob = b.Dob,
-                    national_id = b.NationalId
-                }).ToList()
-            });
+                    success = true,
+                    policy_no = policy.PolicyNo,
+                    app_no = policy.AppNo,
+                    customer = policy.Customer != null ? new { full_name = policy.Customer.FullName } : null,
+                    advisor = policy.Advisor != null ? new { full_name = policy.Advisor.FullName } : null,
+                    product = policy.Product != null ? new { name = policy.Product.Name } : null,
+                    issue_date = policy.IssueDate,
+                    effective_date = policy.EffectiveDate,
+                    maturity_date = policy.MaturityDate,
+                    premium_mode = policy.PremiumMode,
+                    term_years = policy.TermYears,
+                    sum_assured = policy.SumAssured,
+                    annual_premium = policy.AnnualPremium,
+                    status = policy.Status,
+                    notes = policy.Notes,
+                    is_locked = policy.IsLocked,
+                    lock_reason = policy.LockReason,
+                    beneficiaries = beneficiaries.Select(b => new
+                    {
+                        full_name = b.FullName,
+                        relation = b.Relation,
+                        share_percent = b.SharePercent,
+                        dob = b.Dob,
+                        national_id = b.NationalId
+                    }).ToList()
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving policy details.");
+                return Json(new { success = false, message = "Không tìm thấy hợp đồng." });
+            }
         }
 
     }
