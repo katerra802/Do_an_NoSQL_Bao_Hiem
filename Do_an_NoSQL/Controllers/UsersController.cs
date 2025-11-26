@@ -345,8 +345,7 @@ namespace Do_an_NoSQL.Controllers
                 // Cập nhật trạng thái
                 var filter = Builders<User>.Filter.Eq(x => x.Id, request.Id);
                 var update = Builders<User>.Update
-                    .Set(x => x.Status, request.NewStatus)
-                    .Set(x => x.UpdatedAt, DateTime.UtcNow);
+                    .Set(x => x.Status, request.NewStatus);
 
                 var updateResult = _context.Users.UpdateOne(filter, update);
 

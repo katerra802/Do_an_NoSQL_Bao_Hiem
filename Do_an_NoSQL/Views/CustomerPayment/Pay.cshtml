@@ -1,0 +1,391 @@
+﻿@model Do_an_NoSQL.Models.PremiumPayment
+
+@{
+    ViewData["Title"] = "Thanh toán phí bảo hiểm";
+    var policy = ViewBag.Policy as Do_an_NoSQL.Models.Policy;
+}
+
+<style>
+    .payment-container {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 20px;
+    }
+
+    .payment-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+
+    .payment-header {
+        background: linear-gradient(135deg, #E31E24 0%, #c4161c 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+    }
+
+    .payment-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .payment-header p {
+        font-size: 14px;
+        opacity: 0.9;
+        margin: 0;
+    }
+
+    .payment-body {
+        padding: 40px;
+    }
+
+    .info-section {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 30px;
+    }
+
+    .info-section h3 {
+        font-size: 18px;
+        font-weight: 700;
+        color: #003366;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #e0e0e0;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .info-label {
+        font-size: 12px;
+        color: #999;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+        font-weight: 600;
+    }
+
+    .info-value {
+        font-size: 16px;
+        color: #003366;
+        font-weight: 600;
+    }
+
+    .amount-highlight {
+        font-size: 32px;
+        color: #E31E24;
+        font-weight: 700;
+    }
+
+    .form-section {
+        margin-top: 30px;
+    }
+
+    .form-section h3 {
+        font-size: 18px;
+        font-weight: 700;
+        color: #003366;
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #003366;
+        margin-bottom: 8px;
+        font-size: 14px;
+        display: block;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 14px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.3s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #E31E24;
+    }
+
+    .btn-pay {
+        width: 100%;
+        background: linear-gradient(135deg, #E31E24 0%, #c4161c 100%);
+        color: white;
+        padding: 16px;
+        border-radius: 8px;
+        border: none;
+        font-weight: 700;
+        font-size: 16px;
+        cursor: pointer;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .btn-pay:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(227, 30, 36, 0.4);
+    }
+
+    .btn-pay:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-cancel {
+        width: 100%;
+        background: #f5f7fa;
+        color: #666;
+        padding: 14px;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        margin-top: 12px;
+    }
+
+    .btn-cancel:hover {
+        background: #e0e0e0;
+    }
+
+    .alert {
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .alert-info {
+        background: #e0f2fe;
+        color: #0369a1;
+        border-left: 4px solid #0ea5e9;
+    }
+
+    .alert-success {
+        background: #d1fae5;
+        color: #065f46;
+        border-left: 4px solid #10b981;
+    }
+
+    .alert-error {
+        background: #fee2e2;
+        color: #991b1b;
+        border-left: 4px solid #ef4444;
+    }
+
+    @@media (max-width: 768px) {
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .payment-body {
+            padding: 24px;
+        }
+    }
+</style>
+
+<div class="payment-container">
+    <div class="payment-card">
+        <!-- Header -->
+        <div class="payment-header">
+            <h1>💳 Thanh toán phí bảo hiểm</h1>
+            <p>Vui lòng xác nhận thông tin và chọn phương thức thanh toán</p>
+        </div>
+
+        <!-- Body -->
+        <div class="payment-body">
+            <!-- Thông tin hợp đồng -->
+            <div class="info-section">
+                <h3>📋 Thông tin hợp đồng</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Mã hợp đồng</span>
+                        <span class="info-value">@Model.PolicyNo</span>
+                    </div>
+                    @if (policy != null)
+                    {
+                        <div class="info-item">
+                            <span class="info-label">Sản phẩm</span>
+                            <span class="info-value">@policy.ProductCode</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Ngày hiệu lực</span>
+                            <span class="info-value">@policy.EffectiveDate.ToString("dd/MM/yyyy")</span>
+                        </div>
+                    }
+                    <div class="info-item">
+                        <span class="info-label">Ngày đến hạn</span>
+                        <span class="info-value">@Model.DueDate.ToString("dd/MM/yyyy")</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Số tiền cần thanh toán -->
+            <div class="info-section">
+                <h3>💰 Số tiền cần thanh toán</h3>
+                <div style="text-align: center; padding: 20px 0;">
+                    <div class="info-label">Tổng tiền</div>
+                    <div class="amount-highlight">@Model.Amount.ToString("N0") VNĐ</div>
+                </div>
+            </div>
+
+            <!-- Sau dòng hiển thị Amount -->
+            @if (Model.PenaltyAmount > 0)
+            {
+                <div class="alert alert-warning">
+                    <i class="fa-solid fa-exclamation-triangle"></i>
+                    <span>Phí phạt chậm: <strong>@Model.PenaltyAmount.ToString("N0") VNĐ</strong></span>
+                </div>
+                <div class="amount-highlight">
+                    Tổng cộng: @((Model.Amount + Model.PenaltyAmount).ToString("N0")) VNĐ
+                </div>
+            }
+            else
+            {
+                <div class="amount-highlight">@Model.Amount.ToString("N0") VNĐ</div>
+            }
+
+            <!-- Alert thông báo -->
+            <div class="alert alert-info">
+                <i class="fa-solid fa-circle-info" style="font-size: 20px;"></i>
+                <span>Sau khi thanh toán thành công, hệ thống sẽ tự động cập nhật trạng thái hợp đồng của bạn.</span>
+            </div>
+
+            <!-- Form thanh toán -->
+            <form id="paymentForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="paymentId" value="@Model.Id" />
+
+                <div class="form-section">
+                    <h3>🏦 Chọn phương thức thanh toán</h3>
+
+                    <div class="form-group">
+                        <label>Kênh thanh toán <span style="color: #E31E24;">*</span></label>
+                        <select id="channel" class="form-control" required>
+                            <option value="">-- Chọn kênh thanh toán --</option>
+                            <option value="bank">Chuyển khoản ngân hàng</option>
+                            <option value="credit_card">Thẻ tín dụng</option>
+                            <option value="e_wallet">Ví điện tử</option>
+                            <option value="mobile_app">Ứng dụng di động</option>
+                            <option value="cash">Tiền mặt tại văn phòng</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mã tham chiếu / Số giao dịch</label>
+                        <input type="text" id="reference" class="form-control" placeholder="Nhập mã giao dịch (tùy chọn)" />
+                        <small style="color: #999; font-size: 12px; margin-top: 4px; display: block;">
+                            Ví dụ: Mã giao dịch ngân hàng, số biên lai, v.v.
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Alert kết quả -->
+                <div id="resultAlert" style="display: none;"></div>
+
+                <!-- Nút thanh toán -->
+                <button type="submit" id="btnPay" class="btn-pay">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Xác nhận thanh toán</span>
+                </button>
+
+                <button type="button" class="btn-cancel" onclick="window.history.back()">
+                    Quay lại
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#paymentForm').on('submit', function (e) {
+                e.preventDefault();
+
+                var id = $('#paymentId').val();
+                var channel = $('#channel').val();
+                var reference = $('#reference').val();
+
+                if (!channel) {
+                    showAlert('error', 'Vui lòng chọn kênh thanh toán!');
+                    return;
+                }
+
+                // Disable button
+                $('#btnPay').prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...');
+
+                $.ajax({
+                    url: '/CustomerPayment/ProcessPayment',
+                    type: 'POST',
+                    data: {
+                        id: id,
+                        channel: channel,
+                        reference: reference,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            showAlert('success', response.message);
+                            setTimeout(function () {
+                                window.location.href = '/CustomerPayment/Success?policyNo=' +
+                                    response.policyNo + '&amount=' + response.amount +
+                                    '&paidDate=' + response.paidDate;
+                            }, 1500);
+                        } else {
+                            showAlert('error', response.message);
+                            $('#btnPay').prop('disabled', false).html('<i class="fa-solid fa-credit-card"></i> Xác nhận thanh toán');
+                        }
+                    },
+                    error: function () {
+                        showAlert('error', 'Có lỗi xảy ra trong quá trình thanh toán!');
+                        $('#btnPay').prop('disabled', false).html('<i class="fa-solid fa-credit-card"></i> Xác nhận thanh toán');
+                    }
+                });
+            });
+
+            function showAlert(type, message) {
+                var alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+                var icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation';
+
+                var html = '<div class="alert ' + alertClass + '">' +
+                    '<i class="fa-solid ' + icon + '" style="font-size: 20px;"></i>' +
+                    '<span>' + message + '</span>' +
+                    '</div>';
+
+                $('#resultAlert').html(html).show();
+
+                // Auto hide after 5 seconds
+                setTimeout(function () {
+                    $('#resultAlert').fadeOut();
+                }, 5000);
+            }
+        });
+    </script>
+}

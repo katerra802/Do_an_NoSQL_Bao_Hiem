@@ -1,7 +1,8 @@
 ﻿@model PagedResult<dynamic>
+@using Do_an_NoSQL.Helpers
 @{
     ViewData["Title"] = "Quản lý thanh toán & chi trả quyền lợi";
-    string activeTab = ViewBag.ActiveTab ?? "premium";
+    string activeTab = ViewBag.ActiveTab ?? "schedule";
 }
 
 
@@ -10,6 +11,172 @@
 <!-- ========================== -->
 <!-- HEADER -->
 <!-- ========================== -->
+
+<style>
+    /* ✅ THÊM CSS CHO TAB LỊCH THANH TOÁN */
+    .customer-payment-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        padding: 24px;
+        transition: transform 0.2s ease;
+    }
+
+        .customer-payment-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+
+    .customer-info-section {
+        border-right: 2px solid #f0f0f0;
+        padding-right: 24px;
+    }
+
+    .customer-info-card {
+        text-align: center;
+    }
+
+    .customer-avatar {
+        font-size: 64px;
+        color: #E31E24;
+        margin-bottom: 16px;
+    }
+
+    .customer-name {
+        font-size: 18px;
+        font-weight: 700;
+        color: #003366;
+        margin-bottom: 16px;
+    }
+
+    .customer-details p {
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .schedule-section {
+        max-height: 400px;
+        overflow-y: auto;
+        padding-left: 24px;
+    }
+
+    .policy-schedule-group {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 16px;
+        background: #f8f9fa;
+    }
+
+    .policy-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #e0e0e0;
+    }
+
+    .policy-badge {
+        background: #003366;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .product-name {
+        color: #666;
+        font-size: 13px;
+    }
+
+    .schedule-timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .schedule-item {
+        display: grid;
+        grid-template-columns: 60px 100px 1fr 120px 120px;
+        gap: 12px;
+        align-items: center;
+        padding: 12px;
+        background: white;
+        border-radius: 6px;
+        border-left: 4px solid #ccc;
+        transition: all 0.2s ease;
+    }
+
+        .schedule-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .schedule-item.status-paid {
+            border-left-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .schedule-item.status-pending {
+            border-left-color: #f59e0b;
+        }
+
+        .schedule-item.status-overdue {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+
+    .schedule-period {
+        font-weight: 700;
+        color: #003366;
+        font-size: 13px;
+    }
+
+    .schedule-date {
+        font-size: 13px;
+        color: #666;
+    }
+
+    .schedule-amount {
+        font-size: 14px;
+        font-weight: 600;
+        color: #E31E24;
+    }
+
+    .schedule-status {
+        text-align: center;
+    }
+
+    .schedule-action {
+        text-align: right;
+    }
+
+    .btn-pay-small {
+        padding: 6px 12px;
+        background: linear-gradient(135deg, #E31E24 0%, #c4161c 100%);
+        color: white;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+    }
+
+        .btn-pay-small:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(227, 30, 36, 0.3);
+            color: white;
+        }
+</style>
+
 <div class="main-card">
     <div class="main-header">
         <div>
@@ -22,36 +189,52 @@
     <!-- MODERN TABS -->
     <!-- ========================== -->
     <ul class="payment-tabs">
-        <li class="tab-item">
-            <a class="tab-link @(activeTab == "premium" ? "active" : "")"
-               href="@Url.Action("Index", new { tab = "premium" })"
-               data-tab="premium">
-                <i class="fa-solid fa-wallet"></i>
-                <span>Lịch sử đóng phí</span>
-            </a>
-        </li>
-        <li class="tab-item">
-            <a class="tab-link @(activeTab == "payout" ? "active" : "")"
-               href="@Url.Action("Index", new { tab = "payout" })"
-               data-tab="payout">
-                <i class="fa-solid fa-hand-holding-dollar"></i>
-                <span>Chi trả quyền lợi</span>
-            </a>
-        </li>
+        @if (RoleHelper.CanAccessScheduleTab(User))
+        {
+            <li class="tab-item">
+                <a class="tab-link @(activeTab == "schedule" ? "active" : "")"
+                   href="@Url.Action("Index", new { tab = "schedule" })">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>Lịch thanh toán</span>
+                </a>
+            </li>
+        }
+
+        @if (RoleHelper.CanAccessHistoryTab(User))
+        {
+            <li class="tab-item">
+                <a class="tab-link @(activeTab == "history" ? "active" : "")"
+                   href="@Url.Action("Index", new { tab = "history" })">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>Lịch sử thanh toán</span>
+                </a>
+            </li>
+        }
+
+        @if (RoleHelper.CanAccessPayoutTab(User))
+        {
+            <li class="tab-item">
+                <a class="tab-link @(activeTab == "payout" ? "active" : "")"
+                   href="@Url.Action("Index", new { tab = "payout" })">
+                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                    <span>Chi trả quyền lợi</span>
+                </a>
+            </li>
+        }
     </ul>
 
     <!-- ========================== -->
     <!-- TAB CONTENT -->
     <!-- ========================== -->
     <div class="tab-content-wrapper">
-        @if (activeTab == "premium")
+        @if (activeTab == "history")
         {
             <!-- ========================== -->
             <!-- TAB: PREMIUM PAYMENTS -->
             <!-- ========================== -->
             <div class="filter-section mb-4">
                 <form method="get" id="filterForm">
-                    <input type="hidden" name="tab" value="premium" />
+                    <input type="hidden" name="tab" value="history" />
                     <div class="row mb-4 align-items-end">
                         <div class="col-md-4 position-relative">
                             <i class="fa-solid fa-magnifying-glass search-icon"></i>
@@ -184,6 +367,138 @@
             </div>
         }
 
+        <!-- ✅ THÊM TAB MỚI: LỊCH THANH TOÁN THEO KHÁCH HÀNG -->
+        @if (activeTab == "schedule")
+        {
+            <div class="filter-section mb-4">
+                <form method="get" id="filterFormSchedule">
+                    <input type="hidden" name="tab" value="schedule" />
+                    <div class="row mb-4 align-items-end">
+                        <div class="col-md-4 position-relative">
+                            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                            <input type="text" name="search" value="@ViewBag.Search"
+                                   class="input-input ps-5" placeholder="Tìm tên khách hàng, mã hợp đồng...">
+                        </div>
+
+                        <div class="col-md-4">
+                            <select name="status" class="select-input" onchange="this.form.submit()">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="paid" selected="@(ViewBag.Status == "paid")">Đã thanh toán</option>
+                                <option value="due" selected="@(ViewBag.Status == "due")">Đến hạn</option>
+                                <option value="overdue" selected="@(ViewBag.Status == "overdue")">Quá hạn</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-2 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Từ ngày</label>
+                            <input type="date" name="from_date" class="input-input" value="@ViewBag.FromDate">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Đến ngày</label>
+                            <input type="date" name="to_date" class="input-input" value="@ViewBag.ToDate">
+                        </div>
+                        <div class="col-md-2 d-flex justify-content-start">
+                            <button type="button" class="btn-outline-red"
+                                    style="height:42px;"
+                                    onclick="window.location='@Url.Action("Index", new { tab = "schedule" })'">
+                                <i class="fa-solid fa-rotate-left"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Danh sách khách hàng -->
+            @if (Model.Items.Any())
+            {
+                foreach (var customer in Model.Items)
+                {
+                    <div class="customer-payment-card mb-4">
+                        <div class="row">
+                            <!-- Cột trái: Thông tin khách hàng (1/4) -->
+                            <div class="col-md-3 customer-info-section">
+                                <div class="customer-info-card">
+                                    <div class="customer-avatar">
+                                        <i class="fa-solid fa-user-circle"></i>
+                                    </div>
+                                    <h5 class="customer-name">@customer.CustomerName</h5>
+                                    <div class="customer-details">
+                                        <p><i class="fa-solid fa-phone"></i> @customer.CustomerPhone</p>
+                                        <p><i class="fa-solid fa-envelope"></i> @customer.CustomerEmail</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Cột phải: Lịch thanh toán (3/4) -->
+                            <div class="col-md-9 schedule-section">
+                                @foreach (var policy in customer.Policies)
+                                {
+                                    <div class="policy-schedule-group mb-3">
+                                        <div class="policy-header">
+                                            <span class="policy-badge">
+                                                <i class="fa-solid fa-file-contract"></i>
+                                                @policy.PolicyNo
+                                            </span>
+                                            <span class="product-name">@policy.ProductCode</span>
+                                        </div>
+
+                                        <div class="schedule-timeline">
+                                            @foreach (var schedule in policy.Schedules)
+                                            {
+                                                var statusClass = schedule.Status switch
+                                                {
+                                                    "paid" => "status-paid",
+                                                    "due" => "status-pending",
+                                                    "overdue" => "status-overdue",
+                                                    _ => "status-pending"
+                                                };
+
+                                                <div class="schedule-item @statusClass">
+                                                    <div class="schedule-period">Kỳ @schedule.PeriodNo</div>
+                                                    <div class="schedule-date">@schedule.DueDate.ToString("dd/MM/yyyy")</div>
+                                                    <div class="schedule-amount">@String.Format("{0:N0}", schedule.PremiumDue) VNĐ</div>
+                                                    <div class="schedule-status">
+                                                        @switch (schedule.Status)
+                                                        {
+                                                            case "paid":
+                                                                <span class="badge-status status-paid">Đã thanh toán</span>
+                                                                break;
+                                                            case "due":
+                                                                <span class="badge-status status-pending">Đến hạn</span>
+                                                                break;
+                                                            case "overdue":
+                                                                <span class="badge-status status-overdue">Quá hạn</span>
+                                                                break;
+                                                        }
+                                                    </div>
+                                                    <div class="schedule-action">
+                                                        @if (schedule.Status != "paid")
+                                                        {
+                                                            <button type="button" class="btn-pay-small" onclick="quickPayment('@schedule.Id', '@policy.PolicyNo', '@schedule.PremiumDue')">
+                                                                <i class="fa-solid fa-credit-card"></i> Thanh toán
+                                                            </button>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center text-muted py-5 fst-italic">
+                    Không có lịch thanh toán nào.
+                </div>
+            }
+        }
+
         @if (activeTab == "payout")
         {
             <!-- ========================== -->
@@ -228,6 +543,7 @@
                 </form>
             </div>
 
+            
 
             <div class="table-wrapper mt-3">
                 <table class="table align-middle mb-0">

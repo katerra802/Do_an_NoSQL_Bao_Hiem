@@ -16,6 +16,10 @@
         document.getElementById("detailChannel").value = translatePaymentChannel(data.channel);
         document.getElementById("detailStatus").value = translatePaymentStatus(data.status);
         document.getElementById("detailRef").value = data.reference || "-";
+        document.getElementById("detailPaymentType").value =
+            translatePaymentType(data.payment_type);  // ✅ THÊM
+        document.getElementById("detailPenalty").value =
+            data.penalty_amount?.toLocaleString('vi-VN') || "0";  // ✅ THÊM
 
         new bootstrap.Modal(document.getElementById("paymentDetailModal")).show();
     } catch (err) {
@@ -69,6 +73,153 @@ function translatePaymentMethod(method) {
         case "online": return "Cổng thanh toán trực tuyến";
         default: return method || "-";
     }
+}
+
+function translatePaymentType(type) {
+    const map = {
+        "normal": "Thanh toán thường",
+        "penalty": "Có phí phạt",
+        "late_fee": "Phí trễ hạn"
+    };
+    return map[type] || type;
+}
+
+// ✅ THÊM FUNCTION MỚI - Quick Payment
+window.quickPayment = async function (paymentId, policyNo, amount) {
+    // Hiển thị modal xác nhận với form nhập thông tin
+    const { value: formValues } = await Swal.fire({
+        title: '<strong>Xác nhận thanh toán</strong>',
+        html: `
+            <div class="text-start">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Mã hợp đồng:</label>
+                    <input type="text" class="form-control" value="${policyNo}" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Số tiền:</label>
+                    <input type="text" class="form-control" value="${parseFloat(amount).toLocaleString('vi-VN')} VNĐ" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Kênh thanh toán <span class="text-danger">*</span></label>
+                    <select id="swal-channel" class="form-select">
+                        <option value="">-- Chọn kênh --</option>
+                        <option value="admin">Admin</option>
+                        <option value="bank">Ngân hàng</option>
+                        <option value="agent">Tư vấn viên</option>
+                        <option value="office">Văn phòng</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Phương thức thanh toán <span class="text-danger">*</span></label>
+                    <select id="swal-method" class="form-select">
+                        <option value="">-- Chọn phương thức --</option>
+                        <option value="cash">Tiền mặt</option>
+                        <option value="bank_transfer">Chuyển khoản</option>
+                        <option value="credit_card">Thẻ tín dụng</option>
+                        <option value="online">Thanh toán online</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Mã tham chiếu</label>
+                    <input type="text" id="swal-reference" class="form-control" placeholder="Nhập mã tham chiếu (tùy chọn)">
+                </div>
+            </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '<i class="fa-solid fa-check"></i> Xác nhận thanh toán',
+        cancelButtonText: '<i class="fa-solid fa-xmark"></i> Hủy',
+        confirmButtonColor: '#E31E24',
+        cancelButtonColor: '#6c757d',
+        width: '600px',
+        preConfirm: () => {
+            const channel = document.getElementById('swal-channel').value;
+            const method = document.getElementById('swal-method').value;
+            const reference = document.getElementById('swal-reference').value;
+
+            if (!channel || !method) {
+                Swal.showValidationMessage('Vui lòng chọn đầy đủ kênh và phương thức thanh toán!');
+                return false;
+            }
+
+            return { channel, method, reference };
+        }
+    });
+
+    if (!formValues) return;
+
+    // Hiển thị loading
+    Swal.fire({
+        title: "Đang xử lý thanh toán...",
+        didOpen: () => Swal.showLoading(),
+        allowOutsideClick: false
+    });
+
+    try {
+        const res = await fetch('/Payments/QuickPay', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify({
+                paymentId: paymentId,
+                channel: formValues.channel,
+                payMethod: formValues.method,
+                reference: formValues.reference || null
+            })
+        });
+
+        const data = await res.json();
+
+        await Swal.close();
+
+        if (data.success) {
+            await Swal.fire({
+                icon: 'success',
+                title: 'Thanh toán thành công!',
+                html: `
+                    <p class="mb-2"><strong>Mã hợp đồng:</strong> ${data.policyNo}</p>
+                    <p class="mb-2"><strong>Số tiền:</strong> ${parseFloat(data.amount).toLocaleString('vi-VN')} VNĐ</p>
+                    <p class="mb-0"><strong>Thời gian:</strong> ${data.paidDate}</p>
+                `,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#10b981'
+            });
+
+            // Reload trang để cập nhật dữ liệu
+            location.reload();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Thanh toán thất bại',
+                text: data.message,
+                confirmButtonText: 'Đóng',
+                confirmButtonColor: '#E31E24'
+            });
+        }
+    } catch (err) {
+        await Swal.close();
+        console.error('Payment error:', err);
+        Swal.fire({
+            icon: 'error',
+            title: 'Lỗi kết nối',
+            text: 'Không thể kết nối đến máy chủ. Vui lòng thử lại!',
+            confirmButtonText: 'Đóng',
+            confirmButtonColor: '#E31E24'
+        });
+    }
+};
+
+// ✅ THÊM HELPER - Translate payment type
+function translatePaymentType(type) {
+    const map = {
+        "initial": "Phí đầu kỳ",
+        "normal": "Thanh toán thường",
+        "penalty": "Có phí phạt",
+        "late_fee": "Phí trễ hạn"
+    };
+    return map[type] || type || "-";
 }
 
 

@@ -1,7 +1,9 @@
 ﻿using ClosedXML.Excel;
 using Do_an_NoSQL.Database;
+using Do_an_NoSQL.Helpers;
 using Do_an_NoSQL.Models;
 using Do_an_NoSQL.Models.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson.IO;
@@ -13,6 +15,7 @@ using System.Linq;
 
 namespace Do_an_NoSQL.Controllers
 {
+    [Authorize]
     public class CustomersController : Controller
     {
         private readonly MongoDbContext _context;
@@ -36,6 +39,10 @@ namespace Do_an_NoSQL.Controllers
      string sort = "created_at_desc"
  )
         {
+            if (!RoleHelper.CanAccessCustomers(User))
+            {
+                return RedirectToAction("AccessDenied", "Auth");
+            }
             var collection = _context.Customers.AsQueryable();
 
             // ============================

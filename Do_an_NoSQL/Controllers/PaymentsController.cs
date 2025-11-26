@@ -1,5 +1,7 @@
 ﻿using Do_an_NoSQL.Database;
+using Do_an_NoSQL.Helpers;
 using Do_an_NoSQL.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -8,6 +10,7 @@ using System.Linq;
 
 namespace Do_an_NoSQL.Controllers
 {
+    [Authorize]
     public class PaymentsController : Controller
     {
         private readonly MongoDbContext _context;
@@ -18,7 +21,7 @@ namespace Do_an_NoSQL.Controllers
         }
 
         public IActionResult Index(
-    string tab = "premium",
+    string tab = "schedule",
     string search = "",
     string status = "",
     string channel = "",
@@ -28,7 +31,29 @@ namespace Do_an_NoSQL.Controllers
     int page = 1,
     [FromQuery(Name = "per_page")] int pageSize = 10)
         {
-            ViewBag.ActiveTab = tab ?? "premium";
+            // ✅ Check quyền truy cập tổng thể
+            if (!RoleHelper.CanAccessPayments(User))
+            {
+                return RedirectToAction("AccessDenied", "Auth");
+            }
+
+            // ✅ Redirect về tab phù hợp nếu user không có quyền
+            if (tab == "schedule" && !RoleHelper.CanAccessScheduleTab(User))
+            {
+                tab = "history"; // Chuyển sang tab history
+            }
+
+            if (tab == "history" && !RoleHelper.CanAccessHistoryTab(User))
+            {
+                return RedirectToAction("AccessDenied", "Auth");
+            }
+
+            if (tab == "payout" && !RoleHelper.CanAccessPayoutTab(User))
+            {
+                return RedirectToAction("AccessDenied", "Auth");
+            }
+
+            ViewBag.ActiveTab = tab ?? "schedule";
             ViewBag.Search = search ?? "";
             ViewBag.Status = status ?? "";
             ViewBag.Channel = channel ?? "";
@@ -36,9 +61,12 @@ namespace Do_an_NoSQL.Controllers
             ViewBag.FromDate = from_date;
             ViewBag.ToDate = to_date;
 
-            return tab == "payout"
-                ? GetClaimPayoutsView(search, from_date, to_date, page, pageSize, pay_method)
-                : GetPremiumPaymentsView(search, status, from_date, to_date, page, pageSize, channel);
+            return tab switch
+            {
+                "payout" => GetClaimPayoutsView(search, from_date, to_date, page, pageSize, pay_method),
+                "history" => GetPremiumPaymentsView(search, status, from_date, to_date, page, pageSize, channel),
+                _ => GetPaymentSchedulesByCustomer(search, status, from_date, to_date, page, pageSize)
+            };
         }
 
 
@@ -266,6 +294,245 @@ namespace Do_an_NoSQL.Controllers
             }
         }
 
+        // ✅ SỬA LẠI - Hiển thị PremiumPayments theo khách hàng (thay vì PaymentSchedules)
+        private IActionResult GetPaymentSchedulesByCustomer(
+            string search,
+            string status,
+            DateTime? from_date,
+            DateTime? to_date,
+            int page,
+            int pageSize)
+        {
+            try
+            {
+                // Lấy tất cả PremiumPayments
+                var paymentsQuery = _context.PremiumPayments.AsQueryable();
+
+                // Filter theo status
+                if (!string.IsNullOrEmpty(status))
+                {
+                    paymentsQuery = paymentsQuery.Where(p => p.Status == status);
+                }
+
+                // Filter theo date range
+                if (from_date.HasValue)
+                {
+                    paymentsQuery = paymentsQuery.Where(p => p.DueDate >= from_date.Value);
+                }
+
+                if (to_date.HasValue)
+                {
+                    paymentsQuery = paymentsQuery.Where(p => p.DueDate <= to_date.Value);
+                }
+
+                var payments = paymentsQuery.ToList();
+
+                // Lấy danh sách PolicyNo unique
+                var policyNos = payments.Select(p => p.PolicyNo).Distinct().ToList();
+
+                // Lấy policies tương ứng
+                var policies = _context.Policies
+                    .Find(p => policyNos.Contains(p.PolicyNo))
+                    .ToList();
+
+                // Lấy CustomerIds unique
+                var customerIds = policies.Select(p => p.CustomerId).Distinct().ToList();
+
+                // Filter theo search (tên khách hàng hoặc policy_no)
+                if (!string.IsNullOrEmpty(search))
+                {
+                    var keyword = search.Trim().ToLower();
+
+                    // Nếu search theo policy_no
+                    if (keyword.StartsWith("pl-"))
+                    {
+                        policies = policies.Where(p => p.PolicyNo.ToLower().Contains(keyword)).ToList();
+                        customerIds = policies.Select(p => p.CustomerId).Distinct().ToList();
+                    }
+                    else
+                    {
+                        // Search theo tên khách hàng
+                        var matchedCustomers = _context.Customers
+                            .Find(x => x.FullName.ToLower().Contains(keyword))
+                            .ToList();
+
+                        customerIds = matchedCustomers.Select(c => c.CustomerCode).ToList();
+                        policies = policies.Where(p => customerIds.Contains(p.CustomerId)).ToList();
+                    }
+
+                    // Filter lại payments theo policies còn lại
+                    policyNos = policies.Select(p => p.PolicyNo).ToList();
+                    payments = payments.Where(p => policyNos.Contains(p.PolicyNo)).ToList();
+                }
+
+                // Lấy thông tin customers
+                var customers = _context.Customers
+                    .Find(c => customerIds.Contains(c.CustomerCode))
+                    .ToList();
+
+                // Group payments by customer
+                var customerGroups = customers.Select(customer => new
+                {
+                    CustomerId = customer.CustomerCode,
+                    CustomerName = customer.FullName,
+                    CustomerPhone = customer.Phone,
+                    CustomerEmail = customer.Email,
+                    Policies = policies
+                        .Where(p => p.CustomerId == customer.CustomerCode)
+                        .Select(policy => new
+                        {
+                            PolicyNo = policy.PolicyNo,
+                            ProductCode = policy.ProductCode,
+                            // Lấy payments cho policy này (đổi tên từ Schedules thành Payments để rõ nghĩa)
+                            Schedules = payments
+                                .Where(pm => pm.PolicyNo == policy.PolicyNo)
+                                .OrderBy(pm => pm.DueDate)
+                                .Select(pm => new
+                                {
+                                    Id = pm.Id,
+                                    PeriodNo = GetPeriodFromPayment(pm, payments.Where(p => p.PolicyNo == policy.PolicyNo).ToList()),
+                                    DueDate = pm.DueDate,
+                                    PremiumDue = pm.Amount,
+                                    Status = pm.Status,
+                                    PaidDate = pm.PaidDate,
+                                    Channel = pm.Channel,
+                                    Reference = pm.Reference
+                                })
+                                .ToList()
+                        })
+                        .Where(p => p.Schedules.Any())
+                        .ToList()
+                })
+                .Where(g => g.Policies.Any())
+                .ToList();
+
+                var totalItems = customerGroups.Count;
+                var pagedGroups = customerGroups
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Cast<dynamic>()
+                    .ToList();
+
+                var pagedResult = new PagedResult<dynamic>
+                {
+                    Items = pagedGroups,
+                    CurrentPage = page,
+                    PageSize = pageSize,
+                    TotalItems = totalItems,
+                    TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize)
+                };
+
+                ViewBag.RouteValues = new Dictionary<string, string>
+        {
+            { "tab", "schedule" },
+            { "search", search ?? "" },
+            { "status", status ?? "" },
+            { "from_date", from_date?.ToString("yyyy-MM-dd") ?? "" },
+            { "to_date", to_date?.ToString("yyyy-MM-dd") ?? "" }
+        };
+
+                return View(pagedResult);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Lỗi khi tải lịch thanh toán: " + ex.Message;
+                Console.WriteLine($"Error: {ex.Message}\n{ex.StackTrace}");
+                return View(new PagedResult<dynamic>());
+            }
+        }
+
+        // Helper method để tính số kỳ từ PremiumPayment
+        private int GetPeriodFromPayment(PremiumPayment payment, List<PremiumPayment> allPaymentsForPolicy)
+        {
+            var orderedPayments = allPaymentsForPolicy.OrderBy(p => p.DueDate).ToList();
+            return orderedPayments.IndexOf(payment) + 1;
+        }
+
+        // ✅ THÊM METHOD MỚI - Xử lý thanh toán nhanh (Quick Payment)
+        [HttpPost]
+        public IActionResult QuickPay([FromBody] QuickPaymentRequest request)
+        {
+            if (string.IsNullOrEmpty(request.PaymentId))
+            {
+                return Json(new { success = false, message = "Thiếu thông tin thanh toán!" });
+            }
+
+            try
+            {
+                // Tìm premium payment
+                var payment = _context.PremiumPayments
+                    .Find(p => p.Id == request.PaymentId)
+                    .FirstOrDefault();
+
+                if (payment == null)
+                {
+                    return Json(new { success = false, message = "Không tìm thấy khoản phí!" });
+                }
+
+                if (payment.Status == "paid")
+                {
+                    return Json(new { success = false, message = "Khoản phí này đã được thanh toán!" });
+                }
+
+                // Cập nhật thông tin thanh toán
+                var updateDef = Builders<PremiumPayment>.Update
+                    .Set(p => p.Status, "paid")
+                    .Set(p => p.PaidDate, DateTime.UtcNow)
+                    .Set(p => p.Channel, request.Channel ?? "admin")
+                    .Set(p => p.PayMethod, request.PayMethod ?? "cash")
+                    .Set(p => p.PaymentType, payment.PaymentType ?? "normal")
+                    .Set(p => p.PenaltyAmount, payment.PenaltyAmount)
+                    .Set(p => p.Reference, request.Reference ?? $"ADMIN-{DateTime.UtcNow:yyyyMMddHHmmss}");
+
+                var result = _context.PremiumPayments.UpdateOne(
+                    p => p.Id == request.PaymentId,
+                    updateDef
+                );
+
+                if (result.ModifiedCount > 0)
+                {
+                    // Cập nhật PaymentSchedule tương ứng
+                    if (!string.IsNullOrEmpty(payment.RelatedScheduleId))
+                    {
+                        var scheduleUpdate = Builders<PaymentSchedule>.Update
+                            .Set(s => s.Status, "paid");
+
+                        _context.PaymentSchedules.UpdateOne(
+                            s => s.Id == payment.RelatedScheduleId,
+                            scheduleUpdate
+                        );
+                    }
+
+                    return Json(new
+                    {
+                        success = true,
+                        message = "Thanh toán thành công!",
+                        policyNo = payment.PolicyNo,
+                        amount = payment.Amount,
+                        paidDate = DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm")
+                    });
+                }
+                else
+                {
+                    return Json(new { success = false, message = "Không thể cập nhật trạng thái thanh toán!" });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[QuickPay Error] {ex.Message}\n{ex.StackTrace}");
+                return Json(new { success = false, message = $"Lỗi: {ex.Message}" });
+            }
+        }
+
+        // ✅ THÊM CLASS REQUEST
+        public class QuickPaymentRequest
+        {
+            public string PaymentId { get; set; }
+            public string Channel { get; set; }
+            public string PayMethod { get; set; }
+            public string Reference { get; set; }
+        }
+
         [HttpGet]
         public IActionResult GetPaymentDetail(string id)
         {
@@ -282,7 +549,11 @@ namespace Do_an_NoSQL.Controllers
                 due_date = payment.DueDate,
                 paid_date = payment.PaidDate,
                 amount = payment.Amount,
+                payment_type = payment.PaymentType,
+                penalty_amount = payment.PenaltyAmount,
+                related_schedule_id = payment.RelatedScheduleId,  // ✅ SỬA
                 channel = payment.Channel,
+                pay_method = payment.PayMethod,  // ✅ THÊM
                 reference = payment.Reference,
                 status = payment.Status
             });

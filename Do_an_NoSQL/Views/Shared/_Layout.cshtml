@@ -24,10 +24,11 @@
             return controller == routeController && action == routeAction;
         }
     }
-
-    
 </head>
 <body>
+    @using Do_an_NoSQL.Helpers
+    @using System.Security.Claims
+
     <!-- Header -->
     <header class="admin-header">
         <div class="admin-logo">
@@ -35,35 +36,50 @@
             <span class="admin-logo-text">Prudential</span>
         </div>
         <div class="admin-header-right">
-            <div class="admin-user-dropdown">
-                <div class="admin-user" id="userDropdownBtn">
-                    <div class="admin-user-avatar">AD</div>
-                    <div class="admin-user-info">
-                        <span class="admin-user-name">Admin User</span>
-                        <span class="admin-user-role">Quản trị viên</span>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="admin-user-dropdown">
+                    <div class="admin-user" id="userDropdownBtn">
+                        <div class="admin-user-avatar">
+                            @{
+                                var fullName = User.FindFirst("FullName")?.Value ?? User.Identity.Name ?? "User";
+                                var initials = string.Join("", fullName.Split(' ').Select(s => s.FirstOrDefault())).ToUpper();
+                                if (initials.Length > 2) initials = initials.Substring(0, 2);
+                            }
+                            @initials
+                        </div>
+                        <div class="admin-user-info">
+                            <span class="admin-user-name">@(User.FindFirst("FullName")?.Value ?? User.Identity.Name)</span>
+                            <span class="admin-user-role">@(User.FindFirst("RoleName")?.Value ?? "User")</span>
+                        </div>
+                        <i class="fas fa-chevron-down admin-user-arrow"></i>
                     </div>
-                    <i class="fas fa-chevron-down admin-user-arrow"></i>
-                </div>
-                <div class="dropdown-menu-custom">
-                    <div class="dropdown-header">
-                        <div class="dropdown-header-name">Admin User</div>
-                        <div class="dropdown-header-email">admin@prudential.com</div>
+                    <div class="dropdown-menu-custom">
+                        <div class="dropdown-header">
+                            <div class="dropdown-header-name">@(User.FindFirst("FullName")?.Value ?? User.Identity.Name)</div>
+                            <div class="dropdown-header-email">@(User.FindFirst(ClaimTypes.Email)?.Value ?? "N/A")</div>
+                        </div>
+                        <a href="/settings">
+                            <i class="fas fa-cog"></i>
+                            <span>Cài đặt</span>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <form method="post" asp-action="Logout" asp-controller="Auth" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="dropdown-menu-button text-danger">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Đăng xuất</span>
+                            </button>
+                        </form>
                     </div>
-                    <a href="/profile">
-                        <i class="fas fa-user"></i>
-                        <span>Thông tin cá nhân</span>
-                    </a>
-                    <a href="/settings">
-                        <i class="fas fa-cog"></i>
-                        <span>Cài đặt</span>
-                    </a>
-                    <div class="dropdown-divider"></div>
-                    <a href="/logout" class="text-danger">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>Đăng xuất</span>
-                    </a>
                 </div>
-            </div>
+            }
+            else
+            {
+                <a href="/auth/login" class="btn btn-outline-light">
+                    <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập
+                </a>
+            }
         </div>
     </header>
 
@@ -76,66 +92,98 @@
         <aside class="admin-sidebar" id="adminSidebar">
             <nav>
                 <ul class="sidebar-menu">
+                    <!-- Tổng quan - Tất cả user -->
                     <li>
                         <a href="/" class="sidebar-menu-link @(IsActive("Home", "Index") ? "active" : "")">
                             <span class="sidebar-menu-icon"><i class="fas fa-chart-line"></i></span>
                             <span>Tổng quan</span>
                         </a>
                     </li>
-                    <li>
-                        <a href="/customers" class="sidebar-menu-link @(IsActive("Customers") ? "active" : "")">
-                            <span class="sidebar-menu-icon"><i class="fas fa-users"></i></span>
-                            <span>Quản lý khách hàng</span>
-                        </a>
 
-                    </li>
-                    <li>
-                        <a href="/PolicyApplications" class="sidebar-menu-link @(IsActive("PolicyApplications") ? "active" : "")">
-                            <span class="sidebar-menu-icon"><i class="fas fa-file-signature"></i></span>
-                            <span>Quản lý yêu cầu bảo hiểm</span>
-                        </a>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <!-- Quản lý khách hàng - ADMIN, ADVISOR -->
+                        @if (RoleHelper.CanAccessCustomers(User))
+                        {
+                            <li>
+                                <a href="/customers" class="sidebar-menu-link @(IsActive("Customers") ? "active" : "")">
+                                    <span class="sidebar-menu-icon"><i class="fas fa-users"></i></span>
+                                    <span>Quản lý khách hàng</span>
+                                </a>
+                            </li>
+                        }
 
-                    </li>
-                    <li>
-                        <a href="/Policies" class="sidebar-menu-link @(IsActive("Policies") ? "active" : "")">
-                            <span class="sidebar-menu-icon"><i class="fas fa-file-alt"></i></span>
-                            <span>Quản lý hợp đồng</span>
-                        </a>
+                        <!-- Quản lý yêu cầu bảo hiểm - ADMIN, ADVISOR, UNDERWRITER -->
+                        @if (RoleHelper.CanAccessApplications(User))
+                        {
+                            <li>
+                                <a href="/PolicyApplications" class="sidebar-menu-link @(IsActive("PolicyApplications") ? "active" : "")">
+                                    <span class="sidebar-menu-icon"><i class="fas fa-file-signature"></i></span>
+                                    <span>Quản lý yêu cầu bảo hiểm</span>
+                                </a>
+                            </li>
+                        }
 
-                    </li>
-                    <li>
-                        <a href="/products" class="sidebar-menu-link @(IsActive("Products") ? "active" : "")">
-                            <span class="sidebar-menu-icon"><i class="fas fa-shield-alt"></i></span>
-                            <span>Danh sách bảo hiểm</span>
-                        </a>
+                        <!-- Quản lý hợp đồng - ADMIN, ADVISOR, UNDERWRITER -->
+                        @if (RoleHelper.CanAccessPolicies(User))
+                        {
+                            <li>
+                                <a href="/Policies" class="sidebar-menu-link @(IsActive("Policies") ? "active" : "")">
+                                    <span class="sidebar-menu-icon"><i class="fas fa-file-alt"></i></span>
+                                    <span>Quản lý hợp đồng</span>
+                                </a>
+                            </li>
+                        }
 
-                    </li>
-                    <li>
-                        <a href="/claims" class="sidebar-menu-link @(IsActive("Claims") ? "active" : "")" >
-                            <span class="sidebar-menu-icon"><i class="fas fa-coins"></i></span>
-                            <span>Yêu cầu bồi thường</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/payments" class="sidebar-menu-link @(IsActive("Payments") ? "active" : "")">
-                            <span class="sidebar-menu-icon"><i class="fas fa-credit-card"></i></span>
-                            <span>Thanh toán</span>
-                        </a>
+                        <!-- Danh sách bảo hiểm - ADMIN only -->
+                        @if (RoleHelper.CanAccessProducts(User))
+                        {
+                            <li>
+                                <a href="/products" class="sidebar-menu-link @(IsActive("Products") ? "active" : "")">
+                                    <span class="sidebar-menu-icon"><i class="fas fa-shield-alt"></i></span>
+                                    <span>Danh sách bảo hiểm</span>
+                                </a>
+                            </li>
+                        }
 
-                    </li>
+                        <!-- Yêu cầu bồi thường - ADMIN, UNDERWRITER, CSKH -->
+                        @if (RoleHelper.CanAccessClaims(User))
+                        {
+                            <li>
+                                <a href="/claims" class="sidebar-menu-link @(IsActive("Claims") ? "active" : "")">
+                                    <span class="sidebar-menu-icon"><i class="fas fa-coins"></i></span>
+                                    <span>Yêu cầu bồi thường</span>
+                                </a>
+                            </li>
+                        }
+
+                        <!-- Thanh toán - ADMIN, ACCOUNTANT, CSKH -->
+                        @if (RoleHelper.CanAccessPayments(User))
+                        {
+                            <li>
+                                <a href="/payments" class="sidebar-menu-link @(IsActive("Payments") ? "active" : "")">
+                                    <span class="sidebar-menu-icon"><i class="fas fa-credit-card"></i></span>
+                                    <span>Thanh toán</span>
+                                </a>
+                            </li>
+                        }
+                    }
                 </ul>
 
-                <div class="sidebar-section">
-                    <h4 class="sidebar-section-title">Cài đặt hệ thống</h4>
-                    <ul class="sidebar-menu">
-                        <li>
-                            <a href="/users" class="sidebar-menu-link @(IsActive("Users") ? "active" : "")">
-                                <span class="sidebar-menu-icon"><i class="fas fa-cog"></i></span>
-                                <span>Quản lý người dùng</span>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
+                @if (User.Identity?.IsAuthenticated == true && RoleHelper.HasRole(User, RoleHelper.ADMIN))
+                {
+                    <div class="sidebar-section">
+                        <h4 class="sidebar-section-title">Cài đặt hệ thống</h4>
+                        <ul class="sidebar-menu">
+                            <li>
+                                <a href="/users" class="sidebar-menu-link @(IsActive("Users") ? "active" : "")">
+                                    <span class="sidebar-menu-icon"><i class="fas fa-cog"></i></span>
+                                    <span>Quản lý người dùng</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                }
             </nav>
         </aside>
 
@@ -165,17 +213,19 @@
             const userDropdown = document.querySelector('.admin-user-dropdown');
             const userDropdownBtn = document.getElementById('userDropdownBtn');
 
-            userDropdownBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                userDropdown.classList.toggle('active');
-            });
+            if (userDropdownBtn) {
+                userDropdownBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    userDropdown.classList.toggle('active');
+                });
 
-            // Close dropdown when clicking outside
-            document.addEventListener('click', function(e) {
-                if (!userDropdown.contains(e.target)) {
-                    userDropdown.classList.remove('active');
-                }
-            });
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!userDropdown.contains(e.target)) {
+                        userDropdown.classList.remove('active');
+                    }
+                });
+            }
 
             // Sidebar Toggle for Mobile
             const sidebar = document.getElementById('adminSidebar');
@@ -195,5 +245,6 @@
             }
         });
     </script>
+    @Html.AntiForgeryToken()
 </body>
 </html>

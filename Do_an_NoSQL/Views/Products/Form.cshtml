@@ -73,6 +73,18 @@
                     <label class="form-label fw-semibold">Số tiền bảo hiểm tối đa</label>
                     <input type="number" name="MaxSumAssured" class="input-input" value="@Model.MaxSumAssured" placeholder="VD: 2000000000" required />
                 </div>
+
+                <div class="form-group">
+                    <label asp-for="LatePenaltyRate">Tỷ lệ phạt chậm (%)</label>
+                    <input asp-for="LatePenaltyRate" class="form-control" type="number" step="0.01" />
+                    <span asp-validation-for="LatePenaltyRate" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="GracePeriodDays">Số ngày ân hạn</label>
+                    <input asp-for="GracePeriodDays" class="form-control" type="number" />
+                    <span asp-validation-for="GracePeriodDays" class="text-danger"></span>
+                </div>
             </div>
 
             <div class="col-12">

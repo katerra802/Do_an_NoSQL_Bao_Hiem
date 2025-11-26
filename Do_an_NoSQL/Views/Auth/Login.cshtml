@@ -1,0 +1,174 @@
+﻿@{
+    ViewData["Title"] = "Đăng nhập";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .login-container {
+            max-width: 450px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, #E31E24 0%, #c4161c 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+            .login-header i {
+                font-size: 60px;
+                margin-bottom: 15px;
+            }
+
+            .login-header h2 {
+                margin: 0;
+                font-weight: 700;
+                font-size: 28px;
+            }
+
+            .login-header p {
+                margin: 10px 0 0 0;
+                opacity: 0.9;
+                font-size: 14px;
+            }
+
+        .login-body {
+            padding: 40px 30px;
+        }
+
+        .form-floating {
+            margin-bottom: 20px;
+        }
+
+        .form-control {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 12px 15px;
+            height: 55px;
+            transition: all 0.3s ease;
+        }
+
+            .form-control:focus {
+                border-color: #E31E24;
+                box-shadow: 0 0 0 0.2rem rgba(227, 30, 36, 0.15);
+            }
+
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #E31E24 0%, #c4161c 100%);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+            .btn-login:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px rgba(227, 30, 36, 0.3);
+            }
+
+        .alert {
+            border-radius: 10px;
+            border: none;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .login-footer {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            color: #666;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <i class="fa-solid fa-shield-halved"></i>
+                <h2>Đăng nhập</h2>
+                <p>Hệ thống quản lý bảo hiểm</p>
+            </div>
+
+            <div class="login-body">
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger">
+                        <i class="fa-solid fa-circle-exclamation me-2"></i>@TempData["ErrorMessage"]
+                    </div>
+                }
+
+                <form method="post" asp-action="Login" asp-controller="Auth">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+
+                    <div class="form-floating">
+                        <input type="text"
+                               class="form-control"
+                               id="username"
+                               name="username"
+                               placeholder="Tên đăng nhập"
+                               required
+                               autofocus>
+                        <label for="username">
+                            <i class="fa-solid fa-user me-2"></i>Tên đăng nhập
+                        </label>
+                    </div>
+
+                    <div class="form-floating">
+                        <input type="password"
+                               class="form-control"
+                               id="password"
+                               name="password"
+                               placeholder="Mật khẩu"
+                               required>
+                        <label for="password">
+                            <i class="fa-solid fa-lock me-2"></i>Mật khẩu
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-login">
+                        <i class="fa-solid fa-right-to-bracket me-2"></i>Đăng nhập
+                    </button>
+                </form>
+            </div>
+
+            <div class="login-footer">
+                <p class="mb-0">© 2025 Insurance Management System. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

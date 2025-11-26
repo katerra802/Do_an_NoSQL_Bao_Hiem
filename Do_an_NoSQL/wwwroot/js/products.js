@@ -407,10 +407,20 @@ window.viewProductDetails = async function (id) {
                     <label class="form-label fw-semibold">Số tiền bảo hiểm tối đa</label>
                     <input type="text" class="input-input bg-white" value="${p.maxSumAssured.toLocaleString('vi-VN')} ₫" readonly>
                 </div>
-                <div class="col-12">
+                <div class="col-md-6">
                     <label class="form-label fw-semibold">Tỷ lệ phí bảo hiểm (%)</label>
                     <input type="text" class="input-input bg-white" value="${p.premiumRate}" readonly>
                 </div>
+                <!-- ✅ THÊM 2 FIELDS MỚI -->
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Tỷ lệ phạt chậm (%/ngày)</label>
+                    <input type="text" class="input-input bg-white" value="${p.latePenaltyRate || 0}" readonly>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Số ngày ân hạn</label>
+                    <input type="text" class="input-input bg-white" value="${p.gracePeriodDays || 0} ngày" readonly>
+                </div>
+                <!-- END THÊM -->
                 <div class="col-12">
                     <label class="form-label fw-semibold">Sản phẩm bổ trợ (Riders)</label>
                     ${riders}
@@ -419,7 +429,7 @@ window.viewProductDetails = async function (id) {
         `;
 
         $("#productDetailBody").html(html);
-        $("#productDetailModal").modal("show"); // 👉 Dùng jQuery modal thay vì new bootstrap.Modal
+        $("#productDetailModal").modal("show");
     }
     catch (err) {
         Swal.close();

@@ -9,6 +9,19 @@ namespace Do_an_NoSQL.Models
         [BsonElement("policy_no")]
         public string PolicyNo { get; set; }
 
+        // THÊM 3 FIELDS MỚI:
+        [BsonElement("related_schedule_id")]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string RelatedScheduleId { get; set; }  // Link với PaymentSchedule
+
+        [BsonElement("payment_type")]
+        public string PaymentType { get; set; }  // "normal", "penalty", "late_fee"
+
+        [BsonElement("penalty_amount")]
+        [BsonRepresentation(BsonType.Decimal128)]
+        public decimal PenaltyAmount { get; set; }  // Số tiền phạt
+        //
+
         [BsonElement("due_date")]
         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         public DateTime DueDate { get; set; }

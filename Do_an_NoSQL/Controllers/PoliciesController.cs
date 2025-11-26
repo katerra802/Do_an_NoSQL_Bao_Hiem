@@ -1,8 +1,10 @@
 ﻿using ClosedXML.Excel;
 using Do_an_NoSQL.Constants;
 using Do_an_NoSQL.Database;
+using Do_an_NoSQL.Helpers;
 using Do_an_NoSQL.Models;
 using Do_an_NoSQL.Models.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
@@ -12,6 +14,7 @@ using static Do_an_NoSQL.Controllers.PolicyApplicationsController;
 
 namespace Do_an_NoSQL.Controllers
 {
+    [Authorize]
     public class PoliciesController : Controller
     {
         private readonly MongoDbContext _context;
@@ -42,6 +45,10 @@ namespace Do_an_NoSQL.Controllers
      string sort = "date_desc"
  )
         {
+            if (!RoleHelper.CanAccessPolicies(User))
+            {
+                return RedirectToAction("AccessDenied", "Auth");
+            }
             var collection = _context.Policies.AsQueryable();
 
             // ===========================
@@ -167,9 +174,76 @@ namespace Do_an_NoSQL.Controllers
             return View(paged);
         }
 
+        private void GeneratePaymentSchedules(Policy policy, Product product, decimal approvedPremium)
+        {
+            // Tính số kỳ thanh toán dựa trên premium_mode
+            int totalPeriods = policy.PremiumMode switch
+            {
+                "monthly" => policy.TermYears * 12,           // 12 kỳ/năm
+                "quarterly" => policy.TermYears * 4,          // 4 kỳ/năm
+                "semi_annually" => policy.TermYears * 2,      // 2 kỳ/năm
+                "annually" => policy.TermYears,               // 1 kỳ/năm
+                _ => policy.TermYears
+            };
+
+            // Tính số tiền mỗi kỳ
+            decimal premiumPerPeriod = approvedPremium;
+
+            // Tính số tháng giữa các kỳ
+            int monthsInterval = policy.PremiumMode switch
+            {
+                "monthly" => 1,
+                "quarterly" => 3,
+                "semi_annually" => 6,
+                "annually" => 12,
+                _ => 12
+            };
+
+            for (int i = 1; i <= totalPeriods; i++)
+            {
+                // Tính ngày đến hạn cho từng kỳ
+                DateTime dueDate = policy.EffectiveDate.AddMonths((i - 1) * monthsInterval);
+
+                // 1. Tạo PaymentSchedule
+                var schedule = new PaymentSchedule
+                {
+                    PolicyNo = policy.PolicyNo,
+                    PeriodNo = i,
+                    DueDate = dueDate,
+                    PremiumDue = premiumPerPeriod,
+                    Status = i == 1 && policy.FirstPremiumPaid ? "paid" : "due"
+                };
+                _context.PaymentSchedules.InsertOne(schedule);
+
+                // 2. Tạo PremiumPayment tương ứng
+                var payment = new PremiumPayment
+                {
+                    PolicyNo = policy.PolicyNo,
+                    RelatedScheduleId = schedule.Id,
+                    DueDate = dueDate,
+                    Amount = premiumPerPeriod,
+                    Status = i == 1 && policy.FirstPremiumPaid ? "paid" : "pending",
+                    PaymentType = i == 1 ? "initial" : "normal",
+                    PenaltyAmount = 0,
+                    PaidDate = i == 1 && policy.FirstPremiumPaid ? DateTime.UtcNow : (DateTime?)null,
+                    Channel = i == 1 && policy.FirstPremiumPaid ? "advisor" : null,
+                    PayMethod = i == 1 && policy.FirstPremiumPaid ? "cash" : null,
+                    Reference = i == 1 && policy.FirstPremiumPaid ? $"PAY-{DateTime.UtcNow:yyyy}-{i:D4}" : null,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.PremiumPayments.InsertOne(payment);
+
+                _logger.LogInformation($"Created schedule and payment for PolicyNo: {policy.PolicyNo}, Period: {i}/{totalPeriods}");
+            }
+        }
+
         [HttpPost]
         public IActionResult CreateFromApplication([FromBody] CreatePolicyRequest request)
         {
+            if (!RoleHelper.CanAccessPolicies(User))
+            {
+                return Ok(new { success = false, message = "Bạn không có quyền thực hiện thao tác này!" });
+            }
             try
             {
                 // === 1. Lấy hồ sơ yêu cầu ===
@@ -202,10 +276,12 @@ namespace Do_an_NoSQL.Controllers
                 string policyNo = app.AppNo.Replace("APP-", "PL-");
 
                 // === 5. Tính toán phí hàng năm ===
+                // === 5. Tính toán phí hàng năm ===
                 decimal annualPremium = app.PremiumMode switch
                 {
                     "monthly" => (app.ApprovedPremium ?? 0) * 12,
                     "quarterly" => (app.ApprovedPremium ?? 0) * 4,
+                    "semi_annually" => (app.ApprovedPremium ?? 0) * 2,  // ✅ THÊM
                     "annually" => app.ApprovedPremium ?? 0,
                     _ => app.ApprovedPremium ?? 0
                 };
@@ -244,8 +320,11 @@ namespace Do_an_NoSQL.Controllers
 
                 _context.Policies.InsertOne(policy);
 
-                // === 7. Cập nhật hồ sơ yêu cầu ===
-                var updateDef = Builders<PolicyApplication>.Update
+                // ✅ === 7. TẠO PAYMENT SCHEDULES VÀ PREMIUM PAYMENTS ===
+                GeneratePaymentSchedules(policy, product, app.ApprovedPremium ?? 0);
+
+                // === 8. Cập nhật hồ sơ yêu cầu ===
+                var updateDef = Builders<PolicyApplication>.Update 
                     .Set(x => x.Status, "issued")
                     .Set(x => x.IssuedPolicyNo, policyNo);
 
@@ -264,7 +343,7 @@ namespace Do_an_NoSQL.Controllers
                 return Ok(new
                 {
                     success = true,
-                    message = "Hợp đồng đã được phát hành thành công!",
+                    message = "Hợp đồng và lịch thanh toán đã được tạo thành công!",  // ✅ SỬA
                     policyNo = policyNo,
                     issueDate = policy.IssueDate,
                     effectiveDate = policy.EffectiveDate,

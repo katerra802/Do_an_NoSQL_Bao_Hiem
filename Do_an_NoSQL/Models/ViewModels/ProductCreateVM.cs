@@ -11,7 +11,9 @@ namespace Do_an_NoSQL.Models.ViewModels
         public string Type { get; set; }               
         public decimal MinSumAssured { get; set; }       
         public decimal MaxSumAssured { get; set; }       
-        public decimal PremiumRate { get; set; }         
+        public decimal PremiumRate { get; set; }
+        public decimal LatePenaltyRate { get; set; }
+        public int GracePeriodDays { get; set; }
         public int MinAge { get; set; }                 
         public int MaxAge { get; set; }              
         public int TermYears { get; set; }              

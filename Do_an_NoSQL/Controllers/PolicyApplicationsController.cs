@@ -1,14 +1,17 @@
 ﻿using ClosedXML.Excel;
 using Do_an_NoSQL.Constants;
 using Do_an_NoSQL.Database;
+using Do_an_NoSQL.Helpers;
 using Do_an_NoSQL.Models;
 using Do_an_NoSQL.Models.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
 namespace Do_an_NoSQL.Controllers
 {
+    [Authorize]
     public class PolicyApplicationsController : Controller
     {
         private readonly MongoDbContext _context; private readonly ILogger<PolicyApplicationsController> _logger;
@@ -61,6 +64,10 @@ namespace Do_an_NoSQL.Controllers
     string sort = "date_desc"
 )
         {
+            if (!RoleHelper.CanAccessApplications(User))
+            {
+                return RedirectToAction("AccessDenied", "Auth");
+            }
             var collection = _context.PolicyApplications.AsQueryable();
 
             // =======================
@@ -325,6 +332,10 @@ namespace Do_an_NoSQL.Controllers
         // ================================
         public IActionResult Create()
         {
+            if (!RoleHelper.CanAccessApplications(User))
+            {
+                return RedirectToAction("AccessDenied", "Auth");
+            }
             ModelState.Clear();
             Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
             Response.Headers["Pragma"] = "no-cache";
@@ -344,6 +355,10 @@ namespace Do_an_NoSQL.Controllers
         [HttpPost]
         public IActionResult Create(PolicyApplicationCreateVM model)
         {
+            if (!RoleHelper.CanAccessApplications(User))
+            {
+                return RedirectToAction("AccessDenied", "Auth");
+            }
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Dữ liệu không hợp lệ" });
 

@@ -1,0 +1,242 @@
+﻿@model List<Do_an_NoSQL.Models.PremiumPayment>
+@{
+    ViewData["Title"] = "Lịch thanh toán của tôi";
+    var policy = ViewBag.Policy as Do_an_NoSQL.Models.Policy;
+}
+
+<link rel="stylesheet" href="~/css/payment.css" asp-append-version="true" />
+
+<style>
+    .search-container {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 30px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .payment-schedule-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        padding: 30px;
+        margin: 30px auto;
+        max-width: 1200px;
+    }
+
+    .policy-info-header {
+        background: linear-gradient(135deg, #003366 0%, #0066cc 100%);
+        color: white;
+        padding: 24px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+    }
+
+    .schedule-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 10px;
+    }
+
+    .schedule-row {
+        background: white;
+        transition: all 0.3s ease;
+    }
+
+        .schedule-row:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .schedule-row td {
+            padding: 16px;
+            border-top: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+            .schedule-row td:first-child {
+                border-left: 4px solid #ccc;
+                border-top-left-radius: 8px;
+                border-bottom-left-radius: 8px;
+            }
+
+            .schedule-row td:last-child {
+                border-right: 1px solid #e0e0e0;
+                border-top-right-radius: 8px;
+                border-bottom-right-radius: 8px;
+            }
+
+        .schedule-row.status-paid td:first-child {
+            border-left-color: #10b981;
+        }
+
+        .schedule-row.status-pending td:first-child {
+            border-left-color: #f59e0b;
+        }
+
+        .schedule-row.status-overdue td:first-child {
+            border-left-color: #ef4444;
+        }
+</style>
+
+<div class="container">
+    <!-- Form tìm kiếm Policy -->
+    @if (string.IsNullOrEmpty(ViewBag.PolicyNo))
+    {
+        <div class="search-container">
+            <div class="text-center mb-4">
+                <i class="fa-solid fa-file-contract" style="font-size: 48px; color: #E31E24;"></i>
+                <h2 class="mt-3 mb-2" style="color: #003366; font-weight: 700;">Tra cứu lịch thanh toán</h2>
+                <p class="text-muted">Nhập mã hợp đồng của bạn để xem lịch thanh toán</p>
+            </div>
+
+            <form method="get" asp-action="Index">
+                <div class="input-group input-group-lg">
+                    <span class="input-group-text bg-white">
+                        <i class="fa-solid fa-search"></i>
+                    </span>
+                    <input type="text"
+                           name="policyNo"
+                           class="form-control form-control-lg"
+                           placeholder="Nhập mã hợp đồng (VD: PL-2025-001)"
+                           required
+                           style="border-left: none;">
+                    <button type="submit" class="btn btn-lg" style="background: #E31E24; color: white; font-weight: 600;">
+                        <i class="fa-solid fa-arrow-right me-2"></i>Tra cứu
+                    </button>
+                </div>
+            </form>
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger mt-3">
+                    <i class="fa-solid fa-circle-exclamation me-2"></i>@TempData["ErrorMessage"]
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <!-- Hiển thị lịch thanh toán -->
+        <div class="payment-schedule-card">
+            <!-- Thông tin hợp đồng -->
+            @if (policy != null)
+            {
+                <div class="policy-info-header">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h4 class="mb-3"><i class="fa-solid fa-file-contract me-2"></i>@policy.PolicyNo</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-2"><i class="fa-solid fa-user me-2"></i><strong>Khách hàng:</strong> @policy.Customer?.FullName</p>
+                                    <p class="mb-2"><i class="fa-solid fa-box me-2"></i><strong>Sản phẩm:</strong> @policy.Product?.Name</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-2"><i class="fa-solid fa-calendar me-2"></i><strong>Hiệu lực:</strong> @policy.EffectiveDate.ToString("dd/MM/yyyy")</p>
+                                    <p class="mb-2"><i class="fa-solid fa-flag-checkered me-2"></i><strong>Đáo hạn:</strong> @policy.MaturityDate.ToString("dd/MM/yyyy")</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <a href="@Url.Action("Index")" class="btn btn-light">
+                                <i class="fa-solid fa-arrow-left me-2"></i>Tra cứu khác
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Bảng lịch thanh toán -->
+            @if (Model.Any())
+            {
+                <h5 class="mb-4" style="color: #003366; font-weight: 700;">
+                    <i class="fa-solid fa-list-check me-2"></i>Lịch sử và kế hoạch thanh toán
+                </h5>
+
+                <table class="schedule-table">
+                    <thead>
+                        <tr style="color: #003366; font-weight: 600; font-size: 14px;">
+                            <th style="padding: 12px;">KỲ</th>
+                            <th>NGÀY ĐẾN HẠN</th>
+                            <th>SỐ TIỀN (VNĐ)</th>
+                            <th>PHÍ PHẠT (VNĐ)</th>
+                            <th>TỔNG CỘNG (VNĐ)</th>
+                            <th>TRẠNG THÁI</th>
+                            <th>NGÀY THANH TOÁN</th>
+                            <th>THAO TÁC</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            var periodNo = 1;
+                            foreach (var payment in Model)
+                            {
+                                var statusClass = payment.Status switch
+                                {
+                                    "paid" => "status-paid",
+                                    "pending" => payment.DueDate < DateTime.UtcNow ? "status-overdue" : "status-pending",
+                                    _ => "status-pending"
+                                };
+
+                                var total = payment.Amount + (payment.PenaltyAmount > 0 ? payment.PenaltyAmount : 0);
+
+                                <tr class="schedule-row @statusClass">
+                                    <td><strong>@periodNo</strong></td>
+                                    <td>@payment.DueDate.ToString("dd/MM/yyyy")</td>
+                                    <td><strong>@payment.Amount.ToString("N0")</strong></td>
+                                    <td class="@(payment.PenaltyAmount > 0 ? "text-danger fw-bold" : "")">
+                                        @(payment.PenaltyAmount > 0 ? payment.PenaltyAmount.ToString("N0") : "-")
+                                    </td>
+                                    <td><strong style="color: #E31E24;">@total.ToString("N0")</strong></td>
+                                    <td>
+                                        @if (payment.Status == "paid")
+                                        {
+                                            <span class="badge-status status-paid">Đã thanh toán</span>
+                                        }
+                                        else if (payment.DueDate < DateTime.UtcNow)
+                                        {
+                                            <span class="badge-status status-overdue">Quá hạn</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge-status status-pending">Chưa đến hạn</span>
+                                        }
+                                    </td>
+                                    <td>@(payment.PaidDate?.ToString("dd/MM/yyyy") ?? "-")</td>
+                                    <td>
+                                        @if (payment.Status != "paid")
+                                        {
+                                            <a href="@Url.Action("Pay", new { id = payment.Id })"
+                                               class="btn btn-sm btn-primary">
+                                                <i class="fa-solid fa-credit-card me-1"></i>Thanh toán
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-success">
+                                                <i class="fa-solid fa-check-circle"></i> Hoàn tất
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                                periodNo++;
+                            }
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="fa-solid fa-inbox" style="font-size: 64px; color: #ccc;"></i>
+                    <p class="text-muted mt-3">Chưa có lịch thanh toán nào.</p>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/js/payment.js" asp-append-version="true"></script>
+}

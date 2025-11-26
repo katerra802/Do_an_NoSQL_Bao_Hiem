@@ -1,11 +1,14 @@
 ﻿using Do_an_NoSQL.Database;
+using Do_an_NoSQL.Helpers;
 using Do_an_NoSQL.Models;
 using Do_an_NoSQL.Models.ViewModels;
 using DocumentFormat.OpenXml.EMMA;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
+[Authorize]
 public class ClaimsController : Controller
 {
     private readonly MongoDbContext _context;
@@ -29,6 +32,10 @@ public class ClaimsController : Controller
         string sort = "submitted_at_desc"
     )
     {
+        if (!RoleHelper.CanAccessClaims(User))
+        {
+            return RedirectToAction("AccessDenied", "Auth");
+        }
         var collection = _context.Claims.AsQueryable();
 
         // Filter

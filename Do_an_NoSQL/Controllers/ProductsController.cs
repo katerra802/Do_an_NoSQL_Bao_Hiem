@@ -1,15 +1,19 @@
 ﻿using Do_an_NoSQL.Database;
+using Do_an_NoSQL.Helpers;
 using Do_an_NoSQL.Models;
 using Do_an_NoSQL.Models.ViewModels;
 using DocumentFormat.OpenXml.EMMA;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using MongoDB.Driver;
 using OfficeOpenXml;
 
+[Authorize]
 public class ProductsController : Controller
 {
     private readonly MongoDbContext _context;
+
 
     public ProductsController(MongoDbContext context)
     {
@@ -28,6 +32,10 @@ public class ProductsController : Controller
     string sort = "date_desc"             // Sort theo thời gian hợp đồng
 )
     {
+        if (!RoleHelper.CanAccessProducts(User))
+        {
+            return RedirectToAction("AccessDenied", "Auth");
+        }
         var collection = _context.Products.AsQueryable();
 
         // ============================
@@ -156,6 +164,8 @@ public class ProductsController : Controller
                     Code = r.Code,
                     Name = r.Name
                 }).ToList(),
+                LatePenaltyRate = vm.LatePenaltyRate,          // ✅ THÊM
+                GracePeriodDays = vm.GracePeriodDays,          // ✅ THÊM
                 CreatedAt = DateTime.UtcNow
             };
             _context.Products.InsertOne(product);
@@ -171,13 +181,57 @@ public class ProductsController : Controller
     // ================================
     // EDIT (GET)
     // ================================
+    //[HttpGet]
+    //public IActionResult Edit(string id)
+    //{
+    //    var p = _context.Products.Find(x => x.Id == id).FirstOrDefault();
+    //    if (p == null) return NotFound();
+
+    //    // ✅ Truyền selected value để dropdown chọn đúng loại sản phẩm
+    //    ViewBag.TypeOptions = new SelectList(new[]
+    //    {
+    //    new { Value = "endowment", Text = "Tích lũy" },
+    //    new { Value = "term", Text = "Tử kỳ" },
+    //    new { Value = "whole_life", Text = "Trọn đời" },
+    //    new { Value = "retirement", Text = "Hưu trí" },
+    //    new { Value = "health", Text = "Sức khỏe" },
+    //    new { Value = "accident", Text = "Tai nạn" },
+    //    new { Value = "education", Text = "Giáo dục" }
+    //}, "Value", "Text", p.Type); // <== đây nè
+
+    //    ViewData["Mode"] = "edit";
+
+    //    var vm = new ProductCreateVM
+    //    {
+    //        Id = p.Id,
+    //        ProductCode = p.ProductCode,
+    //        Name = p.Name,
+    //        Type = p.Type, // ✅ giữ lại giá trị
+    //        Purpose = p.Purpose,
+    //        TermYears = p.TermYears,
+    //        PremiumRate = p.PremiumRate,
+    //        MinAge = p.MinAge,
+    //        MaxAge = p.MaxAge,
+    //        MinSumAssured = p.MinSumAssured,
+    //        MaxSumAssured = p.MaxSumAssured,
+    //        Riders = p.Riders.Select(r => new RiderVM
+    //        {
+    //            Code = r.Code,
+    //            Name = r.Name
+    //        }).ToList()
+    //    };
+
+    //    return View("Form", vm);
+    //}
+    // ================================
+    // EDIT (GET) - Line ~190
+    // ================================
     [HttpGet]
     public IActionResult Edit(string id)
     {
         var p = _context.Products.Find(x => x.Id == id).FirstOrDefault();
         if (p == null) return NotFound();
 
-        // ✅ Truyền selected value để dropdown chọn đúng loại sản phẩm
         ViewBag.TypeOptions = new SelectList(new[]
         {
         new { Value = "endowment", Text = "Tích lũy" },
@@ -187,7 +241,7 @@ public class ProductsController : Controller
         new { Value = "health", Text = "Sức khỏe" },
         new { Value = "accident", Text = "Tai nạn" },
         new { Value = "education", Text = "Giáo dục" }
-    }, "Value", "Text", p.Type); // <== đây nè
+    }, "Value", "Text", p.Type);
 
         ViewData["Mode"] = "edit";
 
@@ -196,10 +250,12 @@ public class ProductsController : Controller
             Id = p.Id,
             ProductCode = p.ProductCode,
             Name = p.Name,
-            Type = p.Type, // ✅ giữ lại giá trị
+            Type = p.Type,
             Purpose = p.Purpose,
             TermYears = p.TermYears,
             PremiumRate = p.PremiumRate,
+            LatePenaltyRate = p.LatePenaltyRate,          // ✅ THÊM
+            GracePeriodDays = p.GracePeriodDays,          // ✅ THÊM
             MinAge = p.MinAge,
             MaxAge = p.MaxAge,
             MinSumAssured = p.MinSumAssured,
@@ -218,6 +274,29 @@ public class ProductsController : Controller
     // EDIT (POST)
     // ================================
     [HttpPost]
+    //public IActionResult Edit(string id, ProductCreateVM vm)
+    //{
+    //    if (!ModelState.IsValid)
+    //        return Json(new { success = false, message = "Dữ liệu không hợp lệ!" });
+
+    //    var update = Builders<Product>.Update
+    //        .Set(x => x.ProductCode, vm.ProductCode)
+    //        .Set(x => x.Name, vm.Name)
+    //        .Set(x => x.Type, vm.Type)
+    //        .Set(x => x.Purpose, vm.Purpose)
+    //        .Set(x => x.TermYears, vm.TermYears)
+    //        .Set(x => x.PremiumRate, vm.PremiumRate)
+    //        .Set(x => x.MinAge, vm.MinAge)
+    //        .Set(x => x.MaxAge, vm.MaxAge)
+    //        .Set(x => x.MinSumAssured, vm.MinSumAssured)
+    //        .Set(x => x.MaxSumAssured, vm.MaxSumAssured)
+    //        .Set(x => x.Riders, vm.Riders.Select(r => new Rider { Code = r.Code, Name = r.Name }).ToList());
+
+    //    _context.Products.UpdateOne(x => x.Id == id, update);
+
+    //    return Json(new { success = true, message = $"Cập nhật sản phẩm {vm.Name} thành công!" });
+    //}
+    [HttpPost]
     public IActionResult Edit(string id, ProductCreateVM vm)
     {
         if (!ModelState.IsValid)
@@ -230,6 +309,8 @@ public class ProductsController : Controller
             .Set(x => x.Purpose, vm.Purpose)
             .Set(x => x.TermYears, vm.TermYears)
             .Set(x => x.PremiumRate, vm.PremiumRate)
+            .Set(x => x.LatePenaltyRate, vm.LatePenaltyRate)      // ✅ THÊM
+            .Set(x => x.GracePeriodDays, vm.GracePeriodDays)      // ✅ THÊM
             .Set(x => x.MinAge, vm.MinAge)
             .Set(x => x.MaxAge, vm.MaxAge)
             .Set(x => x.MinSumAssured, vm.MinSumAssured)
@@ -312,7 +393,42 @@ public class ProductsController : Controller
         }
 
 
-        
+
+    //[HttpGet]
+    //public IActionResult GetProductDetail(string id)
+    //{
+    //    try
+    //    {
+    //        var product = _context.Products.Find(p => p.Id == id).FirstOrDefault();
+    //        if (product == null)
+    //            return Json(new { success = false, message = "Không tìm thấy sản phẩm!" });
+
+    //        return Json(new
+    //        {
+    //            success = true,
+    //            data = new
+    //            {
+    //                product.ProductCode,
+    //                product.Name,
+    //                product.Type,
+    //                product.Purpose,
+    //                product.TermYears,
+    //                product.PremiumRate,
+    //                product.MinAge,
+    //                product.MaxAge,
+    //                product.MinSumAssured,
+    //                product.MaxSumAssured,
+    //                product.Riders,
+    //                product.CreatedAt
+    //            }
+    //        });
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        return Json(new { success = false, message = "Lỗi khi tải chi tiết sản phẩm: " + ex.Message });
+    //    }
+    //}
+
     [HttpGet]
     public IActionResult GetProductDetail(string id)
     {
@@ -333,6 +449,8 @@ public class ProductsController : Controller
                     product.Purpose,
                     product.TermYears,
                     product.PremiumRate,
+                    product.LatePenaltyRate,          // ✅ THÊM
+                    product.GracePeriodDays,          // ✅ THÊM
                     product.MinAge,
                     product.MaxAge,
                     product.MinSumAssured,

@@ -287,6 +287,45 @@ body {
     margin: 0 24px 16px;
 }
 
+/* Dropdown menu button style */
+.dropdown-menu-button {
+    width: 100%;
+    padding: 12px 20px;
+    background: none;
+    border: none;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+    .dropdown-menu-button:hover {
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    .dropdown-menu-button.text-danger {
+        color: #dc3545 !important;
+    }
+
+        .dropdown-menu-button.text-danger:hover {
+            background: rgba(220, 53, 69, 0.1);
+        }
+
+    .dropdown-menu-button i {
+        width: 18px;
+        text-align: center;
+    }
+
+/* Override default form button styles */
+.dropdown-menu-custom form {
+    margin: 0;
+    padding: 0;
+}
+
 /* Content Area */
 .admin-content {
     flex: 1;

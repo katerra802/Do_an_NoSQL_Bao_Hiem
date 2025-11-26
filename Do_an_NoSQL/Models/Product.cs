@@ -25,6 +25,15 @@ namespace Do_an_NoSQL.Models
         [BsonRepresentation(BsonType.Decimal128)]
         public decimal PremiumRate { get; set; }
 
+        // THÊM 2 FIELDS MỚI:
+        [BsonElement("late_penalty_rate")]
+        [BsonRepresentation(BsonType.Decimal128)]
+        public decimal LatePenaltyRate { get; set; }  // % phạt chậm (VD: 0.5 = 0.5%)
+
+        [BsonElement("grace_period_days")]
+        public int GracePeriodDays { get; set; }  // Số ngày ân hạn (VD: 30 ngày)
+        //
+
         [BsonElement("min_age")]
         public int MinAge { get; set; }
 
