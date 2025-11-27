@@ -1,4 +1,7 @@
-﻿@model PagedResult<dynamic>
+﻿@using Do_an_NoSQL.Helpers
+@model PagedResult<dynamic>
+@inject Do_an_NoSQL.Database.MongoDbContext DbContext
+
 
 @{
     ViewData["Title"] = "Danh sách yêu cầu bảo hiểm";
@@ -331,24 +334,32 @@
     </li>
 
     <!-- Chỉnh sửa -->
-    <li>
+    @if (PermissionHelper.CanManageApplication(User, DbContext))
+    {
+        <li>
         <a class="dropdown-item d-flex align-items-center gap-2 text-primary"
            asp-action="Edit" asp-route-id="@app.Id">
             <i class="fa-solid fa-pen"></i>
             <span>Chỉnh sửa</span>
         </a>
     </li>
+    }
+    
 
     <!-- Duyệt hồ sơ (Thẩm định) -->
     @if (app.Status == "submitted" || app.Status == "under_review")
     {
-        <li>
+        @if (PermissionHelper.CanApproveApplication(User, DbContext))
+    {
+       <li>
             <a class="dropdown-item text-success fw-semibold" 
                href="javascript:void(0)" 
                onclick="openUnderwritingModal('@app.Id', @app.BasePremium)">
                <i class="fa-solid fa-user-check"></i> Duyệt hồ sơ
             </a>
         </li>
+    }
+        
     }
 
     <!-- Khách hàng xác nhận phí -->

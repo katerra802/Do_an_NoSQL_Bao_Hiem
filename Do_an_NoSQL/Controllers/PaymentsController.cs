@@ -31,16 +31,15 @@ namespace Do_an_NoSQL.Controllers
     int page = 1,
     [FromQuery(Name = "per_page")] int pageSize = 10)
         {
-            // ✅ Check quyền truy cập tổng thể
-            if (!RoleHelper.CanAccessPayments(User))
+            if (!PermissionHelper.CanViewPayment(User, _context))
             {
                 return RedirectToAction("AccessDenied", "Auth");
             }
 
-            // ✅ Redirect về tab phù hợp nếu user không có quyền
-            if (tab == "schedule" && !RoleHelper.CanAccessScheduleTab(User))
+            // Check quyền cho từng tab
+            if (tab == "schedule" && !PermissionHelper.CanManagePayment(User, _context))
             {
-                tab = "history"; // Chuyển sang tab history
+                tab = "history"; // Chuyển sang tab chỉ xem
             }
 
             if (tab == "history" && !RoleHelper.CanAccessHistoryTab(User))
@@ -71,18 +70,20 @@ namespace Do_an_NoSQL.Controllers
 
 
         private IActionResult GetPremiumPaymentsView(
-     string search,
-     string status,
-     DateTime? from_date,
-     DateTime? to_date,
-     int page,
-     int pageSize,
-     string channel = "")
+    string search,
+    string status,
+    DateTime? from_date,
+    DateTime? to_date,
+    int page,
+    int pageSize,
+    string channel = "")
         {
             try
             {
-                var query = _context.PremiumPayments.AsQueryable();
-
+                // ✅ CHỈ LẤY CÁC PAYMENT ĐÃ THANH TOÁN
+                var query = _context.PremiumPayments
+                    .AsQueryable()
+                    .Where(x => x.Status == "paid"); // ✅ THÊM FILTER MẶC ĐỊNH
 
                 // 🔍 Tìm kiếm theo mã hợp đồng hoặc mã tham chiếu
                 if (!string.IsNullOrEmpty(search))
@@ -94,9 +95,10 @@ namespace Do_an_NoSQL.Controllers
                     );
                 }
 
-                // Trạng thái
-                if (!string.IsNullOrEmpty(status))
-                    query = query.Where(x => x.Status == status);
+                // ✅ BỎ FILTER STATUS (vì đã mặc định là "paid" rồi)
+                // Nếu muốn cho phép filter khác thì uncomment:
+                // if (!string.IsNullOrEmpty(status))
+                //     query = query.Where(x => x.Status == status);
 
                 // Kênh thanh toán
                 if (!string.IsNullOrEmpty(channel))
@@ -115,8 +117,7 @@ namespace Do_an_NoSQL.Controllers
                     query = query.Where(x => x.DueDate <= toDateOnly);
                 }
 
-
-                query = query.OrderByDescending(x => x.DueDate);
+                query = query.OrderByDescending(x => x.PaidDate); // ✅ Sắp xếp theo ngày thanh toán thay vì due date
 
                 var totalItems = query.Count();
                 var items = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
@@ -135,7 +136,7 @@ namespace Do_an_NoSQL.Controllers
 
                 ViewBag.RouteValues = new Dictionary<string, string>
         {
-            { "tab", "premium" },
+            { "tab", "history" }, // ✅ SỬA từ "premium" sang "history"
             { "search", search ?? "" },
             { "status", status ?? "" },
             { "channel", channel ?? "" },
@@ -448,10 +449,14 @@ namespace Do_an_NoSQL.Controllers
             return orderedPayments.IndexOf(payment) + 1;
         }
 
-        // ✅ THÊM METHOD MỚI - Xử lý thanh toán nhanh (Quick Payment)
+        // ✅ SỬA LẠI METHOD QuickPay - THÊM VALIDATION THANH TOÁN TUẦN TỰ
         [HttpPost]
         public IActionResult QuickPay([FromBody] QuickPaymentRequest request)
         {
+            if (!PermissionHelper.CanManagePayment(User, _context))
+            {
+                return Json(new { success = false, message = "Bạn không có quyền thanh toán!" });
+            }
             if (string.IsNullOrEmpty(request.PaymentId))
             {
                 return Json(new { success = false, message = "Thiếu thông tin thanh toán!" });
@@ -474,6 +479,31 @@ namespace Do_an_NoSQL.Controllers
                     return Json(new { success = false, message = "Khoản phí này đã được thanh toán!" });
                 }
 
+                // ✅ VALIDATION: Kiểm tra các kỳ trước đã thanh toán chưa
+                var allPaymentsForPolicy = _context.PremiumPayments
+                    .Find(p => p.PolicyNo == payment.PolicyNo)
+                    .SortBy(p => p.DueDate)
+                    .ToList();
+
+                var currentPeriod = GetPeriodFromPayment(payment, allPaymentsForPolicy);
+
+                // Lấy các kỳ trước (period < currentPeriod)
+                var previousPayments = allPaymentsForPolicy
+                    .Take(currentPeriod - 1)
+                    .ToList();
+
+                var unpaidPrevious = previousPayments.Where(p => p.Status != "paid").ToList();
+
+                if (unpaidPrevious.Any())
+                {
+                    var unpaidPeriods = string.Join(", ", unpaidPrevious.Select((p, idx) => idx + 1));
+                    return Json(new
+                    {
+                        success = false,
+                        message = $"Bạn phải thanh toán các kỳ trước đó trước! Các kỳ chưa thanh toán: {unpaidPeriods}"
+                    });
+                }
+
                 // Cập nhật thông tin thanh toán
                 var updateDef = Builders<PremiumPayment>.Update
                     .Set(p => p.Status, "paid")
@@ -491,7 +521,7 @@ namespace Do_an_NoSQL.Controllers
 
                 if (result.ModifiedCount > 0)
                 {
-                    // Cập nhật PaymentSchedule tương ứng
+                    // Cập nhật PaymentSchedule tương ứng (nếu có)
                     if (!string.IsNullOrEmpty(payment.RelatedScheduleId))
                     {
                         var scheduleUpdate = Builders<PaymentSchedule>.Update

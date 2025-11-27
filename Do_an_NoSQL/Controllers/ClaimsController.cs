@@ -32,7 +32,7 @@ public class ClaimsController : Controller
         string sort = "submitted_at_desc"
     )
     {
-        if (!RoleHelper.CanAccessClaims(User))
+        if (!PermissionHelper.CanViewClaim(User, _context))
         {
             return RedirectToAction("AccessDenied", "Auth");
         }
@@ -257,6 +257,10 @@ public class ClaimsController : Controller
     {
         try
         {
+            if (!PermissionHelper.CanManageClaim(User, _context))
+            {
+                return Json(new { success = false, message = "Bạn không có quyền tạo yêu cầu!" });
+            }
             // Kiểm tra tính hợp lệ của model (bao gồm tất cả các trường bắt buộc)
             if (!ModelState.IsValid)
             {

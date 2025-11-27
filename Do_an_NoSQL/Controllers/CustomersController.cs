@@ -39,7 +39,7 @@ namespace Do_an_NoSQL.Controllers
      string sort = "created_at_desc"
  )
         {
-            if (!RoleHelper.CanAccessCustomers(User))
+            if (!PermissionHelper.CanViewCustomer(User, _context))
             {
                 return RedirectToAction("AccessDenied", "Auth");
             }
@@ -136,6 +136,10 @@ namespace Do_an_NoSQL.Controllers
         [HttpGet]
         public IActionResult Create()
         {
+            if (!PermissionHelper.CanManageCustomer(User, _context))
+            {
+                return RedirectToAction("AccessDenied", "Auth");
+            }
             ViewData["Mode"] = "create";
             return View("Form", new CustomerCreateVM());
         }
@@ -143,6 +147,10 @@ namespace Do_an_NoSQL.Controllers
         [HttpPost]
         public IActionResult Create(CustomerCreateVM model)
         {
+            if (!PermissionHelper.CanManageCustomer(User, _context))
+            {
+                return Json(new { success = false, message = "Bạn không có quyền thêm khách hàng!" });
+            }
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Dữ liệu không hợp lệ!" });
 
@@ -182,6 +190,10 @@ namespace Do_an_NoSQL.Controllers
         [HttpGet]
         public IActionResult Edit(string id)
         {
+            if (!PermissionHelper.CanManageCustomer(User, _context))
+            {
+                return RedirectToAction("AccessDenied", "Auth");
+            }
             var c = _context.Customers.Find(x => x.Id == id).FirstOrDefault();
             if (c == null) return NotFound();
 
@@ -212,6 +224,10 @@ namespace Do_an_NoSQL.Controllers
         [HttpPost]
         public IActionResult Edit(string id, CustomerCreateVM model)
         {
+            if (!PermissionHelper.CanManageCustomer(User, _context))
+            {
+                return Json(new { success = false, message = "Bạn không có quyền sửa thông tin!" });
+            }
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Dữ liệu không hợp lệ!" });
 
@@ -236,6 +252,10 @@ namespace Do_an_NoSQL.Controllers
         [HttpPost]
         public IActionResult Delete(string id)
         {
+            if (!PermissionHelper.CanManageCustomer(User, _context))
+            {
+                return Json(new { success = false, message = "Bạn không có quyền xóa khách hàng!" });
+            }
             var result = _context.Customers.DeleteOne(x => x.Id == id);
 
             if (result.DeletedCount > 0)

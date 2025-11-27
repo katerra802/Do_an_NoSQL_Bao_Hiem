@@ -1,5 +1,6 @@
 ﻿using ClosedXML.Excel;
 using Do_an_NoSQL.Database;
+using Do_an_NoSQL.Helpers;
 using Do_an_NoSQL.Models;
 using Do_an_NoSQL.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
@@ -32,6 +33,10 @@ namespace Do_an_NoSQL.Controllers
     string? role = null,
     string? status = null)
         {
+            if (!PermissionHelper.CanManageUsers(User, _context))
+            {
+                return RedirectToAction("AccessDenied", "Auth");
+            }
             var query = _context.Users.AsQueryable();
             pageSize = per_page ?? pageSize;
             // --- Tìm kiếm ---

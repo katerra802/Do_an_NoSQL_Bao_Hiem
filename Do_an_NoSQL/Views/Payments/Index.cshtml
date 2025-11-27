@@ -1,5 +1,7 @@
 ﻿@model PagedResult<dynamic>
 @using Do_an_NoSQL.Helpers
+@inject Do_an_NoSQL.Database.MongoDbContext DbContext
+
 @{
     ViewData["Title"] = "Quản lý thanh toán & chi trả quyền lợi";
     string activeTab = ViewBag.ActiveTab ?? "schedule";
@@ -189,7 +191,7 @@
     <!-- MODERN TABS -->
     <!-- ========================== -->
     <ul class="payment-tabs">
-        @if (RoleHelper.CanAccessScheduleTab(User))
+        @if (PermissionHelper.CanManagePayment(User, DbContext))
         {
             <li class="tab-item">
                 <a class="tab-link @(activeTab == "schedule" ? "active" : "")"
@@ -200,7 +202,7 @@
             </li>
         }
 
-        @if (RoleHelper.CanAccessHistoryTab(User))
+        @if (PermissionHelper.CanViewPayment(User, DbContext))
         {
             <li class="tab-item">
                 <a class="tab-link @(activeTab == "history" ? "active" : "")"
@@ -474,12 +476,48 @@
                                                         }
                                                     </div>
                                                     <div class="schedule-action">
-                                                        @if (schedule.Status != "paid")
-                                                        {
-                                                            <button type="button" class="btn-pay-small" onclick="quickPayment('@schedule.Id', '@policy.PolicyNo', '@schedule.PremiumDue')">
-                                                                <i class="fa-solid fa-credit-card"></i> Thanh toán
-                                                            </button>
-                                                        }
+                                                        <div class="schedule-action">
+                                                                @if (schedule.Status != "paid")
+                                                                {
+                                                                @if (PermissionHelper.CanManagePayment(User, DbContext))
+                                                                {
+                                                                    var canPay = true;
+                                                                    var allSchedulesInPolicy = policy.Schedules as IEnumerable<dynamic>;
+                                                                    if (allSchedulesInPolicy != null)
+                                                                    {
+                                                                        var unpaidPrevious = allSchedulesInPolicy
+                                                                        .Where(s => s.PeriodNo < schedule.PeriodNo && s.Status != "paid")
+                                                                        .ToList();
+
+                                                                        if (unpaidPrevious.Any())
+                                                                        {
+                                                                            canPay = false;
+                                                                        }
+                                                                    }
+
+                                                                    @if (canPay)
+                                                                    {
+                                                                        <button type="button" class="btn-pay-small"
+                                                                                onclick="quickPayment('@schedule.Id', '@policy.PolicyNo', '@schedule.PremiumDue')">
+                                                                            <i class="fa-solid fa-credit-card"></i> Thanh toán
+                                                                        </button>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <span class="text-muted small">
+                                                                            <i class="fa-solid fa-lock"></i> Phải thanh toán kỳ trước
+                                                                        </span>
+                                                                    }
+                                                                }
+                                                                
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="text-success">
+                                                                    <i class="fa-solid fa-check-circle"></i> Hoàn tất
+                                                                </span>
+                                                            }
+                                                        </div>
                                                     </div>
                                                 </div>
                                             }

@@ -45,7 +45,7 @@ namespace Do_an_NoSQL.Controllers
      string sort = "date_desc"
  )
         {
-            if (!RoleHelper.CanAccessPolicies(User))
+            if (!PermissionHelper.CanViewPolicy(User, _context))
             {
                 return RedirectToAction("AccessDenied", "Auth");
             }
@@ -240,9 +240,9 @@ namespace Do_an_NoSQL.Controllers
         [HttpPost]
         public IActionResult CreateFromApplication([FromBody] CreatePolicyRequest request)
         {
-            if (!RoleHelper.CanAccessPolicies(User))
+            if (!PermissionHelper.CanManagePolicy(User, _context))
             {
-                return Ok(new { success = false, message = "Bạn không có quyền thực hiện thao tác này!" });
+                return Ok(new { success = false, message = "Bạn không có quyền phát hành hợp đồng!" });
             }
             try
             {

@@ -141,7 +141,7 @@ namespace Do_an_NoSQL.Controllers
         {
             if (string.IsNullOrEmpty(id))
             {
-                return Json(new { success = false, message = "Không tìm thấy thông tin thanh toán!" });
+                return Json(new { success = false, message = "Thiếu thông tin thanh toán!" });
             }
 
             try
@@ -159,6 +159,31 @@ namespace Do_an_NoSQL.Controllers
                 if (payment.Status == "paid")
                 {
                     return Json(new { success = false, message = "Khoản phí này đã được thanh toán!" });
+                }
+
+                // ✅ VALIDATION: Kiểm tra các kỳ trước đã thanh toán chưa
+                var allPaymentsForPolicy = _context.PremiumPayments
+                    .Find(p => p.PolicyNo == payment.PolicyNo)
+                    .SortBy(p => p.DueDate)
+                    .ToList();
+
+                var currentPeriod = GetPeriodFromPayment(payment, allPaymentsForPolicy);
+
+                // Lấy các kỳ trước (period < currentPeriod)
+                var previousPayments = allPaymentsForPolicy
+                    .Take(currentPeriod - 1)
+                    .ToList();
+
+                var unpaidPrevious = previousPayments.Where(p => p.Status != "paid").ToList();
+
+                if (unpaidPrevious.Any())
+                {
+                    var unpaidPeriods = string.Join(", ", unpaidPrevious.Select((p, idx) => idx + 1));
+                    return Json(new
+                    {
+                        success = false,
+                        message = $"Bạn phải thanh toán các kỳ trước đó trước! Các kỳ chưa thanh toán: {unpaidPeriods}"
+                    });
                 }
 
                 // Tính lại penalty (nếu có)
@@ -195,7 +220,7 @@ namespace Do_an_NoSQL.Controllers
 
                 if (result.ModifiedCount > 0)
                 {
-                    // Cập nhật PaymentSchedule tương ứng
+                    // Cập nhật PaymentSchedule tương ứng (nếu có)
                     if (!string.IsNullOrEmpty(payment.RelatedScheduleId))
                     {
                         var scheduleUpdate = Builders<PaymentSchedule>.Update
@@ -227,6 +252,13 @@ namespace Do_an_NoSQL.Controllers
             {
                 return Json(new { success = false, message = $"Lỗi: {ex.Message}" });
             }
+        }
+
+        // ✅ THÊM HELPER METHOD vào CustomerPaymentController
+        private int GetPeriodFromPayment(PremiumPayment payment, List<PremiumPayment> allPaymentsForPolicy)
+        {
+            var orderedPayments = allPaymentsForPolicy.OrderBy(p => p.DueDate).ToList();
+            return orderedPayments.IndexOf(payment) + 1;
         }
 
         // GET: CustomerPayment/Success

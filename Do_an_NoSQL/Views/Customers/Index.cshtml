@@ -1,4 +1,6 @@
 ﻿@model PagedResult<dynamic>
+@using Do_an_NoSQL.Helpers
+@inject Do_an_NoSQL.Database.MongoDbContext DbContext
 
 @{
     ViewData["Title"] = "Danh sách khách hàng";
@@ -93,9 +95,12 @@
             <button id="exportCustomerExcelBtn" class="btn btn-outline-red">
                 <i class="fa-solid fa-file-export me-1"></i> Xuất Excel
             </button>
-            <a asp-action="Create" class="btn btn-red">
-                <i class="fa-solid fa-plus me-1"></i> Thêm khách hàng
-            </a>
+            @if (PermissionHelper.CanManageCustomer(User, DbContext))
+            {
+                <a href="@Url.Action("Create")" class="btn-add">
+                    <i class="fa-solid fa-plus me-2"></i>Thêm khách hàng
+                </a>
+            }
         </div>
     </div>
 
@@ -207,7 +212,9 @@
                                                 <i class="fa-solid fa-eye"></i> Xem chi tiết
                                             </a>
                                         </li>
-                                        <li>
+                                        @if (PermissionHelper.CanManageCustomer(User, DbContext))
+                                        {
+                                            <li>
                                             <a class="dropdown-item text-primary d-flex align-items-center gap-2"
                                                asp-action="Edit" asp-route-id="@c.Id">
                                                 <i class="fa-solid fa-pen"></i> Chỉnh sửa
@@ -219,6 +226,8 @@
                                                 <i class="fa-solid fa-trash-can"></i> Xóa
                                             </button>
                                         </li>
+                                        }
+                                        
                                     </ul>
                                 </div>
                             </td>

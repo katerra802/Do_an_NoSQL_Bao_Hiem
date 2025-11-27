@@ -64,7 +64,7 @@ namespace Do_an_NoSQL.Controllers
     string sort = "date_desc"
 )
         {
-            if (!RoleHelper.CanAccessApplications(User))
+            if (!PermissionHelper.CanViewApplication(User, _context))
             {
                 return RedirectToAction("AccessDenied", "Auth");
             }
@@ -332,7 +332,7 @@ namespace Do_an_NoSQL.Controllers
         // ================================
         public IActionResult Create()
         {
-            if (!RoleHelper.CanAccessApplications(User))
+            if (!PermissionHelper.CanManageApplication(User, _context))
             {
                 return RedirectToAction("AccessDenied", "Auth");
             }
@@ -355,10 +355,6 @@ namespace Do_an_NoSQL.Controllers
         [HttpPost]
         public IActionResult Create(PolicyApplicationCreateVM model)
         {
-            if (!RoleHelper.CanAccessApplications(User))
-            {
-                return RedirectToAction("AccessDenied", "Auth");
-            }
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Dữ liệu không hợp lệ" });
 
@@ -454,6 +450,10 @@ namespace Do_an_NoSQL.Controllers
         // ================================
         public IActionResult Edit(string id)
         {
+            if (!PermissionHelper.CanApproveApplication(User, _context))
+            {
+                return Json(new { success = false, message = "Bạn không có quyền phê duyệt!" });
+            }
             var app = _context.PolicyApplications
                 .Find(x => x.Id == id)
                 .FirstOrDefault();
@@ -488,6 +488,10 @@ namespace Do_an_NoSQL.Controllers
         [HttpPost]
         public IActionResult Edit(PolicyApplicationCreateVM model)
         {
+            if (!PermissionHelper.CanApproveApplication(User, _context))
+            {
+                return Json(new { success = false, message = "Bạn không có quyền phê duyệt!" });
+            }
             var app = _context.PolicyApplications
                 .Find(x => x.Id == model.Id)
                 .FirstOrDefault();
@@ -559,6 +563,10 @@ namespace Do_an_NoSQL.Controllers
         [HttpPost]
         public IActionResult Delete(string id)
         {
+            if (!PermissionHelper.CanManageApplication(User, _context))
+            {
+                return Json(new { success = false, message = "Bạn không có quyền xóa!" });
+            }
             var app = _context.PolicyApplications.Find(x => x.Id == id).FirstOrDefault();
             if (app != null)
             {
