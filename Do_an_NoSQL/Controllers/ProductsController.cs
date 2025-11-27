@@ -403,7 +403,16 @@ public class ProductsController : Controller
 
 
     [HttpPost]
-        public IActionResult BulkDelete([FromBody] List<string> ids, bool deleteAll = false)
+    public IActionResult BulkDelete([FromBody] List<string> ids, bool deleteAll = false)
+    {
+        if (!RoleHelper.CanManageProducts(User))
+        {
+            TempData["ToastType"] = "error";
+            TempData["ToastMessage"] = "Bạn không có quyền xóa sản phẩm!";
+            return Json(new { success = false, message = "Bạn không có quyền thực hiện thao tác này!" });
+        }
+
+        try
         {
             if (deleteAll)
             {
@@ -421,6 +430,11 @@ public class ProductsController : Controller
                 return Json(new { success = true, message = $"Đã xóa {result.DeletedCount} sản phẩm." });
             }
         }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = $"Lỗi: {ex.Message}" });
+        }
+    }
 
 
 
@@ -512,6 +526,13 @@ public class ProductsController : Controller
     [HttpPost]
     public IActionResult ImportExcel(IFormFile file)
     {
+        if (!RoleHelper.CanManageProducts(User))
+        {
+            TempData["ToastType"] = "error";
+            TempData["ToastMessage"] = "Bạn không có quyền import sản phẩm!";
+            return Json(new { success = false, message = "Bạn không có quyền thực hiện thao tác này!" });
+
+        }
         if (file == null || file.Length == 0)
             return Json(new { success = false, message = "Vui lòng chọn file Excel hợp lệ!" });
 

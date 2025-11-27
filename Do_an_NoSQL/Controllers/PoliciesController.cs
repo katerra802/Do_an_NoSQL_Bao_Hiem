@@ -372,42 +372,69 @@ namespace Do_an_NoSQL.Controllers
             public string Notes { get; set; }
         }
 
+
+        // ✅ TẠO CLASS DTO
+        public class UpdatePolicyInfoRequest
+        {
+            public string Id { get; set; }
+            public string AdvisorName { get; set; }
+            public decimal SumAssured { get; set; }
+            public DateTime IssueDate { get; set; }
+            public string Notes { get; set; }
+        }
+
         [HttpPost]
-        public IActionResult UpdatePolicyInfo([FromBody] dynamic body)
+        public IActionResult UpdatePolicyInfo([FromBody] UpdatePolicyInfoRequest request)
         {
             if (!PermissionHelper.CanManagePolicy(User, _context))
             {
-                return Json(new { success = false, message = "Bạn không có quyền sửa hợp đồng!" });
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] = "Bạn không có quyền sửa hợp đồng!";
+                return Json(new { success = false, reload = true });
             }
+
             try
             {
-                string id = body.Id;
-                string advisorName = body.advisor_name;
-                string notes = body.notes;
-                decimal sumAssured = Convert.ToDecimal(body.sum_assured);
-                DateTime issueDate = DateTime.Parse(body.issue_date.ToString());
+                if (string.IsNullOrEmpty(request.Id))
+                {
+                    return BadRequest(new { success = false, message = "Thiếu ID hợp đồng!" });
+                }
 
-                var policy = _context.Policies.Find(x => x.Id == id).FirstOrDefault();
-                if (policy == null) return NotFound();
+                var policy = _context.Policies.Find(x => x.Id == request.Id).FirstOrDefault();
+                if (policy == null)
+                {
+                    return NotFound(new { success = false, message = "Không tìm thấy hợp đồng!" });
+                }
 
-                var advisor = _context.Advisors.Find(x => x.FullName == advisorName).FirstOrDefault();
+                // Cập nhật advisor nếu có
+                if (!string.IsNullOrEmpty(request.AdvisorName))
+                {
+                    var advisor = _context.Advisors
+                        .Find(x => x.FullName == request.AdvisorName)
+                        .FirstOrDefault();
 
-                if (advisor != null)
-                    policy.AdvisorId = advisor.Code;
+                    if (advisor != null)
+                        policy.AdvisorId = advisor.Code;
+                }
 
-                policy.SumAssured = sumAssured;
-                policy.IssueDate = issueDate;
-                policy.Notes = notes;
-                policy.LastModified = DateTime.Now;
+                policy.SumAssured = request.SumAssured;
+                policy.IssueDate = request.IssueDate;
+                policy.Notes = request.Notes;
+                policy.LastModified = DateTime.UtcNow;
+                policy.ModifiedBy = User?.Identity?.Name ?? "System";
 
-                _context.Policies.ReplaceOne(x => x.Id == id, policy);
+                _context.Policies.ReplaceOne(x => x.Id == request.Id, policy);
 
-                return Json(new { success = true });
+                TempData["ToastType"] = "success";
+                TempData["ToastMessage"] = "Cập nhật hợp đồng thành công!";
+                return Json(new { success = true, reload = true });
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
-                return StatusCode(500, "Lỗi khi cập nhật hợp đồng");
+                _logger.LogError(ex, "UpdatePolicyInfo Error");
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] = $"Lỗi: {ex.Message}";
+                return Json(new { success = false, reload = true });
             }
         }
 
