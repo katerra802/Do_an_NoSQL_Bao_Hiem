@@ -105,15 +105,34 @@ namespace Do_an_NoSQL.Helpers
             return HasRole(user, ADMIN, UNDERWRITER);
         }
 
-        // === CLAIM ===
+        // === CLAIM === (Cập nhật phần này)
         public static bool CanAccessClaims(ClaimsPrincipal user)
         {
             return HasRole(user, ADMIN, UNDERWRITER, CSKH);
         }
 
+        // ✅ THÊM: CHỈ XEM CLAIM (READ-ONLY)
+        public static bool CanViewClaim(ClaimsPrincipal user, MongoDbContext context)
+        {
+            return HasRole(user, ADMIN, UNDERWRITER, CSKH);
+        }
+
+        // ✅ THÊM: TẠO VÀ SỬA CLAIM (CSKH có thể tạo/sửa)
         public static bool CanManageClaim(ClaimsPrincipal user, MongoDbContext context)
         {
             return HasRole(user, ADMIN, UNDERWRITER, CSKH);
+        }
+
+        // ✅ THÊM: PHÊ DUYỆT CLAIM (CHỈ UNDERWRITER và ADMIN)
+        public static bool CanApproveClaim(ClaimsPrincipal user, MongoDbContext context)
+        {
+            return HasRole(user, ADMIN, UNDERWRITER);
+        }
+
+        // ✅ THÊM: XÓA CLAIM (CHỈ ADMIN)
+        public static bool CanDeleteClaim(ClaimsPrincipal user, MongoDbContext context)
+        {
+            return HasRole(user, ADMIN);
         }
 
         // === PAYMENT ===
@@ -145,6 +164,12 @@ namespace Do_an_NoSQL.Helpers
         public static bool CanAccessPayoutTab(ClaimsPrincipal user)
         {
             return HasRole(user, ADMIN, ACCOUNTANT, CSKH);
+        }
+        // === PAYOUT ===
+        // ✅ THÊM: CHI TRẢ QUYỀN LỢI (CHỈ ACCOUNTANT VÀ ADMIN)
+        public static bool CanManagePayout(ClaimsPrincipal user, MongoDbContext context)
+        {
+            return HasRole(user, ADMIN, ACCOUNTANT);
         }
 
         // === PRODUCTS ===

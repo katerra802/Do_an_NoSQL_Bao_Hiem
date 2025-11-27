@@ -1,4 +1,6 @@
 ﻿@model PagedResult<dynamic>
+@using Do_an_NoSQL.Helpers
+@inject Do_an_NoSQL.Database.MongoDbContext DbContext
 
 @{
     ViewData["Title"] = "Danh sách yêu cầu bồi thường";
@@ -85,11 +87,15 @@
             <p>Quản lý yêu cầu và giải quyết quyền lợi bảo hiểm</p>
         </div>
 
-        <div class="d-flex flex-wrap gap-2">
-            <button type="button" id="exportExcelBtn" class="btn btn-outline-red">
-                <i class="fa-solid fa-file-export me-1"></i> Xuất Excel
-            </button>
-        </div>
+        @if (RoleHelper.CanViewClaim(User, DbContext))
+        {
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" id="exportExcelBtn" class="btn btn-outline-red">
+                    <i class="fa-solid fa-file-export me-1"></i> Xuất Excel
+                </button>
+            </div>
+        }
+        
     </div>
 
     <!-- BỘ LỌC -->
@@ -154,11 +160,15 @@
             </div>
         </form>
 
-        <div class="mt-4">
-            <button type="button" class="btn-red" onclick="bulkDeleteClaims()">
-                <i class="fa-solid fa-trash-can me-1"></i> Xóa hàng loạt
-            </button>
-        </div>
+        @if (RoleHelper.CanDeleteClaim(User, DbContext))
+        {
+            <div class="mt-4 d-flex gap-3">
+                <button type="button" class="btn-outline-red" onclick="bulkDeleteClaims()">
+                    <i class="fa-solid fa-trash-can me-1"></i>
+                    Xóa hàng loạt
+                </button>
+            </div>
+        }
     </div>
 
     <!-- TABLE -->
@@ -266,33 +276,44 @@
                                                 <span>Xem chi tiết</span>
                                             </button>
                                         </li>
-                                        <li>
-                                            <button type="button"
-                                                    class="dropdown-item d-flex align-items-center gap-2 text-success @((c.Status != "submitted" && c.Status != "under_review") ? "disabled text-muted" : "")"
-                                                    @((c.Status != "submitted" && c.Status != "under_review") ? "disabled" : "")
-                                                    onclick="openClaimApprovalModal('@c.Id', @c.RequestedAmount)">
-                                                <i class="fa-solid fa-circle-check"></i>
-                                                <span>Phê duyệt</span>
-                                            </button>
-                                        </li>
-                                        <li>
-                                            <button type="button"
-                                                    class="dropdown-item d-flex align-items-center gap-2 text-primary @((c.Status == "approved") ? "" : "disabled text-muted")"
-                                                    @((c.Status != "approved") ? "disabled" : "")
-                                                    onclick="openPayoutModal('@c.Id', '@c.ClaimNo', @c.ApprovedAmount, '@c.PolicyNo')">
-                                                <i class="fa-solid fa-hand-holding-dollar"></i>
-                                                <span>Chi trả tiền</span>
-                                            </button>
-                                        </li>
+                                        @if (RoleHelper.CanApproveClaim(User, DbContext))
+                                        {
+                                            @if (c.Status == "submitted" || c.Status == "under_review")
+                                            {
+                                                <li>
+                                                    <button type="button"
+                                                            class="dropdown-item d-flex align-items-center gap-2 text-primary"
+                                                            onclick="openClaimApprovalModal('@c.Id')">
+                                                        <i class="fa-solid fa-check-circle"></i> Phê duyệt
+                                                    </button>
+                                                </li>
+                                            }
+                                        }
+                                        @if (RoleHelper.CanManagePayout(User, DbContext))
+                                        {
+                                            @if (c.Status == "approved")
+                                            {
+                                                <li>
+                                                    <button type="button"
+                                                            class="dropdown-item d-flex align-items-center gap-2 text-info"
+                                                            onclick="openPayoutModal('@c.Id', '@c.ClaimNo', @c.ApprovedAmount, '@c.PolicyNo')">
+                                                        <i class="fa-solid fa-money-bill-wave"></i> Chi trả
+                                                    </button>
+                                                </li>
+                                            }
+                                        }
 
-                                        <li>
-                                            <button type="button"
-                                                    class="dropdown-item d-flex align-items-center gap-2 text-danger"
-                                                    onclick="deleteClaim('@c.Id')">
-                                                <i class="fa-solid fa-trash-can"></i>
-                                                <span>Xóa</span>
-                                            </button>
-                                        </li>
+                                        @* ✅ CHỈ ADMIN XÓA *@
+                                        @if (RoleHelper.CanDeleteClaim(User, DbContext))
+                                        {
+                                            <li>
+                                                <button type="button"
+                                                        class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                                                        onclick="deleteClaim('@c.Id')">
+                                                    <i class="fa-solid fa-trash-can"></i> Xóa
+                                                </button>
+                                            </li>
+                                        }
                                     </ul>
                                 </div>
                             </td>
