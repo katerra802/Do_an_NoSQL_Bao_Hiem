@@ -1,4 +1,5 @@
-﻿@{
+﻿@model Do_an_NoSQL.Controllers.DashboardViewModel
+@{
     ViewData["Title"] = "Dashboard - Tổng quan";
 }
 
@@ -176,25 +177,34 @@
         display: inline-block;
     }
 
-        .status-badge.active {
+        .status-badge.active, .status-badge.paid {
             background: #d1fae5;
             color: #065f46;
         }
 
-        .status-badge.pending {
+        .status-badge.pending, .status-badge.submitted {
             background: #fef3c7;
             color: #92400e;
         }
 
-        .status-badge.completed {
+        .status-badge.inforce {
             background: #dbeafe;
             color: #1e40af;
         }
 
-    /* Chart Placeholder */
+        .status-badge.grace {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-badge.expired, .status-badge.rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+    /* Chart Container */
     .chart-container {
         height: 300px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 12px;
         display: flex;
         align-items: center;
@@ -202,6 +212,76 @@
         color: white;
         font-size: 18px;
         font-weight: 600;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .chart-container::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+        transform: rotate(45deg);
+        animation: shine 3s infinite;
+    }
+
+
+    .chart-content {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+        padding: 40px;
+    }
+
+    .chart-icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+        animation: float 3s ease-in-out infinite;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+    }
+
+    .chart-main-value {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .chart-label {
+        font-size: 16px;
+        opacity: 0.95;
+        font-weight: 500;
+        margin-bottom: 12px;
+    }
+
+    .chart-sub-info {
+        font-size: 14px;
+        opacity: 0.85;
+        background: rgba(255,255,255,0.15);
+        padding: 8px 16px;
+        border-radius: 20px;
+        display: inline-block;
+        backdrop-filter: blur(10px);
+    }
+
+    .payment-chart {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .application-chart {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .stats-grid .content-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .stats-grid .content-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
     }
 </style>
 
@@ -219,40 +299,40 @@
 <div class="stats-grid">
     <div class="stat-card">
         <div class="stat-card-header">
-            <span class="stat-card-title">Giao dịch hôm nay</span>
+            <span class="stat-card-title">Hợp đồng mới</span>
             <div class="stat-card-icon" style="background: #dbeafe; color: #1e40af;">
-                💳
+                📄
             </div>
         </div>
-        <div class="stat-card-value">47</div>
+        <div class="stat-card-value">@Model.NewPoliciesToday</div>
         <div class="stat-card-change positive">
-            ↑ 23% so với hôm qua
+            Tổng: @Model.TotalPolicies hợp đồng
         </div>
     </div>
 
     <div class="stat-card">
         <div class="stat-card-header">
-            <span class="stat-card-title">Tổng giá trị giao dịch</span>
+            <span class="stat-card-title">Tổng giá trị hợp đồng</span>
             <div class="stat-card-icon" style="background: #d1fae5; color: #065f46;">
                 💰
             </div>
         </div>
-        <div class="stat-card-value">1.2B VNĐ</div>
+        <div class="stat-card-value">@Model.TotalValue.ToString("N0") VNĐ</div>
         <div class="stat-card-change positive">
-            ↑ 15.7% so với hôm qua
+            Tổng tích lũy
         </div>
     </div>
 
     <div class="stat-card">
         <div class="stat-card-header">
-            <span class="stat-card-title">Hợp đồng mới</span>
+            <span class="stat-card-title">Khách hàng</span>
             <div class="stat-card-icon" style="background: #fef3c7; color: #92400e;">
-                📄
+                👥
             </div>
         </div>
-        <div class="stat-card-value">12</div>
+        <div class="stat-card-value">@Model.TotalCustomers</div>
         <div class="stat-card-change positive">
-            ↑ 8 hợp đồng
+            Tổng khách hàng
         </div>
     </div>
 
@@ -263,9 +343,9 @@
                 ⏰
             </div>
         </div>
-        <div class="stat-card-value">8</div>
+        <div class="stat-card-value">@Model.PendingApplications</div>
         <div class="stat-card-change negative">
-            ↓ 3 yêu cầu đã xử lý
+            Hồ sơ đang thẩm định
         </div>
     </div>
 </div>
@@ -276,19 +356,19 @@
         <h2 class="content-card-title">⚡ Thao tác nhanh</h2>
     </div>
     <div class="quick-actions">
-        <a href="/customers" class="quick-action-btn">
+        <a href="/Customers" class="quick-action-btn">
             <span class="quick-action-icon">➕</span>
             <span>Thêm khách hàng</span>
         </a>
-        <a href="/contracts" class="quick-action-btn">
+        <a href="/PolicyApplications" class="quick-action-btn">
             <span class="quick-action-icon">📝</span>
-            <span>Tạo hợp đồng</span>
+            <span>Tạo hồ sơ</span>
         </a>
-        <a href="/payments" class="quick-action-btn">
+        <a href="/PremiumPayments" class="quick-action-btn">
             <span class="quick-action-icon">💳</span>
             <span>Xử lý thanh toán</span>
         </a>
-        <a href="/claims" class="quick-action-btn">
+        <a href="/Claims" class="quick-action-btn">
             <span class="quick-action-icon">💰</span>
             <span>Xem bồi thường</span>
         </a>
@@ -299,156 +379,214 @@
 <div class="content-card activity-feed">
     <div class="content-card-header">
         <h2 class="content-card-title">🔔 Hoạt động gần đây</h2>
-        <a href="#" style="color: #E31E24; text-decoration: none; font-weight: 600; font-size: 14px;">Xem tất cả →</a>
+        <a href="/PolicyApplications" style="color: #E31E24; text-decoration: none; font-weight: 600; font-size: 14px;">Xem tất cả →</a>
     </div>
 
-    <div class="activity-item">
-        <div class="activity-icon new">
-            ✅
+    @if (Model.RecentApplications != null && Model.RecentApplications.Any())
+    {
+        @foreach (var app in Model.RecentApplications.Take(5))
+        {
+            <div class="activity-item">
+                <div class="activity-icon @(app.Status == "issued" ? "completed" : app.Status == "under_review" ? "pending" : "new")">
+                    @(app.Status == "issued" ? "✅" : app.Status == "under_review" ? "📋" : "📝")
+                </div>
+                <div class="activity-details">
+                    <div class="activity-title">
+                        @(app.Status == "issued" ? "Hợp đồng đã phát hành" : 
+                          app.Status == "approved" ? "Hồ sơ đã duyệt" :
+                          app.Status == "under_review" ? "Hồ sơ đang thẩm định" : "Hồ sơ mới")
+                    </div>
+                    <div class="activity-desc">@app.CustomerId - @app.ProductCode</div>
+                    <div class="activity-time">
+                        @{
+                            var timeAgo = DateTime.Now - app.SubmittedAt;
+                            if (timeAgo.TotalMinutes < 60)
+                            {
+                                @($"{(int)timeAgo.TotalMinutes} phút trước")
+                            }
+                            else if (timeAgo.TotalHours < 24)
+                            {
+                                @($"{(int)timeAgo.TotalHours} giờ trước")
+                            }
+                            else
+                            {
+                                @($"{(int)timeAgo.TotalDays} ngày trước")
+                            }
+                        }
+                    </div>
+                </div>
+                <div class="activity-amount">@app.SumAssured.ToString("N0") VNĐ</div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="activity-item">
+            <div class="activity-details">
+                <div class="activity-desc">Chưa có hoạt động nào</div>
+            </div>
         </div>
-        <div class="activity-details">
-            <div class="activity-title">Hợp đồng mới được tạo</div>
-            <div class="activity-desc">Nguyễn Văn A - PRU Đầu Tư Vững Tiền</div>
-            <div class="activity-time">5 phút trước</div>
-        </div>
-        <div class="activity-amount">250,000,000 VNĐ</div>
-    </div>
-
-    <div class="activity-item">
-        <div class="activity-icon completed">
-            💳
-        </div>
-        <div class="activity-details">
-            <div class="activity-title">Thanh toán phí bảo hiểm</div>
-            <div class="activity-desc">Trần Thị B - Hợp đồng #HD2025045</div>
-            <div class="activity-time">15 phút trước</div>
-        </div>
-        <div class="activity-amount">5,500,000 VNĐ</div>
-    </div>
-
-    <div class="activity-item">
-        <div class="activity-icon pending">
-            📋
-        </div>
-        <div class="activity-details">
-            <div class="activity-title">Yêu cầu bồi thường mới</div>
-            <div class="activity-desc">Lê Văn C - Yêu cầu #YC2025012</div>
-            <div class="activity-time">30 phút trước</div>
-        </div>
-        <div class="activity-amount">15,000,000 VNĐ</div>
-    </div>
-
-    <div class="activity-item">
-        <div class="activity-icon new">
-            👤
-        </div>
-        <div class="activity-details">
-            <div class="activity-title">Khách hàng mới đăng ký</div>
-            <div class="activity-desc">Phạm Thị D - Email: phamthid@email.com</div>
-            <div class="activity-time">1 giờ trước</div>
-        </div>
-    </div>
-
-    <div class="activity-item">
-        <div class="activity-icon completed">
-            📄
-        </div>
-        <div class="activity-details">
-            <div class="activity-title">Hợp đồng được phê duyệt</div>
-            <div class="activity-desc">Hoàng Văn E - Bảo hiểm sức khỏe</div>
-            <div class="activity-time">2 giờ trước</div>
-        </div>
-        <div class="activity-amount">180,000,000 VNĐ</div>
-    </div>
+    }
 </div>
 
-<!-- Today's Transactions Table -->
+<!-- Recent Payments Table -->
 <div class="content-card">
     <div class="content-card-header">
-        <h2 class="content-card-title">💳 Giao dịch hôm nay</h2>
-        <a href="/payments" style="color: #E31E24; text-decoration: none; font-weight: 600; font-size: 14px;">Xem tất cả →</a>
+        <h2 class="content-card-title">💳 Thanh toán gần đây</h2>
+        <a href="/PremiumPayments" style="color: #E31E24; text-decoration: none; font-weight: 600; font-size: 14px;">Xem tất cả →</a>
     </div>
     <table class="data-table">
         <thead>
             <tr>
-                <th>Mã GD</th>
-                <th>Khách hàng</th>
-                <th>Loại giao dịch</th>
+                <th>Mã thanh toán</th>
+                <th>Hợp đồng</th>
+                <th>Loại</th>
                 <th>Số tiền</th>
-                <th>Thời gian</th>
+                <th>Ngày thanh toán</th>
                 <th>Trạng thái</th>
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td><strong>GD20251112001</strong></td>
-                <td>Nguyễn Văn A</td>
-                <td>Đóng phí BH</td>
-                <td>5,500,000 VNĐ</td>
-                <td>08:30 AM</td>
-                <td><span class="status-badge completed">Thành công</span></td>
-            </tr>
-            <tr>
-                <td><strong>GD20251112002</strong></td>
-                <td>Trần Thị B</td>
-                <td>Hợp đồng mới</td>
-                <td>250,000,000 VNĐ</td>
-                <td>09:15 AM</td>
-                <td><span class="status-badge completed">Thành công</span></td>
-            </tr>
-            <tr>
-                <td><strong>GD20251112003</strong></td>
-                <td>Lê Văn C</td>
-                <td>Bồi thường</td>
-                <td>15,000,000 VNĐ</td>
-                <td>10:00 AM</td>
-                <td><span class="status-badge pending">Đang xử lý</span></td>
-            </tr>
-            <tr>
-                <td><strong>GD20251112004</strong></td>
-                <td>Phạm Thị D</td>
-                <td>Đóng phí BH</td>
-                <td>8,200,000 VNĐ</td>
-                <td>10:45 AM</td>
-                <td><span class="status-badge completed">Thành công</span></td>
-            </tr>
-            <tr>
-                <td><strong>GD20251112005</strong></td>
-                <td>Hoàng Văn E</td>
-                <td>Hợp đồng mới</td>
-                <td>180,000,000 VNĐ</td>
-                <td>11:20 AM</td>
-                <td><span class="status-badge completed">Thành công</span></td>
-            </tr>
-            <tr>
-                <td><strong>GD20251112006</strong></td>
-                <td>Võ Thị F</td>
-                <td>Đóng phí BH</td>
-                <td>6,800,000 VNĐ</td>
-                <td>02:10 PM</td>
-                <td><span class="status-badge pending">Đang xử lý</span></td>
-            </tr>
+            @if (Model.RecentPayments != null && Model.RecentPayments.Any())
+            {
+                @foreach (var payment in Model.RecentPayments)
+                {
+                    <tr>
+                        <td><strong>@payment.Reference</strong></td>
+                        <td>@payment.PolicyNo</td>
+                        <td>@(payment.PaymentType == "initial" ? "Phí khởi tạo" : "Phí định kỳ")</td>
+                        <td>@payment.Amount.ToString("N0") VNĐ</td>
+                        <td>@(payment.PaidDate?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")</td>
+                        <td><span class="status-badge @payment.Status">@(payment.Status == "paid" ? "Đã thanh toán" : payment.Status)</span></td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" style="text-align: center; color: #999;">Chưa có dữ liệu thanh toán</td>
+                </tr>
+            }
         </tbody>
     </table>
 </div>
+
+<!-- Recent Policies Table -->
+<div class="content-card">
+    <div class="content-card-header">
+        <h2 class="content-card-title">📄 Hợp đồng gần đây</h2>
+        <a href="/Policies" style="color: #E31E24; text-decoration: none; font-weight: 600; font-size: 14px;">Xem tất cả →</a>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Số hợp đồng</th>
+                <th>Khách hàng</th>
+                <th>Sản phẩm</th>
+                <th>Số tiền bảo hiểm</th>
+                <th>Ngày hiệu lực</th>
+                <th>Trạng thái</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.RecentPolicies != null && Model.RecentPolicies.Any())
+            {
+                @foreach (var policy in Model.RecentPolicies.Take(6))
+                {
+                    <tr>
+                        <td><strong>@policy.PolicyNo</strong></td>
+                        <td>@policy.CustomerId</td>
+                        <td>@policy.ProductCode</td>
+                        <td>@policy.SumAssured.ToString("N0") VNĐ</td>
+                        <td>@policy.EffectiveDate.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            <span class="status-badge @policy.Status">
+                                @(policy.Status == "inforce" ? "Hiệu lực" :
+                                  policy.Status == "grace" ? "Ân hạn" :
+                                  policy.Status == "expired" ? "Hết hạn" :
+                                  policy.Status == "terminated" ? "Chấm dứt" : policy.Status)
+                            </span>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" style="text-align: center; color: #999;">Chưa có dữ liệu hợp đồng</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Claims Section -->
+@if (Model.PendingClaims != null && Model.PendingClaims.Any())
+{
+    <div class="content-card">
+        <div class="content-card-header">
+            <h2 class="content-card-title">💰 Yêu cầu bồi thường chờ xử lý</h2>
+            <a href="/Claims" style="color: #E31E24; text-decoration: none; font-weight: 600; font-size: 14px;">Xem tất cả →</a>
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Mã yêu cầu</th>
+                    <th>Hợp đồng</th>
+                    <th>Loại yêu cầu</th>
+                    <th>Số tiền yêu cầu</th>
+                    <th>Ngày nộp</th>
+                    <th>Trạng thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var claim in Model.PendingClaims)
+                {
+                    <tr>
+                        <td><strong>@claim.ClaimNo</strong></td>
+                        <td>@claim.PolicyNo</td>
+                        <td>@claim.ClaimType</td>
+                        <td>@claim.Payout.RequestedAmount.ToString("N0") VNĐ</td>
+                        <td>@claim.SubmittedAt.ToString("dd/MM/yyyy")</td>
+                        <td><span class="status-badge @claim.Status">@(claim.Status == "submitted" ? "Chờ xử lý" : claim.Status)</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
 
 <!-- Charts Section -->
 <div class="stats-grid">
     <div class="content-card">
         <div class="content-card-header">
-            <h2 class="content-card-title">📈 Giao dịch theo giờ</h2>
+            <h2 class="content-card-title">📈 Thống kê thanh toán</h2>
         </div>
-        <div class="chart-container">
-            [Biểu đồ giao dịch theo giờ]
+        <div class="chart-container payment-chart">
+            <div class="chart-content">
+                <div class="chart-icon">💳</div>
+                <div class="chart-label">Tổng thanh toán</div>
+                <div class="chart-main-value">@Model.TotalPaymentsToday.ToString("N0") ₫</div>
+                <div class="chart-sub-info">
+                    <span style="font-weight: 600;">@Model.RecentPayments.Count</span> giao dịch thành công
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="content-card">
         <div class="content-card-header">
-            <h2 class="content-card-title">📊 Loại giao dịch</h2>
+            <h2 class="content-card-title">📊 Tình trạng hồ sơ</h2>
         </div>
-        <div class="chart-container">
-            [Biểu đồ phân bổ loại giao dịch]
+        <div class="chart-container application-chart">
+            <div class="chart-content">
+                <div class="chart-icon">📋</div>
+                <div class="chart-label">Hồ sơ đang xử lý</div>
+                <div class="chart-main-value">@Model.PendingApplications</div>
+                <div class="chart-sub-info">
+                    Cần thẩm định <span style="font-weight: 600;">ngay</span>
+                </div>
+            </div>
         </div>
     </div>
 </div>
