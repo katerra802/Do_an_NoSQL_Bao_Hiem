@@ -453,58 +453,60 @@ namespace Do_an_NoSQL.Controllers
         [HttpPost]
         public IActionResult QuickPay([FromBody] QuickPaymentRequest request)
         {
+            // ✅ CHECK QUYỀN MANAGE_PAYMENT
             if (!PermissionHelper.CanManagePayment(User, _context))
             {
-                return Json(new { success = false, message = "Bạn không có quyền thanh toán!" });
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] = "Bạn không có quyền thực hiện thanh toán!";
+                return Json(new { success = false, reload = true });
             }
+
             if (string.IsNullOrEmpty(request.PaymentId))
             {
-                return Json(new { success = false, message = "Thiếu thông tin thanh toán!" });
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] = "Thiếu thông tin thanh toán!";
+                return Json(new { success = false, reload = true });
             }
 
             try
             {
-                // Tìm premium payment
                 var payment = _context.PremiumPayments
                     .Find(p => p.Id == request.PaymentId)
                     .FirstOrDefault();
 
                 if (payment == null)
                 {
-                    return Json(new { success = false, message = "Không tìm thấy khoản phí!" });
+                    TempData["ToastType"] = "error";
+                    TempData["ToastMessage"] = "Không tìm thấy khoản phí!";
+                    return Json(new { success = false, reload = true });
                 }
 
                 if (payment.Status == "paid")
                 {
-                    return Json(new { success = false, message = "Khoản phí này đã được thanh toán!" });
+                    TempData["ToastType"] = "warning";
+                    TempData["ToastMessage"] = "Khoản phí này đã được thanh toán!";
+                    return Json(new { success = false, reload = true });
                 }
 
-                // ✅ VALIDATION: Kiểm tra các kỳ trước đã thanh toán chưa
+                // ✅ VALIDATION thanh toán tuần tự
                 var allPaymentsForPolicy = _context.PremiumPayments
                     .Find(p => p.PolicyNo == payment.PolicyNo)
                     .SortBy(p => p.DueDate)
                     .ToList();
 
                 var currentPeriod = GetPeriodFromPayment(payment, allPaymentsForPolicy);
-
-                // Lấy các kỳ trước (period < currentPeriod)
-                var previousPayments = allPaymentsForPolicy
-                    .Take(currentPeriod - 1)
-                    .ToList();
-
+                var previousPayments = allPaymentsForPolicy.Take(currentPeriod - 1).ToList();
                 var unpaidPrevious = previousPayments.Where(p => p.Status != "paid").ToList();
 
                 if (unpaidPrevious.Any())
                 {
                     var unpaidPeriods = string.Join(", ", unpaidPrevious.Select((p, idx) => idx + 1));
-                    return Json(new
-                    {
-                        success = false,
-                        message = $"Bạn phải thanh toán các kỳ trước đó trước! Các kỳ chưa thanh toán: {unpaidPeriods}"
-                    });
+                    TempData["ToastType"] = "warning";
+                    TempData["ToastMessage"] = $"Bạn phải thanh toán các kỳ trước đó trước! Các kỳ chưa thanh toán: {unpaidPeriods}";
+                    return Json(new { success = false, reload = true });
                 }
 
-                // Cập nhật thông tin thanh toán
+                // Cập nhật thanh toán
                 var updateDef = Builders<PremiumPayment>.Update
                     .Set(p => p.Status, "paid")
                     .Set(p => p.PaidDate, DateTime.UtcNow)
@@ -514,43 +516,32 @@ namespace Do_an_NoSQL.Controllers
                     .Set(p => p.PenaltyAmount, payment.PenaltyAmount)
                     .Set(p => p.Reference, request.Reference ?? $"ADMIN-{DateTime.UtcNow:yyyyMMddHHmmss}");
 
-                var result = _context.PremiumPayments.UpdateOne(
-                    p => p.Id == request.PaymentId,
-                    updateDef
-                );
+                var result = _context.PremiumPayments.UpdateOne(p => p.Id == request.PaymentId, updateDef);
 
                 if (result.ModifiedCount > 0)
                 {
-                    // Cập nhật PaymentSchedule tương ứng (nếu có)
                     if (!string.IsNullOrEmpty(payment.RelatedScheduleId))
                     {
-                        var scheduleUpdate = Builders<PaymentSchedule>.Update
-                            .Set(s => s.Status, "paid");
-
-                        _context.PaymentSchedules.UpdateOne(
-                            s => s.Id == payment.RelatedScheduleId,
-                            scheduleUpdate
-                        );
+                        var scheduleUpdate = Builders<PaymentSchedule>.Update.Set(s => s.Status, "paid");
+                        _context.PaymentSchedules.UpdateOne(s => s.Id == payment.RelatedScheduleId, scheduleUpdate);
                     }
 
-                    return Json(new
-                    {
-                        success = true,
-                        message = "Thanh toán thành công!",
-                        policyNo = payment.PolicyNo,
-                        amount = payment.Amount,
-                        paidDate = DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm")
-                    });
+                    TempData["ToastType"] = "success";
+                    TempData["ToastMessage"] = "Thanh toán thành công!";
+                    return Json(new { success = true, reload = true });
                 }
                 else
                 {
-                    return Json(new { success = false, message = "Không thể cập nhật trạng thái thanh toán!" });
+                    TempData["ToastType"] = "error";
+                    TempData["ToastMessage"] = "Không thể cập nhật trạng thái thanh toán!";
+                    return Json(new { success = false, reload = true });
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[QuickPay Error] {ex.Message}\n{ex.StackTrace}");
-                return Json(new { success = false, message = $"Lỗi: {ex.Message}" });
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] = $"Lỗi: {ex.Message}";
+                return Json(new { success = false, reload = true });
             }
         }
 

@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using Do_an_NoSQL.Database;
+using System.Security.Claims;
 
 namespace Do_an_NoSQL.Helpers
 {
@@ -16,11 +17,13 @@ namespace Do_an_NoSQL.Helpers
             return userRole != null && roles.Contains(userRole);
         }
 
+        // === CUSTOMER ===
         public static bool CanAccessCustomers(ClaimsPrincipal user)
         {
             return HasRole(user, ADMIN, ADVISOR);
         }
 
+        // === APPLICATION ===
         public static bool CanAccessApplications(ClaimsPrincipal user)
         {
             return HasRole(user, ADMIN, ADVISOR, UNDERWRITER);
@@ -31,44 +34,78 @@ namespace Do_an_NoSQL.Helpers
             return HasRole(user, ADMIN, UNDERWRITER);
         }
 
-        public static bool CanAccessClaims(ClaimsPrincipal user)
-        {
-            return HasRole(user, ADMIN, UNDERWRITER, CSKH);
-        }
-
+        // === POLICY ===
         public static bool CanAccessPolicies(ClaimsPrincipal user)
         {
             return HasRole(user, ADMIN, ADVISOR, UNDERWRITER);
         }
 
-        public static bool CanAccessProducts(ClaimsPrincipal user)
+        // === CLAIM ===
+        public static bool CanAccessClaims(ClaimsPrincipal user)
         {
-            return HasRole(user, ADMIN);
+            return HasRole(user, ADMIN, UNDERWRITER, CSKH);
         }
 
-        public static bool CanAccessAdvisors(ClaimsPrincipal user)
+        // === PAYMENT ===
+        public static bool CanViewPayment(ClaimsPrincipal user)
         {
-            return HasRole(user, ADMIN);
+            return HasRole(user, ADMIN, ADVISOR, ACCOUNTANT, CSKH);
+        }
+
+        public static bool CanManagePayment(ClaimsPrincipal user)
+        {
+            return HasRole(user, ADMIN, ACCOUNTANT);
         }
 
         public static bool CanAccessPayments(ClaimsPrincipal user)
         {
-            return HasRole(user, ADMIN, ACCOUNTANT, CSKH);
+            return CanViewPayment(user);
         }
 
         public static bool CanAccessScheduleTab(ClaimsPrincipal user)
         {
-            return HasRole(user, ADMIN); // Chỉ admin mới thấy tab lịch thanh toán
+            return HasRole(user, ADMIN);
         }
 
         public static bool CanAccessHistoryTab(ClaimsPrincipal user)
         {
-            return HasRole(user, ADMIN, ACCOUNTANT, CSKH);
+            return HasRole(user, ADMIN, ADVISOR, ACCOUNTANT, CSKH);
         }
 
         public static bool CanAccessPayoutTab(ClaimsPrincipal user)
         {
             return HasRole(user, ADMIN, ACCOUNTANT, CSKH);
+        }
+
+        // === PRODUCTS ===
+        // ✅ ADVISOR CÓ THỂ XEM PRODUCTS
+        public static bool CanViewProducts(ClaimsPrincipal user)
+        {
+            return HasRole(user, ADMIN, ADVISOR);
+        }
+
+        // ✅ CHỈ ADMIN QUẢN LÝ PRODUCTS
+        public static bool CanManageProducts(ClaimsPrincipal user)
+        {
+            return HasRole(user, ADMIN);
+        }
+
+        // ✅ Giữ lại method cũ để tương thích
+        public static bool CanAccessProducts(ClaimsPrincipal user)
+        {
+            return CanViewProducts(user);
+        }
+
+        // === ADVISORS ===
+        public static bool CanAccessAdvisors(ClaimsPrincipal user)
+        {
+            return HasRole(user, ADMIN);
+        }
+
+        // === USERS ===
+        public static bool CanManageUsers(ClaimsPrincipal user)
+        {
+            return HasRole(user, ADMIN);
         }
     }
 }

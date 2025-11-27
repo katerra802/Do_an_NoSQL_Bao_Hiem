@@ -86,7 +86,6 @@ function translatePaymentType(type) {
 
 // ✅ THÊM FUNCTION MỚI - Quick Payment
 window.quickPayment = async function (paymentId, policyNo, amount) {
-    // Hiển thị modal xác nhận với form nhập thông tin
     const { value: formValues } = await Swal.fire({
         title: '<strong>Xác nhận thanh toán</strong>',
         html: `
@@ -148,7 +147,6 @@ window.quickPayment = async function (paymentId, policyNo, amount) {
 
     if (!formValues) return;
 
-    // Hiển thị loading
     Swal.fire({
         title: "Đang xử lý thanh toán...",
         didOpen: () => Swal.showLoading(),
@@ -171,43 +169,16 @@ window.quickPayment = async function (paymentId, policyNo, amount) {
         });
 
         const data = await res.json();
-
         await Swal.close();
 
-        if (data.success) {
-            await Swal.fire({
-                icon: 'success',
-                title: 'Thanh toán thành công!',
-                html: `
-                    <p class="mb-2"><strong>Mã hợp đồng:</strong> ${data.policyNo}</p>
-                    <p class="mb-2"><strong>Số tiền:</strong> ${parseFloat(data.amount).toLocaleString('vi-VN')} VNĐ</p>
-                    <p class="mb-0"><strong>Thời gian:</strong> ${data.paidDate}</p>
-                `,
-                confirmButtonText: 'OK',
-                confirmButtonColor: '#10b981'
-            });
-
-            // Reload trang để cập nhật dữ liệu
+        // ✅ NẾU BACKEND TRẢ VỀ reload = true → RELOAD VÀ HIỆN TOAST TỪ TEMPDATA
+        if (data.reload) {
             location.reload();
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Thanh toán thất bại',
-                text: data.message,
-                confirmButtonText: 'Đóng',
-                confirmButtonColor: '#E31E24'
-            });
         }
     } catch (err) {
         await Swal.close();
         console.error('Payment error:', err);
-        Swal.fire({
-            icon: 'error',
-            title: 'Lỗi kết nối',
-            text: 'Không thể kết nối đến máy chủ. Vui lòng thử lại!',
-            confirmButtonText: 'Đóng',
-            confirmButtonColor: '#E31E24'
-        });
+        window.showToast('error', 'Lỗi kết nối đến máy chủ. Vui lòng thử lại!');
     }
 };
 

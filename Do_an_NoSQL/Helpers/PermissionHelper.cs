@@ -1,12 +1,12 @@
-﻿using System.Security.Claims;
-using Do_an_NoSQL.Database;
+﻿using Do_an_NoSQL.Database;
 using MongoDB.Driver;
+using System.Security.Claims;
 
 namespace Do_an_NoSQL.Helpers
 {
     public static class PermissionHelper
     {
-        // Cache permissions cho mỗi role (tối ưu performance)
+        // Cache permissions cho mỗi role
         private static Dictionary<string, List<string>> _rolePermissionsCache = new();
 
         public static bool HasPermission(ClaimsPrincipal user, MongoDbContext context, params string[] permissions)
@@ -30,37 +30,32 @@ namespace Do_an_NoSQL.Helpers
 
         private static List<string> GetRolePermissions(MongoDbContext context, string roleCode)
         {
-            // Check cache trước
             if (_rolePermissionsCache.ContainsKey(roleCode))
                 return _rolePermissionsCache[roleCode];
 
-            // Lấy từ DB
             var rolePermission = context.RolePermissions
                 .Find(rp => rp.RoleCode == roleCode)
                 .FirstOrDefault();
 
             var permissions = rolePermission?.Permissions ?? new List<string>();
-
-            // Cache lại
             _rolePermissionsCache[roleCode] = permissions;
 
             return permissions;
         }
 
-        // Clear cache khi cần (ví dụ sau khi update permissions)
         public static void ClearCache()
         {
             _rolePermissionsCache.Clear();
         }
 
-        // === CUSTOMER PERMISSIONS ===
+        // === CUSTOMER ===
         public static bool CanViewCustomer(ClaimsPrincipal user, MongoDbContext context)
             => HasPermission(user, context, "VIEW_CUSTOMER");
 
         public static bool CanManageCustomer(ClaimsPrincipal user, MongoDbContext context)
             => HasPermission(user, context, "MANAGE_CUSTOMER");
 
-        // === APPLICATION PERMISSIONS ===
+        // === APPLICATION ===
         public static bool CanViewApplication(ClaimsPrincipal user, MongoDbContext context)
             => HasPermission(user, context, "VIEW_APPLICATION");
 
@@ -70,32 +65,46 @@ namespace Do_an_NoSQL.Helpers
         public static bool CanApproveApplication(ClaimsPrincipal user, MongoDbContext context)
             => HasPermission(user, context, "APPROVE_APPLICATION");
 
-        // === POLICY PERMISSIONS ===
+        // === POLICY ===
         public static bool CanViewPolicy(ClaimsPrincipal user, MongoDbContext context)
             => HasPermission(user, context, "VIEW_POLICY");
 
         public static bool CanManagePolicy(ClaimsPrincipal user, MongoDbContext context)
             => HasPermission(user, context, "MANAGE_POLICY");
 
-        // === PAYMENT PERMISSIONS ===
+        // === PAYMENT ===
         public static bool CanViewPayment(ClaimsPrincipal user, MongoDbContext context)
             => HasPermission(user, context, "VIEW_PAYMENT");
 
         public static bool CanManagePayment(ClaimsPrincipal user, MongoDbContext context)
             => HasPermission(user, context, "MANAGE_PAYMENT");
 
-        // === CLAIM PERMISSIONS ===
+        // === CLAIM ===
         public static bool CanViewClaim(ClaimsPrincipal user, MongoDbContext context)
             => HasPermission(user, context, "VIEW_CLAIM");
 
         public static bool CanManageClaim(ClaimsPrincipal user, MongoDbContext context)
             => HasPermission(user, context, "MANAGE_CLAIM");
 
+        public static bool CanApproveClaim(ClaimsPrincipal user, MongoDbContext context)
+            => HasPermission(user, context, "APPROVE_CLAIM");
+
+        // === PAYOUT ===
         public static bool CanManagePayout(ClaimsPrincipal user, MongoDbContext context)
             => HasPermission(user, context, "MANAGE_PAYOUT");
 
-        // === SYSTEM PERMISSIONS ===
+        // === REPORT ===
+        public static bool CanViewReport(ClaimsPrincipal user, MongoDbContext context)
+            => HasPermission(user, context, "VIEW_REPORT");
+
+        public static bool CanExportReport(ClaimsPrincipal user, MongoDbContext context)
+            => HasPermission(user, context, "EXPORT_REPORT");
+
+        // === SYSTEM ===
         public static bool CanManageUsers(ClaimsPrincipal user, MongoDbContext context)
             => HasPermission(user, context, "MANAGE_USERS");
+
+        public static bool CanManageProducts(ClaimsPrincipal user, MongoDbContext context)
+            => HasPermission(user, context, "MANAGE_PRODUCTS");
     }
 }

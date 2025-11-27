@@ -1,5 +1,5 @@
 ﻿@model PagedResult<dynamic>
-
+@using Do_an_NoSQL.Helpers
 @functions {
     string SortIcon(string field)
     {
@@ -92,13 +92,18 @@
             <a href="#" class="btn btn-red" data-bs-toggle="modal" data-bs-target="#importModal">
                 <i class="fa-solid fa-file-import me-1"></i> Import Excel
             </a>
-            <a href="javascript:void(0);" id="exportExcelBtn" class="btn btn-outline-red">
-                <i class="fa-solid fa-file-export me-1"></i>
-                Xuất Excel
-            </a>
-            <a asp-action="Create" class="btn btn-red">
-                <i class="fa-solid fa-plus me-1"></i> Tạo hồ sơ
-            </a>
+            @if (RoleHelper.CanViewProducts(User))
+            {
+                <a href="javascript:void(0);" id="exportExcelBtn" class="btn btn-outline-red">
+                    <i class="fa-solid fa-file-export me-1"></i>Xuất Excel
+                </a>
+            }
+            @if (RoleHelper.CanManageProducts(User))
+            {
+                <a href="@Url.Action("Create")" class="btn btn-red">
+                    <i class="fa-solid fa-plus me-1"></i>Thêm sản phẩm
+                </a>
+            }
         </div>
     </div>
 

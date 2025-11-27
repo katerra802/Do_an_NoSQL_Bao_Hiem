@@ -450,9 +450,11 @@ namespace Do_an_NoSQL.Controllers
         // ================================
         public IActionResult Edit(string id)
         {
-            if (!PermissionHelper.CanApproveApplication(User, _context))
+            if (!PermissionHelper.CanManageApplication(User, _context))
             {
-                return Json(new { success = false, message = "Bạn không có quyền phê duyệt!" });
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] = "Bạn không có quyền xóa hồ sơ!";
+                return Json(new { success = false, reload = true });
             }
             var app = _context.PolicyApplications
                 .Find(x => x.Id == id)
@@ -488,9 +490,11 @@ namespace Do_an_NoSQL.Controllers
         [HttpPost]
         public IActionResult Edit(PolicyApplicationCreateVM model)
         {
-            if (!PermissionHelper.CanApproveApplication(User, _context))
+            if (!PermissionHelper.CanManageApplication(User, _context))
             {
-                return Json(new { success = false, message = "Bạn không có quyền phê duyệt!" });
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] = "Bạn không có quyền xóa hồ sơ!";
+                return Json(new { success = false, reload = true });
             }
             var app = _context.PolicyApplications
                 .Find(x => x.Id == model.Id)
@@ -557,7 +561,9 @@ namespace Do_an_NoSQL.Controllers
 
             // Lưu lại dữ liệu
             _context.PolicyApplications.ReplaceOne(x => x.Id == app.Id, app);
-            return Json(new { success = true, message = "Cập nhật hồ sơ thành công!" });
+            TempData["ToastType"] = "success";
+            TempData["ToastMessage"] = "Cập nhật hồ sơ thành công!";
+            return Json(new { success = true, reload = true });
         }
 
         [HttpPost]
@@ -565,7 +571,9 @@ namespace Do_an_NoSQL.Controllers
         {
             if (!PermissionHelper.CanManageApplication(User, _context))
             {
-                return Json(new { success = false, message = "Bạn không có quyền xóa!" });
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] = "Bạn không có quyền xóa hồ sơ!";
+                return Json(new { success = false, reload = true });
             }
             var app = _context.PolicyApplications.Find(x => x.Id == id).FirstOrDefault();
             if (app != null)
@@ -573,8 +581,9 @@ namespace Do_an_NoSQL.Controllers
                 _context.PolicyApplications.DeleteOne(x => x.Id == id);
                 return Json(new { success = true, message = "Hồ sơ đã được xóa thành công!" });
             }
-
-            return Json(new { success = false, message = "Không thể tìm thấy hồ sơ." });
+            TempData["ToastType"] = "success";
+            TempData["ToastMessage"] = "Xóa hồ sơ thành công!";
+            return Json(new { success = true, reload = true });
         }
 
         [HttpPost]
