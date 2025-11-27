@@ -32,7 +32,7 @@ public class ProductsController : Controller
     string sort = "date_desc"             // Sort theo thời gian hợp đồng
 )
     {
-        if (!RoleHelper.CanAccessProducts(User))
+        if (!RoleHelper.CanViewProducts(User))
         {
             return RedirectToAction("AccessDenied", "Auth");
         }
@@ -131,6 +131,12 @@ public class ProductsController : Controller
     [HttpGet]
     public IActionResult Create()
     {
+        if (!RoleHelper.CanManageProducts(User))
+        {
+            TempData["ToastType"] = "error";
+            TempData["ToastMessage"] = "Bạn không có quyền thêm sản phẩm!";
+            return RedirectToAction("Index");
+        }
         LoadTypeOptions();
         ViewData["Mode"] = "create";
         return View("Form", new ProductCreateVM());
@@ -142,6 +148,12 @@ public class ProductsController : Controller
     [HttpPost]
     public IActionResult Create(ProductCreateVM vm)
     {
+        if (!RoleHelper.CanManageProducts(User))
+        {
+            TempData["ToastType"] = "error";
+            TempData["ToastMessage"] = "Bạn không có quyền thêm sản phẩm!";
+            return Json(new { success = false, reload = true });
+        }
         if (!ModelState.IsValid)
             return Json(new { success = false, message = "Dữ liệu không hợp lệ!" });
 
@@ -229,6 +241,12 @@ public class ProductsController : Controller
     [HttpGet]
     public IActionResult Edit(string id)
     {
+        if (!RoleHelper.CanManageProducts(User))
+        {
+            TempData["ToastType"] = "error";
+            TempData["ToastMessage"] = "Bạn không có quyền sửa sản phẩm!";
+            return RedirectToAction("Index");
+        }
         var p = _context.Products.Find(x => x.Id == id).FirstOrDefault();
         if (p == null) return NotFound();
 
@@ -299,6 +317,12 @@ public class ProductsController : Controller
     [HttpPost]
     public IActionResult Edit(string id, ProductCreateVM vm)
     {
+        if (!RoleHelper.CanManageProducts(User))
+        {
+            TempData["ToastType"] = "error";
+            TempData["ToastMessage"] = "Bạn không có quyền sửa sản phẩm!";
+            return RedirectToAction("Index");
+        }
         if (!ModelState.IsValid)
             return Json(new { success = false, message = "Dữ liệu không hợp lệ!" });
 
@@ -339,6 +363,12 @@ public class ProductsController : Controller
     [HttpPost]
     public IActionResult Delete(string id)
     {
+        if (!RoleHelper.CanManageProducts(User))
+        {
+            TempData["ToastType"] = "error";
+            TempData["ToastMessage"] = "Bạn không có quyền xóa sản phẩm!";
+            return Json(new { success = false, reload = true });
+        }
         try
         {
             var result = _context.Products.DeleteOne(x => x.Id == id);
@@ -671,6 +701,10 @@ public class ProductsController : Controller
     DateTime? from_date = null,
     DateTime? to_date = null)
     {
+        if (!RoleHelper.CanViewProducts(User))
+        {
+            return StatusCode(403, "Bạn không có quyền xuất dữ liệu!");
+        }
         try
         {
             var query = _context.Products.AsQueryable();

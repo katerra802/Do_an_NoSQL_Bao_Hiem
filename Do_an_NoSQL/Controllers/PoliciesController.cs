@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using OfficeOpenXml;
 using System.Globalization;
+using System.Security.Claims;
 using static Do_an_NoSQL.Controllers.PolicyApplicationsController;
 
 namespace Do_an_NoSQL.Controllers
@@ -374,6 +375,10 @@ namespace Do_an_NoSQL.Controllers
         [HttpPost]
         public IActionResult UpdatePolicyInfo([FromBody] dynamic body)
         {
+            if (!PermissionHelper.CanManagePolicy(User, _context))
+            {
+                return Json(new { success = false, message = "Bạn không có quyền sửa hợp đồng!" });
+            }
             try
             {
                 string id = body.Id;
@@ -454,6 +459,10 @@ namespace Do_an_NoSQL.Controllers
     DateTime? from_date = null,
     DateTime? to_date = null)
         {
+            if (!PermissionHelper.CanExportReport(User, _context))
+            {
+                return StatusCode(403, "Bạn không có quyền xuất báo cáo!");
+            }
             try
             {
                 var query = _context.Policies.AsQueryable();
@@ -551,6 +560,11 @@ namespace Do_an_NoSQL.Controllers
         [HttpPost]
         public IActionResult BulkUpdateStatus(bool updateAll, [FromBody] PolicyStatusUpdate request)
         {
+            if (!PermissionHelper.HasPermission(User, _context, "MANAGE_POLICY") ||
+            User.FindFirst(ClaimTypes.Role)?.Value != "ADMIN")
+            {
+                return Json(new { success = false, message = "Chỉ Admin mới có quyền xóa hợp đồng!" });
+            }
             try
             {
                 var update = Builders<Policy>.Update
@@ -598,6 +612,12 @@ namespace Do_an_NoSQL.Controllers
         [HttpPost]
         public IActionResult UpdateStatus([FromBody] PolicyStatusUpdate request)
         {
+            if (!PermissionHelper.CanManagePolicy(User, _context))
+            {
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] = "Bạn không có quyền cập nhật trạng thái!";
+                return Json(new { success = false, reload = true });
+            }
             if (string.IsNullOrEmpty(request.Id) || string.IsNullOrEmpty(request.NewStatus))
                 return BadRequest(new { message = "Thiếu thông tin bắt buộc." });
 
@@ -613,7 +633,9 @@ namespace Do_an_NoSQL.Controllers
 
             _context.Policies.UpdateOne(filter, update);
 
-            return Json(new { success = true, message = "Cập nhật trạng thái hợp đồng thành công!" });
+            TempData["ToastType"] = "success";
+            TempData["ToastMessage"] = "Cập nhật trạng thái thành công!";
+            return Json(new { success = true, reload = true });
         }
 
 

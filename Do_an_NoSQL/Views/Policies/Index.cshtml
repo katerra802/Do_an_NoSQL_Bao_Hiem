@@ -1,4 +1,7 @@
 ﻿@model PagedResult<dynamic>
+@using Do_an_NoSQL.Helpers
+@using System.Security.Claims
+@inject Do_an_NoSQL.Database.MongoDbContext DbContext
 
 @functions {
     string SortIcon(string field)
@@ -98,10 +101,13 @@
 
         <div class="d-flex flex-wrap gap-2">
            
-            <a href="javascript:void(0);" id="exportExcelBtn" class="btn btn-outline-red">
-                <i class="fa-solid fa-file-export me-1"></i>
-                Xuất Excel
-            </a>
+            @if (PermissionHelper.CanExportReport(User, DbContext))
+            {
+                <a href="javascript:void(0);" id="exportExcelBtn" class="btn btn-outline-red">
+                    <i class="fa-solid fa-file-export me-1"></i>
+                    Xuất Excel
+                </a>
+            }
         </div>
 
     </div>
@@ -199,10 +205,13 @@
 
         <!-- Bulk actions -->
         <div class="mt-4 d-flex gap-3">
-            <button type="button" class="btn-outline-red" onclick="bulkUpdateStatus()">
-                <i class="fa-solid fa-pen-to-square me-1"></i>
-                Cập nhật trạng thái hàng loạt
-            </button>
+            @if (PermissionHelper.CanManagePolicy(User, DbContext))
+            {
+                <button type="button" class="btn-outline-red" onclick="bulkUpdateStatus()">
+                    <i class="fa-solid fa-pen-to-square me-1"></i>
+                    Cập nhật trạng thái hàng loạt
+                </button>
+            }
 
           @*   <button type="button" class="btn-red" onclick="bulkDelete()">
                 <i class="fa-solid fa-trash-can me-1"></i>
@@ -305,50 +314,56 @@
                                                 <i class="fa-solid fa-eye"></i> Xem chi tiết
                                             </a>
                                         </li>
-                                        <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-2 text-primary"
-                                               href="javascript:void(0);" onclick="editPolicy('@p.Id')">
-                                                <i class="fa-solid fa-pen"></i> Chỉnh sửa
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <button type="button"
-                                                    class="dropdown-item d-flex align-items-center gap-2 text-info"
-                                                    onclick="updateStatus('@p.Id')">
-                                                <i class="fa-solid fa-pen-to-square"></i> Cập nhật trạng thái
-                                            </button>
-                                        </li>
-                                        <li>
-                                            @if (p.Status != "inforce")
-                                            {
-                                                <!-- Nếu KHÔNG được tạo claim -->
+                                        @if (PermissionHelper.CanManagePolicy(User, DbContext))
+                                        {
+                                            <li>
+                                                <a class="dropdown-item d-flex align-items-center gap-2 text-primary"
+                                                   href="javascript:void(0);" onclick="editPolicy('@p.Id')">
+                                                    <i class="fa-solid fa-pen"></i> Chỉnh sửa
+                                                </a>
+                                            </li>
+                                            <li>
                                                 <button type="button"
-                                                        class="dropdown-item d-flex align-items-center gap-2 text-muted disabled"
-                                                        title="Không thể tạo hồ sơ cho hợp đồng bị từ chối hoặc đang gia hạn phí"
-                                                        disabled>
-                                                    <i class="fa-solid fa-file-alt"></i>
-                                                    Tạo hồ sơ yêu cầu giải quyết quyền lợi
-                                                </button>                                                
-                                            }
-                                            else
-                                            {
-                                                <!-- Nếu được phép -->
+                                                        class="dropdown-item d-flex align-items-center gap-2 text-info"
+                                                        onclick="updateStatus('@p.Id')">
+                                                    <i class="fa-solid fa-pen-to-square"></i> Cập nhật trạng thái
+                                                </button>
+                                            </li>
+                                        }
+                                        @if (PermissionHelper.CanManageClaim(User, DbContext))
+                                        {
+                                            <li>
+                                                @if (p.Status != "inforce")
+                                                {
+                                                    <button type="button"
+                                                            class="dropdown-item d-flex align-items-center gap-2 text-muted disabled"
+                                                            disabled>
+                                                        <i class="fa-solid fa-file-alt"></i>
+                                                        Tạo hồ sơ yêu cầu giải quyết quyền lợi
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <button type="button"
+                                                            class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                                                            onclick="loadPolicyDetails('@p.Id')">
+                                                        <i class="fa-solid fa-file-alt"></i>
+                                                        Tạo hồ sơ yêu cầu giải quyết quyền lợi
+                                                    </button>
+                                                }
+                                            </li>
+                                        }
+                                        @* @if (User.FindFirst(ClaimTypes.Role)?.Value == "ADMIN")
+                                        {
+                                            <li>
                                                 <button type="button"
                                                         class="dropdown-item d-flex align-items-center gap-2 text-danger"
-                                                        onclick="loadPolicyDetails('@p.Id')">
-                                                    <i class="fa-solid fa-file-alt"></i>
-                                                    Tạo hồ sơ yêu cầu giải quyết quyền lợi
+                                                        onclick="confirmDeletePolicy('@p.Id')">
+                                                    <i class="fa-solid fa-trash-can"></i>
+                                                    <span>Xóa</span>
                                                 </button>
-                                            }
-                                        </li>
-                                        <li>
-                                            <button type="button"
-                                                    class="dropdown-item d-flex align-items-center gap-2 text-danger"
-                                                    onclick="confirmDeletePolicy('@p.Id')">
-                                                <i class="fa-solid fa-trash-can"></i>
-                                                <span>Xóa</span>
-                                            </button>
-                                        </li>
+                                            </li>
+                                        } *@
                                     </ul>
                                 </div>
                             </td>
