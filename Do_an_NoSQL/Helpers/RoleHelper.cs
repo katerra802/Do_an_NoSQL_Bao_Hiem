@@ -1,4 +1,5 @@
 ﻿using Do_an_NoSQL.Database;
+using MongoDB.Driver;
 using System.Security.Claims;
 
 namespace Do_an_NoSQL.Helpers
@@ -11,10 +12,52 @@ namespace Do_an_NoSQL.Helpers
         public const string ACCOUNTANT = "ACCOUNTANT";
         public const string CSKH = "CSKH";
 
+        // Cache permissions
+        private static Dictionary<string, List<string>> _rolePermissionsCache = new();
+
         public static bool HasRole(ClaimsPrincipal user, params string[] roles)
         {
             var userRole = user.FindFirst(ClaimTypes.Role)?.Value;
             return userRole != null && roles.Contains(userRole);
+        }
+
+        // ✅ THÊM METHOD HasPermission
+        public static bool HasPermission(ClaimsPrincipal user, MongoDbContext context, params string[] permissions)
+        {
+            if (user?.Identity?.IsAuthenticated != true)
+                return false;
+
+            var roleCode = user.FindFirst(ClaimTypes.Role)?.Value;
+            if (string.IsNullOrEmpty(roleCode))
+                return false;
+
+            // Admin có tất cả quyền
+            if (roleCode == "ADMIN")
+                return true;
+
+            // Lấy permissions từ cache hoặc DB
+            var userPermissions = GetRolePermissions(context, roleCode);
+            return permissions.Any(p => userPermissions.Contains(p));
+        }
+
+        private static List<string> GetRolePermissions(MongoDbContext context, string roleCode)
+        {
+            if (_rolePermissionsCache.ContainsKey(roleCode))
+                return _rolePermissionsCache[roleCode];
+
+            var rolePermission = context.RolePermissions
+                .Find(rp => rp.RoleCode == roleCode)
+                .FirstOrDefault();
+
+            var permissions = rolePermission?.Permissions ?? new List<string>();
+            _rolePermissionsCache[roleCode] = permissions;
+
+            return permissions;
+        }
+
+        public static void ClearCache()
+        {
+            _rolePermissionsCache.Clear();
         }
 
         // === CUSTOMER ===
@@ -34,14 +77,41 @@ namespace Do_an_NoSQL.Helpers
             return HasRole(user, ADMIN, UNDERWRITER);
         }
 
+        public static bool CanManageApplication(ClaimsPrincipal user, MongoDbContext context)
+        {
+            return HasRole(user, ADMIN, ADVISOR);
+        }
+
+        public static bool CanViewApplication(ClaimsPrincipal user, MongoDbContext context)
+        {
+            return HasRole(user, ADMIN, ADVISOR, UNDERWRITER);
+        }
+
         // === POLICY ===
         public static bool CanAccessPolicies(ClaimsPrincipal user)
         {
             return HasRole(user, ADMIN, ADVISOR, UNDERWRITER);
         }
 
+        // ✅ THÊM: UNDERWRITER CÓ THỂ XEM POLICIES
+        public static bool CanViewPolicy(ClaimsPrincipal user, MongoDbContext context)
+        {
+            return HasRole(user, ADMIN, ADVISOR, UNDERWRITER);
+        }
+
+        // ✅ THÊM: UNDERWRITER CÓ THỂ QUẢN LÝ POLICIES
+        public static bool CanManagePolicy(ClaimsPrincipal user, MongoDbContext context)
+        {
+            return HasRole(user, ADMIN, UNDERWRITER);
+        }
+
         // === CLAIM ===
         public static bool CanAccessClaims(ClaimsPrincipal user)
+        {
+            return HasRole(user, ADMIN, UNDERWRITER, CSKH);
+        }
+
+        public static bool CanManageClaim(ClaimsPrincipal user, MongoDbContext context)
         {
             return HasRole(user, ADMIN, UNDERWRITER, CSKH);
         }
@@ -78,19 +148,16 @@ namespace Do_an_NoSQL.Helpers
         }
 
         // === PRODUCTS ===
-        // ✅ ADVISOR CÓ THỂ XEM PRODUCTS
         public static bool CanViewProducts(ClaimsPrincipal user)
         {
-            return HasRole(user, ADMIN, ADVISOR);
+            return HasRole(user, ADMIN, ADVISOR, UNDERWRITER);
         }
 
-        // ✅ CHỈ ADMIN QUẢN LÝ PRODUCTS
         public static bool CanManageProducts(ClaimsPrincipal user)
         {
             return HasRole(user, ADMIN);
         }
 
-        // ✅ Giữ lại method cũ để tương thích
         public static bool CanAccessProducts(ClaimsPrincipal user)
         {
             return CanViewProducts(user);
@@ -106,6 +173,13 @@ namespace Do_an_NoSQL.Helpers
         public static bool CanManageUsers(ClaimsPrincipal user)
         {
             return HasRole(user, ADMIN);
+        }
+
+        // === REPORTS ===
+        // ✅ THÊM: Export Report
+        public static bool CanExportReport(ClaimsPrincipal user, MongoDbContext context)
+        {
+            return HasRole(user, ADMIN, ADVISOR, UNDERWRITER, ACCOUNTANT);
         }
     }
 }

@@ -680,49 +680,57 @@ function editPolicy(id) {
 
     content.html(`<div class="text-center py-5"><div class="spinner-border text-danger"></div><p class="mt-2">Đang tải...</p></div>`);
 
-    $.get(`/Policies/GetPolicyDetails?id=${id}`, function (p) {
-        if (!p) {
+    $.get(`/Policies/GetPolicyDetails?id=${id}`, function (response) {
+        // ✅ CHECK response format
+        console.log("Policy data:", response);
+
+        if (!response || !response.success) {
             content.html(`<p class="text-danger text-center fw-bold">Không tìm thấy dữ liệu!</p>`);
             return;
         }
 
+        // ✅ LẤY ID TỪ PARAMETER, KHÔNG PHẢI TỪ RESPONSE
+        // Vì response trả về snake_case nhưng MongoDB Id không có trong response
         content.html(`
             <form id="editPolicyForm">
-                <input type="hidden" name="Id" value="${p.id}" />
+                <input type="hidden" id="policyId" value="${id}" />
 
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="fw-semibold">Khách hàng</label>
-                        <input class="input-input opacity-50" value="${p.customer?.full_name || ''}" readonly>
+                        <input class="input-input opacity-50" value="${response.customer?.full_name || ''}" readonly>
                     </div>
 
                     <div class="col-md-6">
                         <label class="fw-semibold">Sản phẩm</label>
-                        <input class="input-input opacity-50" value="${p.product?.name || ''}" readonly>
+                        <input class="input-input opacity-50" value="${response.product?.name || ''}" readonly>
                     </div>
 
                     <div class="col-md-6">
                         <label class="fw-semibold">Tư vấn viên</label>
-                        <input class="input-input" name="advisor_name" value="${p.advisor?.full_name || ''}">
+                        <input class="input-input" id="advisorName" value="${response.advisor?.full_name || ''}">
                     </div>
 
                     <div class="col-md-6">
                         <label class="fw-semibold">Số tiền bảo hiểm (₫)</label>
-                        <input class="input-input" name="sum_assured" value="${p.sum_assured}">
+                        <input class="input-input" type="number" id="sumAssured" value="${response.sum_assured || 0}">
                     </div>
 
                     <div class="col-md-6">
                         <label class="fw-semibold">Ngày cấp</label>
-                        <input type="date" class="input-input" name="issue_date" value="${p.issue_date?.split('T')[0] || ''}">
+                        <input type="date" class="input-input" id="issueDate" value="${response.issue_date?.split('T')[0] || ''}">
                     </div>
 
                     <div class="col-md-6">
                         <label class="fw-semibold">Ghi chú</label>
-                        <input class="input-input" name="notes" value="${p.notes || ''}">
+                        <input class="input-input" id="notes" value="${response.notes || ''}">
                     </div>
                 </div>
             </form>
         `);
+    }).fail(function (xhr) {
+        console.error("Get policy details error:", xhr);
+        content.html(`<p class="text-danger text-center fw-bold">Lỗi tải dữ liệu!</p>`);
     });
 }
 
@@ -730,7 +738,22 @@ function editPolicy(id) {
 // LƯU CẬP NHẬT HỢP ĐỒNG
 // ===============================
 $("#saveEditBtn").click(function () {
-    const data = Object.fromEntries(new FormData(document.getElementById("editPolicyForm")).entries());
+    // ✅ LẤY DATA TỪNG FIELD VÀ TẠO OBJECT ĐÚNG FORMAT
+    const data = {
+        Id: $("#policyId").val(),
+        AdvisorName: $("#advisorName").val(),
+        SumAssured: parseFloat($("#sumAssured").val()) || 0,
+        IssueDate: $("#issueDate").val(),
+        Notes: $("#notes").val() || ""
+    };
+
+    // Debug
+    console.log("Sending data:", data);
+
+    if (!data.Id) {
+        Swal.fire("Lỗi", "Thiếu ID hợp đồng!", "error");
+        return;
+    }
 
     Swal.fire({
         title: "Xác nhận cập nhật?",
@@ -740,17 +763,33 @@ $("#saveEditBtn").click(function () {
         cancelButtonText: "Hủy"
     }).then(result => {
         if (result.isConfirmed) {
+            Swal.fire({
+                title: "Đang cập nhật...",
+                didOpen: () => Swal.showLoading(),
+                allowOutsideClick: false
+            });
+
             $.ajax({
                 url: "/Policies/UpdatePolicyInfo",
                 method: "POST",
                 data: JSON.stringify(data),
                 contentType: "application/json",
-                success: function () {
-                    Swal.fire("Thành công", "Cập nhật thông tin hợp đồng thành công!", "success")
-                        .then(() => location.reload());
+                success: function (response) {
+                    Swal.close();
+
+                    if (response.reload) {
+                        // Reload để hiển thị toast từ TempData
+                        location.reload();
+                    } else {
+                        Swal.fire("Thành công", "Cập nhật thông tin hợp đồng thành công!", "success")
+                            .then(() => location.reload());
+                    }
                 },
-                error: function () {
-                    Swal.fire("Lỗi", "Không thể cập nhật hợp đồng!", "error");
+                error: function (xhr) {
+                    Swal.close();
+                    console.error("Update error:", xhr);
+                    const errorMsg = xhr.responseJSON?.message || "Không thể cập nhật hợp đồng!";
+                    Swal.fire("Lỗi", errorMsg, "error");
                 }
             });
         }

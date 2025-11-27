@@ -89,9 +89,12 @@
             <a href="/Products/DownloadTemplate" class="btn btn-outline-red">
                 <i class="fa-solid fa-file-arrow-down me-1"></i> Tải file mẫu
             </a>
-            <a href="#" class="btn btn-red" data-bs-toggle="modal" data-bs-target="#importModal">
-                <i class="fa-solid fa-file-import me-1"></i> Import Excel
-            </a>
+            @if (RoleHelper.CanManageProducts(User))
+            {
+                <a href="#" class="btn btn-red" data-bs-toggle="modal" data-bs-target="#importModal">
+                    <i class="fa-solid fa-file-import me-1"></i> Import Excel
+                </a>
+            }
             @if (RoleHelper.CanViewProducts(User))
             {
                 <a href="javascript:void(0);" id="exportExcelBtn" class="btn btn-outline-red">
@@ -177,11 +180,15 @@
             </div>
             <button type="submit" style="display:none"></button>
         </form>
-        <div class="mt-4">
-            <button type="button" class="btn-red" onclick="bulkDeleteProducts()">
-                <i class="fa-solid fa-trash-can me-1"></i> Xóa hàng loạt
-            </button>
-        </div>
+        @if (RoleHelper.CanManageProducts(User))
+        {
+            <div class="mt-4 d-flex gap-3">
+                <button type="button" class="btn-outline-red" onclick="bulkDeleteProducts()">
+                    <i class="fa-solid fa-trash-can me-1"></i>
+                    Xóa hàng loạt
+                </button>
+            </div>
+        }
     </div>
 
     <!-- TABLE -->
