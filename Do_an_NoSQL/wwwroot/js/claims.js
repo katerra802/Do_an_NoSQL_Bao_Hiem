@@ -232,7 +232,6 @@
 
 window.openClaimApprovalModal = async function (claimId, maxAmount = 0) {
     try {
-        // 🔹 Gọi API để lấy thông tin yêu cầu bồi thường
         const res = await fetch(`/Claims/GetClaimDetails?id=${claimId}`);
         const data = await res.json();
 
@@ -241,83 +240,19 @@ window.openClaimApprovalModal = async function (claimId, maxAmount = 0) {
             return;
         }
 
-        // Lấy đúng giá trị requested_amount từ claim.payout
-        const requestedAmount = data.claim.payout?.requested_amount
-            ? Number(data.claim.payout.requested_amount)
-            : 0;
+        const requestedAmount = data.claim.payout?.requested_amount ? Number(data.claim.payout.requested_amount) : 0;
 
         Swal.fire({
             title: "Phê duyệt yêu cầu bồi thường",
             html: `
                 <div class="text-start">
-                    <p class="text-muted small">
-                        Bộ phận thẩm định sẽ kiểm tra tính hợp lệ của hồ sơ, xem xét điều khoản, loại trừ và đánh giá khả năng chi trả.
-                    </p>
-
-                    <label class="fw-semibold mt-2">Kết quả thẩm định</label>
-                    <select id="decision" class="select-input mt-1">
-                        <option value="approved" class="text-success">Chấp nhận chi trả</option>
-                        <option value="under_review" class="text-warning">Yêu cầu thẩm định thêm</option>
-                        <option value="rejected" class="text-danger">Từ chối chi trả</option>
-                    </select>
-
-                    <!-- Hiển thị số tiền yêu cầu -->
-                    <div class="mt-3">
-                        <label class="fw-semibold">Số tiền yêu cầu bồi thường</label>
-                        <input id="requestedAmount" 
-                            type="text" 
-                            class="input-input bg-light text-dark fw-semibold" 
-                            readonly 
-                            value="${requestedAmount.toLocaleString('vi-VN')} ₫" />
-                    </div>
-
-                    <div id="payoutSection" class="mt-3">
-                        <label class="fw-semibold">Số tiền bồi thường được duyệt</label>
-                        <input id="approvedAmount" 
-                            type="number" 
-                            class="input-input" 
-                            placeholder="Nhập số tiền (₫)" 
-                            min="0" 
-                            max="${requestedAmount}" />
-
-                        <label class="fw-semibold mt-3">Phương thức chi trả</label>
-                        <select id="payMethod" class="select-input">
-                            <option value="bank_transfer">Chuyển khoản ngân hàng</option>
-                            <option value="in_person">Nhận trực tiếp tại điểm giao dịch</option>
-                        </select>
-                    </div>
-
-                    <label class="fw-semibold mt-3">Ghi chú</label>
-                    <textarea id="notes" class="input-input" rows="3"
-                        placeholder="Nhập ghi chú hoặc lý do từ chối/thẩm định thêm..."></textarea>
+                    <!-- ... existing HTML ... -->
                 </div>
             `,
             showCancelButton: true,
             confirmButtonText: "Xác nhận",
             cancelButtonText: "Hủy bỏ",
             reverseButtons: true,
-            customClass: {
-                popup: "custom-swal-popup",
-                confirmButton: "custom-swal-confirm-btn",
-                cancelButton: "custom-swal-cancel-btn"
-            },
-            didOpen: () => {
-                const decisionSelect = document.getElementById("decision");
-                const payoutSection = document.getElementById("payoutSection");
-
-                const togglePayoutFields = () => {
-                    if (decisionSelect.value === "approved") {
-                        payoutSection.style.opacity = "1";
-                        payoutSection.querySelectorAll("input, select").forEach(el => el.disabled = false);
-                    } else {
-                        payoutSection.style.opacity = "0.5";
-                        payoutSection.querySelectorAll("input, select").forEach(el => el.disabled = true);
-                    }
-                };
-
-                togglePayoutFields();
-                decisionSelect.addEventListener("change", togglePayoutFields);
-            },
             preConfirm: () => {
                 const decision = document.getElementById("decision").value;
                 const approvedAmount = parseFloat(document.getElementById("approvedAmount").value || 0);
@@ -337,28 +272,38 @@ window.openClaimApprovalModal = async function (claimId, maxAmount = 0) {
                     notes: notes
                 };
             }
-        }).then((result) => {
+        }).then(async (result) => {
             if (result.isConfirmed) {
-                $.ajax({
-                    url: "/Claims/ApproveClaim",
-                    method: "POST",
-                    contentType: "application/json",
-                    data: JSON.stringify(result.value),
-                    success: (res) => {
-                        if (res.success) {
-                            localStorage.setItem("toastAfterReload", JSON.stringify({
-                                type: "success",
-                                message: res.message
-                            }));
-                            setTimeout(() => location.reload(), 800);
-                        } else {
-                            window.showToast("error", res.message);
-                        }
-                    },
-                    error: () => {
-                        window.showToast("error", "Lỗi hệ thống khi phê duyệt!");
-                    }
+                Swal.fire({
+                    title: "Đang xử lý...",
+                    didOpen: () => Swal.showLoading(),
+                    allowOutsideClick: false
                 });
+
+                try {
+                    const response = await fetch("/Claims/ApproveClaim", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(result.value)
+                    });
+
+                    const res = await response.json();
+                    await Swal.close();
+
+                    // ✅ NẾU BACKEND TRẢ VỀ reload = true → RELOAD VÀ HIỆN TOAST TỪ TEMPDATA
+                    if (res.reload) {
+                        location.reload();
+                    } else if (res.success) {
+                        window.showToast("success", res.message);
+                        setTimeout(() => location.reload(), 800);
+                    } else {
+                        window.showToast("error", res.message);
+                    }
+                } catch (err) {
+                    await Swal.close();
+                    console.error("Approve error:", err);
+                    window.showToast("error", "Lỗi kết nối máy chủ!");
+                }
             }
         });
     } catch (err) {

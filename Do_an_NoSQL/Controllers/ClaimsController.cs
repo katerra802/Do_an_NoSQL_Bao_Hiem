@@ -32,7 +32,7 @@ public class ClaimsController : Controller
         string sort = "submitted_at_desc"
     )
     {
-        if (!PermissionHelper.CanViewClaim(User, _context))
+        if (!RoleHelper.CanViewClaim(User, _context))
         {
             return RedirectToAction("AccessDenied", "Auth");
         }
@@ -112,6 +112,10 @@ public class ClaimsController : Controller
     [HttpGet]
     public IActionResult GetClaimDetails(string id)
     {
+        if (!RoleHelper.CanViewClaim(User, _context))
+        {
+            return Json(new { success = false, message = "Bạn không có quyền xem chi tiết!" });
+        }
         try
         {
             var claim = _context.Claims.Find(x => x.Id == id).FirstOrDefault();
@@ -173,6 +177,12 @@ public class ClaimsController : Controller
     [HttpPost]
     public IActionResult Delete(string id)
     {
+        if (!RoleHelper.CanDeleteClaim(User, _context))
+        {
+            TempData["ToastType"] = "error";
+            TempData["ToastMessage"] = "Chỉ Admin mới có quyền xóa yêu cầu!";
+            return Json(new { success = false, message = "Bạn không có quyền thực hiện thao tác này!" });
+        }
         try
         {
             if (string.IsNullOrEmpty(id))
@@ -184,16 +194,16 @@ public class ClaimsController : Controller
 
             _context.Claims.DeleteOne(x => x.Id == id);
 
-            return Json(new
-            {
-                success = true,
-                message = $"Đã xóa yêu cầu bồi thường {claim.ClaimNo} thành công."
-            });
+            TempData["ToastType"] = "success";
+            TempData["ToastMessage"] = $"Đã xóa yêu cầu {claim.ClaimNo} thành công!";
+            return Json(new { success = true, reload = true });
+
         }
         catch (Exception ex)
         {
-            Console.WriteLine("[DeleteClaim ERROR] " + ex.Message);
-            return Json(new { success = false, message = "Lỗi hệ thống: " + ex.Message });
+            TempData["ToastType"] = "error";
+            TempData["ToastMessage"] = $"Lỗi: {ex.Message}";
+            return Json(new { success = false, reload = true });
         }
     }
 
@@ -205,6 +215,13 @@ public class ClaimsController : Controller
     [HttpPost]
     public IActionResult BulkDelete([FromBody] object request, bool deleteAll = false)
     {
+        if (!RoleHelper.CanDeleteClaim(User, _context))
+        {
+            TempData["ToastType"] = "error";
+            TempData["ToastMessage"] = "Chỉ Admin mới có quyền xóa hàng loạt!";
+            return Json(new { success = false, reload = true });
+
+        }
         try
         {
             if (deleteAll)
@@ -255,6 +272,12 @@ public class ClaimsController : Controller
     [HttpPost]
     public IActionResult CreateClaimFromPolicy([FromBody] ClaimCreateVM model)
     {
+        if (!RoleHelper.CanManageClaim(User, _context))
+        {
+            TempData["ToastType"] = "error";
+            TempData["ToastMessage"] = "Bạn không có quyền tạo yêu cầu bồi thường!";
+            return Json(new { success = false, message = "Bạn không có quyền thực hiện thao tác này!" });
+        }
         try
         {
             if (!PermissionHelper.CanManageClaim(User, _context))
@@ -327,6 +350,12 @@ public class ClaimsController : Controller
     [HttpPost]
     public IActionResult ApproveClaim([FromBody] ClaimApprovalVM model)
     {
+        if (!RoleHelper.CanApproveClaim(User, _context))
+        {
+            TempData["ToastType"] = "error";
+            TempData["ToastMessage"] = "Bạn không có quyền phê duyệt yêu cầu!";
+            return Json(new { success = false, message = "Chỉ Underwriter và Admin mới có quyền phê duyệt!" });
+        }
         try
         {
             var claim = _context.Claims.Find(c => c.Id == model.ClaimId).FirstOrDefault();
@@ -364,28 +393,37 @@ public class ClaimsController : Controller
 
             _context.Claims.ReplaceOne(c => c.Id == claim.Id, claim);
 
-            return Json(new
+            TempData["ToastType"] = "success";
+            TempData["ToastMessage"] = model.Decision switch
             {
-                success = true,
-                message = model.Decision switch
-                {
-                    "approved" => "Đã phê duyệt hồ sơ bồi thường. Đang chờ chi trả.",
-                    "under_review" => "Hồ sơ đang được yêu cầu thẩm định thêm. Vui lòng chờ kết quả.",
-                    "rejected" => "Đã từ chối hồ sơ bồi thường.",
-                    _ => "Trạng thái đã được cập nhật."
-                }
-            });
+                "approved" => "Đã phê duyệt hồ sơ bồi thường!",
+                "under_review" => "Hồ sơ đang yêu cầu thẩm định thêm!",
+                "rejected" => "Đã từ chối hồ sơ bồi thường!",
+                _ => "Cập nhật thành công!"
+            };
+
+            return Json(new { success = true, reload = true });
+
         }
         catch (Exception ex)
         {
-            Console.WriteLine("[ApproveClaim ERROR] " + ex);
-            return Json(new { success = false, message = "Lỗi hệ thống: " + ex.Message });
+            TempData["ToastType"] = "error";
+            TempData["ToastMessage"] = $"Lỗi: {ex.Message}";
+            return Json(new { success = false, reload = true });
         }
     }
 
     [HttpPost]
     public IActionResult CreatePayout([FromBody] ClaimPayoutCreateVM data)
     {
+        if (!RoleHelper.CanManagePayout(User, _context))
+        {
+            return Json(new
+            {
+                success = false,
+                message = "Bạn không có quyền thực hiện chi trả!"
+            });
+        }
         try
         {
             string claimId = data.ClaimId;
@@ -431,11 +469,15 @@ public class ClaimsController : Controller
 
             _context.Claims.UpdateOne(x => x.Id == claimId, update);
 
-            return Json(new { success = true, message = "Chi trả quyền lợi thành công!" });
+            TempData["ToastType"] = "success";
+            TempData["ToastMessage"] = "Chi trả quyền lợi thành công!";
+            return Json(new { success = true, reload = true });
         }
         catch (Exception ex)
         {
-            return Json(new { success = false, message = "Lỗi khi tạo chi trả: " + ex.Message });
+            TempData["ToastType"] = "error";
+            TempData["ToastMessage"] = $"Lỗi: {ex.Message}";
+            return Json(new { success = false, reload = true });
         }
     }
 
@@ -451,6 +493,10 @@ public class ClaimsController : Controller
     DateTime? to_date = null
 )
     {
+        if (!RoleHelper.CanViewClaim(User, _context))
+        {
+            return StatusCode(403, "Bạn không có quyền xuất dữ liệu!");
+        }
         try
         {
             var query = _context.Claims.AsQueryable();
