@@ -353,8 +353,8 @@ public class ClaimsController : Controller
         if (!RoleHelper.CanApproveClaim(User, _context))
         {
             TempData["ToastType"] = "error";
-            TempData["ToastMessage"] = "Bạn không có quyền phê duyệt yêu cầu!";
-            return Json(new { success = false, message = "Chỉ Underwriter và Admin mới có quyền phê duyệt!" });
+            TempData["ToastMessage"] = "Chỉ Underwriter và Admin mới có quyền phê duyệt!";
+            return Json(new { success = false, message = "Bạn không có quyền phê duyệt!", reload = true });
         }
         try
         {
