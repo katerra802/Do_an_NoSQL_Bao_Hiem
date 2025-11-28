@@ -267,6 +267,14 @@ namespace Do_an_NoSQL.Controllers
         [HttpPost]
         public IActionResult BulkDelete([FromBody] List<string>? ids, bool deleteAll = false)
         {
+            if (!PermissionHelper.CanManageCustomer(User, _context))
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Bạn không có quyền xóa hàng loạt khách hàng!"
+                });
+            }
             if (deleteAll)
             {
                 // Nếu đang ở chế độ "chọn tất cả" => xóa tất cả trừ excludedIds
@@ -305,6 +313,14 @@ namespace Do_an_NoSQL.Controllers
         [HttpPost]
         public IActionResult ImportExcel(IFormFile file)
         {
+            if (!PermissionHelper.CanManageCustomer(User, _context))
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Bạn không có quyền import khách hàng!"
+                });
+            }
             if (file == null || file.Length == 0)
                 return Json(new { success = false, message = "Vui lòng chọn file Excel hợp lệ!" });
 

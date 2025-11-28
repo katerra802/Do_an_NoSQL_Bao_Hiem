@@ -656,6 +656,10 @@ namespace Do_an_NoSQL.Controllers
         [HttpPost]
         public IActionResult BulkDelete([FromBody] List<string> ids)
         {
+            if (!PermissionHelper.CanManageApplication(User, _context))
+            {
+                return BadRequest(new { message = "Bạn không có quyền xóa hàng loạt!" });
+            }
             if (ids == null || !ids.Any())
                 return BadRequest(new { message = "Không có hồ sơ nào được chọn." });
 
@@ -707,6 +711,13 @@ namespace Do_an_NoSQL.Controllers
         [HttpPost]
         public IActionResult ImportExcel(IFormFile file)
         {
+
+            if (!PermissionHelper.CanManageApplication(User, _context))
+            {
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] = "Bạn không có quyền import!";
+                return RedirectToAction("Index");
+            }
             if (file != null && file.Length > 0)
             {
                 using (var stream = new MemoryStream())

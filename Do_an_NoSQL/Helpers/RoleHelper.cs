@@ -65,6 +65,15 @@ namespace Do_an_NoSQL.Helpers
         {
             return HasRole(user, ADMIN, ADVISOR);
         }
+        public static bool CanViewCustomer(ClaimsPrincipal user, MongoDbContext context)
+        {
+            return HasRole(user, ADMIN, ADVISOR, CSKH, ACCOUNTANT); // ✅ THÊM ACCOUNTANT
+        }
+
+        public static bool CanManageCustomer(ClaimsPrincipal user, MongoDbContext context)
+        {
+            return HasRole(user, ADMIN, ADVISOR);
+        }
 
         // === APPLICATION ===
         public static bool CanAccessApplications(ClaimsPrincipal user)
@@ -114,7 +123,7 @@ namespace Do_an_NoSQL.Helpers
         // ✅ THÊM: CHỈ XEM CLAIM (READ-ONLY)
         public static bool CanViewClaim(ClaimsPrincipal user, MongoDbContext context)
         {
-            return HasRole(user, ADMIN, UNDERWRITER, CSKH);
+            return HasRole(user, ADMIN, UNDERWRITER, CSKH, ACCOUNTANT); // ✅ THÊM ACCOUNTANT
         }
 
         // ✅ THÊM: TẠO VÀ SỬA CLAIM (CSKH có thể tạo/sửa)
@@ -175,7 +184,7 @@ namespace Do_an_NoSQL.Helpers
         // === PRODUCTS ===
         public static bool CanViewProducts(ClaimsPrincipal user)
         {
-            return HasRole(user, ADMIN, ADVISOR, UNDERWRITER);
+            return HasRole(user, ADMIN, ADVISOR, UNDERWRITER, ACCOUNTANT, CSKH); // ✅ THÊM ACCOUNTANT, CSKH
         }
 
         public static bool CanManageProducts(ClaimsPrincipal user)
