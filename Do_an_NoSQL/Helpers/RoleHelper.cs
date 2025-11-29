@@ -93,7 +93,7 @@ namespace Do_an_NoSQL.Helpers
 
         public static bool CanViewApplication(ClaimsPrincipal user, MongoDbContext context)
         {
-            return HasRole(user, ADMIN, ADVISOR, UNDERWRITER);
+            return HasRole(user, ADMIN, ADVISOR, UNDERWRITER, CSKH);
         }
 
         // === POLICY ===
@@ -105,7 +105,7 @@ namespace Do_an_NoSQL.Helpers
         // ✅ THÊM: UNDERWRITER CÓ THỂ XEM POLICIES
         public static bool CanViewPolicy(ClaimsPrincipal user, MongoDbContext context)
         {
-            return HasRole(user, ADMIN, ADVISOR, UNDERWRITER);
+            return HasRole(user, ADMIN, ADVISOR, UNDERWRITER, CSKH);
         }
 
         // ✅ THÊM: UNDERWRITER CÓ THỂ QUẢN LÝ POLICIES

@@ -282,9 +282,11 @@
                                             {
                                                 <li>
                                                     <button type="button"
-                                                            class="dropdown-item d-flex align-items-center gap-2 text-primary"
-                                                            onclick="openClaimApprovalModal('@c.Id')">
-                                                        <i class="fa-solid fa-check-circle"></i> Phê duyệt
+                                                            class="dropdown-item d-flex align-items-center gap-2 text-success @((c.Status != "submitted" && c.Status != "under_review") ? "disabled text-muted" : "")"
+                                                            @((c.Status != "submitted" && c.Status != "under_review") ? "disabled" : "")
+                                                            onclick="openClaimApprovalModal('@c.Id', @c.RequestedAmount)">
+                                                        <i class="fa-solid fa-circle-check"></i>
+                                                        <span>Phê duyệt</span>
                                                     </button>
                                                 </li>
                                             }
